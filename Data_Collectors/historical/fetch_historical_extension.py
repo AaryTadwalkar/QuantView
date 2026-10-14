@@ -43,7 +43,7 @@ if str(DATA_COLLECTORS_DIR) not in sys.path:
     sys.path.insert(0, str(DATA_COLLECTORS_DIR))
 
 try:
-    from settings import ACCESS_TOKEN, NIFTY_INSTRUMENT_KEY, TIMEFRAMES
+    from Data_Collectors.settings import ACCESS_TOKEN, NIFTY_INSTRUMENT_KEY, TIMEFRAMES
 except ImportError:
     raise RuntimeError(
         "Cannot import settings.py — ensure ACCESS_TOKEN and NIFTY_INSTRUMENT_KEY "

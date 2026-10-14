@@ -20,7 +20,7 @@ if str(DATA_COLLECTORS_DIR) not in sys.path:
     sys.path.insert(0, str(DATA_COLLECTORS_DIR))
 
 try:
-    from settings import TIMEFRAMES
+    from Data_Collectors.settings import TIMEFRAMES
 except ImportError:
     raise RuntimeError("Cannot import settings.py from Data_Collectors/settings.py")
 

@@ -1,37 +1,24 @@
-# Progress
+# Progress — QuantView (`c:\Algo\quantview`)
 
-## What works
-- Upstox REST historical candle fetcher (`fetch_historical.py`) — functional for NIFTY index.
-- Incremental extension fetcher (`fetch_historical_extension.py`) — works but saves to separate file.
-- `merge_extensions.py` — merges extension CSV into main (but overwrites raw; risky).
-- Option chain snapshot collector — collects ~30s cadence snapshots; operational but unreliable (gaps, late starts).
-- `data_status.py` — generates `data_status.md` audit report; uses business-day calendar (not exchange holidays).
+## Completed Milestones
+- **[2026-10-11] Stage A — Pre-Edit Inspection, Comparison & Reconciliation Matrix:**
+  - Read all 10 source Markdown files across `DOCS/person_1/` and `DOCS/person_2/` in full and recorded baseline SHA-256 hashes.
+  - Identified and presented the 6 material architectural questions (`Q1–Q6`) to the owner; owner approved all 6 with explicit constraints.
+- **[2026-10-11] Stage B — Reconciled Final Documentation Baseline (`DOCS/final/`):**
+  - Created all 12 required deliverables (`A` through `I`) in `c:\Algo\quantview\DOCS\final\`.
+- **[2026-10-11] Documentation Audit Correction Pass (`v1.3`, `BLK-01` – `BLK-06`):**
+  - Unified all 12 files to `v1.3` and `2026-10-11`; established 4-Tier Document Hierarchy + 6 Conflict Rules (`ADR-007`).
+  - Added `ADR-039`, `ADR-040`, `ADR-041`, worked 2-lot integer-paise financial fixture (`LLD §8.5.4`), 6-boundary crash matrix (`B1–B6`), and `UNVERIFIED_BLOCKER` enforcement.
+- **[2026-10-12] Documentation Hardening & Implementation Gate Baseline (`v1.4`, `REC-24` – `REC-30`):**
+  - Unified all 12 files in `DOCS/final/` to **`Version: v1.4 (Hardened Implementation Baseline)`** and **`Release Date: 2026-10-12`**.
+  - Established canonical operating modes (`RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`) and allocation modes (`ISOLATED`, `PORTFOLIO`).
+  - Clarified causal availability: `available_at = bar_end` under `HISTORICAL_ASSUMED_AVAILABILITY` for backtests; `available_at = finalized_at = bar_end + grace_period` in live streams.
+  - Disambiguated Risk Rules into canonical catalogue `RK-01` through `RK-26`, cleanly splitting `RK-06` (hard freeze limit) and `RK-26` (advisory lot ceiling).
+  - Clarified release gates: Phase 7 `GATE-04` ($\ge 10$ paper sessions; paper evaluation only) vs Phase 9 `GATE-05` ($\ge 30$ paper sessions, $\le 1\text{ paise}$ zero-drift fee reconciliation across $\ge 5$ contract notes, live capital authorization).
+  - Defined safe Phase 1 deterministic vertical slice backtest runner (`T1.7`) with zero broker or option-chain dependencies.
+  - Programmatically verified 0 broken links, 12/12 header checks, 100% ID alignment (`P1–P18`, `ADR-001–ADR-041`, `CAP-01–CAP-24`, `RK-01–RK-26`), 10/10 untouched source hashes, and exact integer-paise fixture math (`validation_evidence.json`).
 
-## What's collected
-- 1m NIFTY candles: 2022-01-03 to 2026-10-08 (~432,967 rows)
-- Higher-TF NIFTY candles: 3m, 5m, 15m, 1h, 4h, 1d
-- Option chain snapshots: 2026-01-20 to 2026-10-09 (78,535 files, 35 expiry folders)
-- Live daily 1m candle CSVs: 57 files (2026-01-20 to at least 2026-06-08)
-
-## What's left to build (Phase 0 gates)
-- [ ] G1: NSE calendar — **next task**
-- [ ] G2: Calendar-driven audit v2
-- [ ] G3: Robust folder discovery (fix non-zero-padded names)
-- [ ] G4: Timestamp semantics documentation + resampling parity
-- [ ] G5: Expired option API access verification
-- [ ] G6: Parquet conversion + checksummed backup
-- [ ] G7: Causality test harness in CI
-- [ ] G8: Reliable collector (heartbeat, reconnect, scheduling)
-
-## Current status
-Phase 0 — Data collection operational; all gates unmet; no application code started.
-
-## Known issues
-- 19k 1m candle row count discrepancy (reported vs. observed).
-- 3 non-zero-padded expiry folders break parsers.
-- Multiple utility scripts have hardcoded wrong paths.
-- `pyarrow` missing from requirements — Parquet impossible.
-- No backup of collected data.
-- Volume=0, OI=0 in all NIFTY candles (undocumented).
-- Option chain timezone not documented.
-- Saturday erroneous rows in both candle and option chain data.
+## Implementation & Readiness Status (`Appendix C` of `LOW_LEVEL_DESIGN.md`)
+- **All Capabilities (`CAP-01` – `CAP-24`):** `Design Status = DESIGNED` (`CAP-21` `LIMIT` orders is `DESIGNED (DEFERRED / POST-v1)`), `Implementation Status = PENDING`, `Test Execution Status = NOT_RUN`.
+- **Readiness Verdicts:** **Phase 0 (`T0.1–T0.15`):** `GO` | **Full Build (`Phases 1–8`):** `CONDITIONAL GO` | **Live Execution (`Phase 9`):** `NO-GO`.
+- **Application Code (`src/`, `frontend/`, `tests/`):** Not started (awaiting owner go-ahead for Phase 0 `T0.1`).

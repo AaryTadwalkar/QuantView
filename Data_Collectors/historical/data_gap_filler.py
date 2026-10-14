@@ -4,7 +4,7 @@ import time
 import sys
 from datetime import timedelta, datetime
 from pathlib import Path
-from settings import ACCESS_TOKEN
+from Data_Collectors.settings import ACCESS_TOKEN
 #  python -m data_collectors.historical.data_gap_filler
 FILE_PATH = Path(r"C:\Algo\storage\historical\candles\index\nifty\1m\nifty.csv")
 BASE_URL = "https://api.upstox.com/v2/historical-candle"

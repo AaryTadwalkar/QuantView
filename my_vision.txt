@@ -1,0 +1,98 @@
+# I want a full scaleable system similar to trading view and broker mixed.
+
+I want a full-stack app where there is a UI, there is a backend, and there is a database.
+
+List down some features I want on frontend:
+# 1.Dashboard, where i there are options to to go backtesting section, launch chart, see strategies,able to see accounts we have, handle risk management and capital, of the accounts
+
+2. Interactive chart like trading view with following feature
+A. should be able to put on indicators like trading view(general indicators in market+ my custom indicators)
+B. multiple chart types i can switch from like candlestick, heiken ashi, etc
+C. should be able to draw and put on lines, boxes, etc.
+D. shound be able to put chart in different layout.
+E. should be able to put on chart of differnt strike prices
+F. see option chain like brokers live.
+G. visualization of oi levels in seperate tabs, and ON chart as a overlay
+H. see timeline on bottom scale and price on vertical scale.
+I. should be able to pull the chart up and on same page, see backtesting results , able to backtest strategies, see metrices values of backtesting results. just like trading view
+J. should be able to place paper trade order directly on chart and see its position on chart itself and should be able to put target and stoploss by dragging the sla nd tp level accross chart like most brokers nowadays
+
+3. BACKTESTING TERMINAL
+A. existing strategy in system i should be able to backtest.
+B. set date range from and too
+C. if a strategy is bidirectional(CE/PE) then i should i have option to CE or PE, or both.
+D. other backtesting options( you expand) 
+
+## AS I DEFINE BACKEND I WILL MENTION PLACES WHERE THINGS SHOULD BE AVALAIABLE TO FRONTEND OR BACKEND SETTING THAT SHOULD BE MODIFIABLE IN FRONTEND SO NOTE THAT IN FRONTEND
+## if you think there are some additions to frontend based on backend requirements, add them.
+-------------------------------------------------------------------------------
+## BACKEND
+
+### data injestion
+# 1. Current state of data injestion and Data base
+A. 
+we have api of upstox which return historical candlestick data
+schema:
+timestamp,open,high,low,close,volume,open_interest
+2022-01-03 09:15:00+05:30,17387.15,17438.4,17387.15,17428.9,0,0
+2022-01-03 09:16:00+05:30,17428.4,17451.45,17428.4,17450.55,0,0
+2022-01-03 09:17:00+05:30,17450.05,17459.55,17442.05,17457.7,0,0
+2022-01-03 09:18:00+05:30,17455.95,17465.75,17455.3,17464.55,0,0
+2022-01-03 09:19:00+05:30,17465.25,17474.65,17462.15,17473.2,0,0
+
+we have 1min/3min/5min/15min/1h/1d interval candlestick data
+- Candlestick Data Summary
+| Timeframe | Total Rows | Start Date | End Date |
+|---|---|---|---|
+| 1m | 451,952 | 2022-01-03 09:15:00 | 2026-10-08 15:29:00 |
+| 3m | 144,428 | 2022-01-03 09:15:00 | 2026-10-08 15:27:00 |
+| 5m | 86,728 | 2022-01-03 09:15:00 | 2026-10-08 15:25:00 |
+| 15m | 28,944 | 2022-01-03 09:15:00 | 2026-10-08 15:15:00 |
+| 1h | 8,232 | 2022-01-03 09:15:00 | 2026-10-08 15:15:00 |
+| 4h | 2,352 | 2022-01-03 09:15:00 | 2026-10-08 13:15:00 |
+| 1d | 1,410 | 2021-02-01 00:00:00 | 2026-10-08 00:00:00 |
+
+
+
+-------------------------------------------------------------------------------
+B.we have live option chain snapshots since
+- **Data Collection Start Date**: 2026-01-20
+- **Data Collection End Date**: 2026-10-09
+these snapshots are taken every 30 sec with the schema being
+schema:
+timestamp,spot_price,strike,type,oi,volume,ltp,bid,ask,bid_qty,ask_qty,chng,chng_oi,iv,delta,gamma,theta,vega
+2026-07-27 09:42:33.713525,23947.0,21100.0,CE,26260.0,260,2860.0,2836.0,2876.6,65,65,0,0,0.927734375,0.9912,0.0,-12.4566,0.3334
+2026-07-27 09:42:33.713525,23947.0,21100.0,PE,2629705.0,310245,0.55,0.55,0.6,85215,81445,0,0,0.751953125,-0.0018,0.0,-2.3986,0.0792
+SAVE_DIR = (
+    PROJECT_ROOT /
+    "Data/live/option_chain/nifty" /
+    EXPIRY_DATE /
+    TRADE_DATE /
+    "snapshots"
+)
+-------------------------------------------------------------------------------
+C.we have upstox api endpoint which provide: historical option chain candle
+- we get historical expired contracts with ohlc levels per strike price
+INTERVAL: 1min 
+schema:
+timestamp,instrument_key,trading_symbol,expiry,strike,option_type,lot_size,open,high,low,close,volume,oi,source,interval
+2025-04-24 09:23:00+05:30,NSE_FO|79196|24-04-2025,NIFTY 20350 CE 24 APR 25,2025-04-24,20350.0,CE,75,3997.8,3997.8,3962.1,3962.25,75,31200,upstox_expired_historical_candle,1minute
+2025-04-24 09:24:00+05:30,NSE_FO|79196|24-04-2025,NIFTY 20350 CE 24 APR 25,2025-04-24,20350.0,CE,75,3962.25,3962.25,3962.25,3962.25,0,31200,upstox_expired_historical_candle,1minute
+
+schema design:
+- timestamp sorted
+-each timestamp has all the strike price then for next time stamp we have alll the strikeprice again
+-so every min timestamp will have x value strikeprice till y strikeprice
+eg: for 9:15 spot price is 24800, we have strike price from NIFTY 20350 CE till  NIFTY 26100 CE
+alternating with CE and PE
+dummy data
+timestamp,instrument_key,underlying,expiry,strike,option_type,close,volume....
+2025-04-24 09:15:00,NSE_FO|79196,NIFTY,2025-04-24,24200,CE,145.20,8500
+2025-04-24 09:15:00,NSE_FO|79197,NIFTY,2025-04-24,24200,PE,120.00,9200
+2025-04-24 09:15:00,NSE_FO|79205,NIFTY,2025-04-24,24250,CE,115.50,4500
+2025-04-24 09:15:00,NSE_FO|79206,NIFTY,2025-04-24,24250,PE,155.10,11000
+2025-04-24 09:16:00,NSE_FO|79196,NIFTY,2025-04-24,24200,CE,151.00,6200
+2025-04-24 09:16:00,NSE_FO|79197,NIFTY,2025-04-24,24200,PE,112.50,8100
+-------------------------------------------------------------------------------
+
+for live candle building on chart in live market we will need websocket to poll in live tick by tick data(option chain and general value+ if possible other extra data)

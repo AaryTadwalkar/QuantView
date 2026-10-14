@@ -14,7 +14,7 @@ import requests
 import pandas as pd
 import os
 
-from settings import (
+from Data_Collectors.settings import (
     ACCESS_TOKEN,
     NIFTY_INSTRUMENT_KEY,
     FROM_DATE,

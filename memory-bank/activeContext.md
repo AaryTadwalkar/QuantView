@@ -1,61 +1,30 @@
-# Active Context
+# Active Context — QuantView (`c:\Algo\quantview`)
 
-## Session 2026-10-10 — Phase 0A completed
-**Task completed:** Documentation baseline and git safety checkpoint (read-only, no files modified).
+## Current State of the Union (2026-10-12)
+- **Completed Baseline:** QuantView v1.4 Hardened Implementation Baseline (`v1.4`, `Release Date: 2026-10-12`) across all 12 canonical documents in `c:\Algo\quantview\DOCS\final\`.
+- **Readiness Verdicts:**
+  - **Architecture Quality:** `8.5 / 10` (Modular monolith, hybrid PostgreSQL + Parquet/DuckDB storage, 5-layer isolation).
+  - **Documentation Completeness:** `8.5 / 10` (Full coverage across tiers, schemas, APIs, tickets, tests).
+  - **Verified Technical Correctness:** `6.5 / 10` (`Runtime Unproven` — `Implementation Status = PENDING`, `Test Execution Status = NOT_RUN`).
+  - **Ready for Phase 0 (`T0.1–T0.15`):** **`GO`** (Repository scaffolding, raw data audit, empirical verification scripts).
+  - **Ready for Full Build (`Phases 1–8`):** **`CONDITIONAL GO`** (Gated on `UNVERIFIED_BLOCKER` items `VER-01–06`, `S1–12`, checkpoints `REV-01–04`; includes safe Phase 1 vertical slice `T1.7`).
+  - **Ready for Live Execution (`Phase 9`):** **`NO-GO`** (Requires $\ge 30$ paper sessions, $\le 1\text{ paise}$ zero-drift fee reconciliation across $\ge 5$ contract notes, 3-lock live arming, `readiness_signed.yaml`).
 
-## Phase 0A findings (key)
-- **BLOCKED for G1** by one correctable issue: dev spec filename has "(2)" suffix.
-- Both authoritative docs exist at `docs/` (lowercase, committed):
-  - `docs/QUANTVIEW_MASTER_SYSTEM_BLUEPRINT.md` (68,815 bytes) ✅
-  - `docs/QUANTVIEW_DEVELOPER_IMPLEMENTATION_SPEC (2).md` (41,359 bytes) ⚠️ wrong filename
-- `AGENTS.md` lives at `docs/AGENTS.md` and `DOCS/AGENTS.md` — not at repo root.
-- `DOCS/` (uppercase) is a full untracked duplicate of `docs/` — NOT authoritative.
-- `docs/` (lowercase) is committed and authoritative (matches AGENTS.md path references).
-- 8 contradictions found and documented — none block G1 itself after the rename.
-- **One required action before G1:** rename `docs/QUANTVIEW_DEVELOPER_IMPLEMENTATION_SPEC (2).md` → `docs/QUANTVIEW_DEVELOPER_IMPLEMENTATION_SPEC.md`
+## Canonical Architectural Contracts & Modes
+- **Operating Modes:** `RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`.
+- **Allocation Modes:** `ISOLATED`, `PORTFOLIO` (`ADR-038`). Ambiguous "Mode A/B" labels retired.
+- **Causal Availability Model:** `available_at = bar_end` under `HISTORICAL_ASSUMED_AVAILABILITY` for backtests; `available_at = finalized_at = bar_end + grace_period` in live streams. Invariant: `feature.available_at <= decision_time`.
+- **Risk Catalogue (`RK-01–RK-26`):** `RK-06` (`HARD_ORDER_FREEZE_LIMIT`, pre-submit hard block) split from `RK-26` (`ADVISORY_ORDER_LOT_CEILING`, non-blocking advisory in manual paper).
+- **Release Gates:** Phase 7 `GATE-04` ($\ge 10$ paper sessions; paper engine evaluation only) vs Phase 9 `GATE-05` ($\ge 30$ paper sessions, $\le 1\text{ paise}$ fee reconciliation, live capital authorization).
+- **Phase 1 Vertical Slice (`T1.7`):** Minimal feature engine, deterministic underlying strategy, causal backtest, run manifest, reproducible report, `T-ACC-1`; zero broker or option dependencies.
+- **Order Safety:** Manual orders market-only in v1; LIMIT orders deferred post-v1 (`ADR-039`); `EXPIRY_UNRESOLVED` handles ambiguous settlements without inventing prices.
 
-## Module boundary resolution (C1 contradiction)
-- 6 domains (AGENTS.md): `market_data`, `instruments`, `research`, `simulation`, `ledger`, `api`
-- 12 fine-grained modules (Blueprint repo layout): nested within those 6 domains
-- `research` = `features/` + `strategies/` + `contract_selection/`
-- `simulation` = `backtesting/` + `paper_trading/` + `risk/`
-- Record as ADR in DECISIONS.md before first code task.
-
-## Session 2026-10-09 — Phase 0 audit
-
-## Audit findings summary
-- **Overall status: NO-GO for Phase 1+.** All 8 Phase 0 gates unmet.
-- Repository has one git commit; all DOCS are untracked (never committed).
-- No application module code exists (market_data, instruments, research, simulation, ledger, api, frontend — all absent).
-- No tests, no CI, no Parquet pipeline operational.
-
-## Critical data facts discovered
-- Historical 1m candle rows: **432,967** (observed) vs. 451,952 (reported in data_status.md) — 19k discrepancy unresolved.
-- Option chain snapshot files: **78,535** CSV files (vs. 71,617 reported — additional collection since report).
-- **3 non-zero-padded expiry folder names:** `2026-02-3`, `2026-03-2`, `2026-04-7` — break naive date parsers.
-- 3 option chain schema versions (V1=aggregated?, V3=current with Greeks).
-- Option chain timestamps: sub-second, no timezone suffix — **timezone ambiguous**.
-- Volume=0, OI=0 in all NIFTY candle rows — index behavior, needs documentation.
-- `nifty_2026-02-21.csv` (live) has 1 row on a Saturday — quarantine needed.
-- `data_status.py` uses `pd.date_range(freq="B")` — does NOT exclude Indian holidays.
-
-## Broken scripts (wrong hardcoded paths)
-- `data_gap_checker.py` → `C:\Algo\Data\...` (wrong)
-- `data_gap_filler.py` → `C:\Algo\storage\...` (wrong)
-- `migrate_options.py` → `storage/live/...` (wrong)
-- `parquet_quality_checker.py` → `C:/Algo/Data/...` (wrong)
-- `pyarrow` not in requirements.txt — Parquet cannot work.
-
-## Next recommended task (smallest safe step)
-**G1: Build NSE session/holiday calendar** — dependency for G2, G3, G4, G8.
-- Source from NSE website official holiday lists.
-- Include effective-dated NIFTY weekly expiry (Thursday → Tuesday change; verify exact NSE circular date before coding).
-- Acceptance: 15+ spot-checked dates pass as unit tests.
-
-## Open questions / decisions needed
-1. Exact NSE circular date for NIFTY Tuesday expiry change (approx. April 2025 — verify).
-2. Resolve 1m row count discrepancy (432,967 vs 451,952).
-3. Confirm Upstox Plus plan / expired candle API access (G5).
-4. Decide live 1m candle merging strategy (live per-day CSVs vs. historical bulk CSV).
-5. Commit DOCS to git before next task (P1-7).
-6. Clarify V1 option chain actual per-strike schema vs. aggregated structure.
+## 4-Tier Document Hierarchy (`ADR-007`, `SOURCE_OF_TRUTH_INDEX.md`)
+1. **Tier 1 (Authority):** `ADR_REGISTER.md` (`ADR-001–ADR-041`, where `status == OWNER_APPROVED`).
+2. **Tier 2 (System Contract):** `HIGH_LEVEL_DESIGN.md` (`P1–P18`, `L0–L7`, `G0.1–G7.9`, `GATE-01–GATE-05`).
+3. **Tier 3 (Build Contract):** `LOW_LEVEL_DESIGN.md` (`RK-01–RK-26`, `CAP-01–CAP-24`, `B1–B6`, `T0.1–T9.2`).
+4. **Tier 4 (Specialized Contracts):** `CHARTING_UX.md`, `BACKTESTING_REPORT_SPEC.md`, `OPTIONS_CHAIN_UI.md`, `PAPER_TRADING_UI.md`.
+5. **Cross-Cutting Controls:** `TRACEABILITY_MATRIX.md`, `RECONCILIATION_AND_CHANGE_LOG.md`, `UNRESOLVED_DECISIONS_REGISTER.md`, `SOURCE_OF_TRUTH_INDEX.md`, `VALIDATION_REPORT.md` (+ `validation_evidence.json`).
+- **Historical Sources (`DOCS/person_1/`, `DOCS/person_2/`):** 10/10 files preserved byte-identical; never implement from.
+- **Recent Corrections (2026-10-12):** Completed HLD v1.5.1 targeted corrections in `DOCS/HIGH_LEVEL_DESIGN (1).md` per `DOCS/HLD_MANUAL_CORRECTION_GUIDE.md` (Patches 2B–6 applied).
+- **Next Step:** Ready to begin Phase 0 (`T0.1` Archive legacy data with manifest).

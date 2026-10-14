@@ -3,14 +3,38 @@
 ## Architecture pattern
 Modular monolith — six bounded packages sharing one process initially. Extract only when measured need exists.
 
-## Six bounded packages (none implemented yet)
-1. `market_data` — adapters, raw archive, normalization, quality, candle builder
-2. `instruments` — instrument master, exchange calendar, effective-dated expiry rules
-3. `research` — indicators/features, strategy contracts, Python runtime, contract selection
-4. `simulation` — event clock, event loop, fill models (historical + paper), positions
-5. `ledger` — append-only financial events, cash/positions/P&L projections
-6. `api` — REST + WebSocket endpoints (no business logic duplication)
-7. Frontend — Next.js + Lightweight Charts (separate project)
+## System Modules & Low-Level Sub-modules
+1. **Frontend** 
+   - Charting: TradingView-like UI for historical and live visualization (`UtcEpochSec` timestamp contract via `LightweightChartsAdapter`).
+   - UI Controls: Forms for backtest execution and paper trading.
+   - Data Quality Dashboard: Surfaces data gaps and freshness metrics.
+2. **API (`api`)**
+   - REST Endpoints: Serves historical data, handles configuration.
+   - WebSocket Streaming: Real-time price updates and execution states.
+   - Orchestration Layer: Connects decoupled backend modules without business logic duplication.
+3. **Simulation (`simulation`)**
+   - Event Clock: Orchestrates point-in-time ticks for historical backtests.
+   - Fill Models: Approximates live execution using historical/paper data.
+   - Position Tracker: Maintains state of held contracts during backtests.
+   - P&L Engine: Separates canonical result types (`UNDERLYING_DIRECTIONAL`, `SYNTHETIC_OPTIONS_ESTIMATE`, `ACTUAL_OPTIONS`).
+4. **Research (`research`)**
+   - Feature Extraction: Builds lag features, technical indicators, and data transformations without look-ahead bias (`available_at <= decision_time`).
+   - ML Offline (`ADR-040`): Strictly optional data preparation, model evaluation metrics, and local dataset caching.
+   - ML Training Strategies: Optional training pipelines across distinct time regimes.
+   - Contract Selection: Logic for selecting which strike/expiry to trade based on signals.
+5. **Ledger (`ledger`)**
+   - Financial Events: Append-only log of trades and deposits in integer paise (`ROUND_HALF_UP`).
+   - P&L Projections: Reconciles theoretical vs realized profits.
+6. **Market Data (`market_data`)**
+   - Adapters: Connects to broker endpoints.
+   - Raw Archive: Immutable CSV storage.
+   - Normalization: Converts varied formats to standard parquets.
+   - Quality Checker: Flags missing rows and verifies timestamps.
+   - Candle Builder: Aggregates 1m data to higher timeframes.
+7. **Instruments (`instruments`)**
+   - Master Catalog: Metadata for all tradable assets.
+   - Exchange Calendar: Valid trading days and session timings.
+   - Expiry Rules: Effective-dated logic for weekly and monthly expiries.
 
 ## Dependency rules (from ADR-002)
 - `api` → all other modules (orchestrate, not reimplement)
@@ -20,42 +44,37 @@ Modular monolith — six bounded packages sharing one process initially. Extract
 - `market_data` ✗ broker adapters
 - Enforce with `import-linter` in CI
 
-## Storage decisions (ADR-004 Provisional)
+## Storage decisions (ADR-004)
 - Raw CSVs: immutable archive (never overwrite without checksummed backup)
 - Historical/analytical: Parquet + DuckDB
-- Transactional (orders, ledger, accounts): PostgreSQL
-- Defer: TimescaleDB, Redis, Kafka
+- Transactional (orders, ledger, accounts): PostgreSQL (`qv_core`, `qv_paper`, `qv_live` isolated)
 
-## Time semantics (ADR-006)
-- `bar_start`, `bar_end`, `available_at`, `ingested_at`, `source_ts` are distinct fields
-- `bar_end` computed from interval + session calendar, NOT `bar_start + timeframe`
-- All intraday joins are backward/as-of using `available_at`
-- All timestamps stored/compared in IST (Asia/Kolkata) or UTC with explicit conversion
+## Time semantics & Causal Availability (ADR-006, ADR-008, ADR-041)
+- `bar_start`, `bar_end`, `available_at`, `ingested_at`, `source_ts` are distinct fields.
+- Historical Backtests: `available_at = bar_end` under `HISTORICAL_ASSUMED_AVAILABILITY` (clipped to session close).
+- Live Streaming: `available_at = finalized_at = bar_end + grace_period` (where `grace_period` accounts for finalization/network latency; never backdated to `bar_end`).
+- Universal Invariant: `feature.available_at <= decision_time`.
+- Frontend Charting: Branded `UtcEpochSec` (`int64` UTC seconds) canonical contract across stores, APIs, markers, and replay cursors; IST (`Asia/Kolkata`, `UTC+05:30`) display offset strictly isolated inside `LightweightChartsAdapter`.
 
-## Candle timestamp convention (observed in existing data)
-- Intraday: bar_start labeled (e.g., `09:15:00+05:30` = 09:15–09:16 bar)
-- Daily: midnight IST label (`00:00:00+05:30`) — NOT availability time
-- `bar_end` and `available_at` NOT yet stored — must be added
+## Canonical Operating & Allocation Modes
+- **Operating Modes:** `RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`.
+- **Allocation Modes (`ADR-038`):** `ISOLATED` (single active deployment per account) and `PORTFOLIO` (multiple deployments sharing account risk ceilings).
+- **Risk Catalogue (`RK-01–RK-26`):** `RK-06` (`HARD_ORDER_FREEZE_LIMIT`, pre-submit exchange block) vs `RK-26` (`ADVISORY_ORDER_LOT_CEILING`, non-blocking advisory in manual paper).
 
 ## Key ADRs
-- ADR-003: Raw archive immutable — never overwrite source CSVs
-- ADR-005: 1m candles are canonical source for derived intraday TFs; retain native TFs for reconciliation
-- ADR-009: Three separate P&L modes — underlying directional / synthetic / actual-options (never mixed)
-- ADR-010: Upstox expired options is provisional until API access confirmed
-- ADR-012: Live trading gated — disabled by default always
-
-## Expiry rules (NIFTY)
-- Thursday weekly expiry until approx. April 2025
-- Tuesday weekly expiry from approx. April 2025 (exact date per NSE circular — not yet confirmed)
-- Must be stored as effective-dated rules, not hardcoded weekday
+- ADR-003: Raw archive immutable
+- ADR-005: 1m candles are canonical source
+- ADR-007: 4-tier document hierarchy and 6 conflict resolution rules
+- ADR-008: Causal availability model (live vs historical distinction)
+- ADR-009: Strict separation of underlying directional vs actual options P&L
+- ADR-012: Live trading gated — disabled by default (`NO-GO`) until Phase 9 `GATE-05`
+- ADR-026: Three-Lock Live Arming
+- ADR-038: Account allocation modes (`ISOLATED` vs `PORTFOLIO`)
+- ADR-039: Conservative `LIMIT` orders deferred post-v1 (v1 manual orders market-only)
+- ADR-040: Optional ML extension over `Strategy(Protocol)`
+- ADR-041: Canonical `UtcEpochSec` chart timestamp contract
 
 ## Data integrity invariants
-- No look-ahead in any join, feature, or contract selection
-- Missing data → null + quality flag; never silently forward-fill or zero-fill
-- Options: synthetic prices ≠ actual fill prices; always separate
-- Ledger events are append-only; corrections via reversal entries
-
-## Current critical patterns (anti-patterns to fix)
-- Scripts use hardcoded absolute paths → fix with `PROJECT_ROOT` constant
-- `merge_extensions.py` overwrites raw `nifty.csv` → add backup before merge
-- `data_status.py` uses `freq="B"` for expected sessions → replace with G1 calendar
+- No look-ahead in any join, feature, or contract selection (`available_at <= decision_time`).
+- Missing data → null + quality flag; never silently forward-fill.
+- Ledger events are append-only in integer paise; corrections via reversal entries.

@@ -4,8 +4,9 @@
 |---|---|
 | Document | `docs/HIGH_LEVEL_DESIGN.md` |
 | Companion | `docs/LOW_LEVEL_DESIGN.md` (LLD) — exact schemas, formulas, algorithms, tickets |
-| Status | Baseline v1.1 (amends v1.0), supersedes `SYSTEM_ARCHITECTURE.md` and the architecture parts of `TECHNICAL_IMPLEMENTATION_SPEC.md` |
-| Evidence date | 2026-10-09 (repository + `data_status.md` audit; external facts researched 2026-10-10); v1.1 amendments 2026-10-10 |
+| Status | Baseline v1.2 (amends v1.1), supersedes `SYSTEM_ARCHITECTURE.md` and the architecture parts of `TECHNICAL_IMPLEMENTATION_SPEC.md`. v1.2 additions are **DESIGNED only**: nothing in v1.2 is claimed implemented, tested or verified (LLD Appendix C) |
+| Evidence date | 2026-10-09 (repository + `data_status.md` audit; external facts researched 2026-10-10); v1.1 amendments 2026-10-10; v1.2 amendments 2026-10-11 (document review only, repository not re-inspected) |
+| Focused specs | `docs/CHARTING_UX.md`, `docs/OPTIONS_CHAIN_UI.md`, `docs/PAPER_TRADING_UI.md`, `docs/BACKTESTING_REPORT_SPEC.md` (UI behaviour; contracts live in the LLD, which wins on conflict). Review record: `docs/V1_2_CHANGE_LOG_AND_TRACEABILITY.md` |
 | Audience | Project owner, coding agents, reviewers |
 | Primary market | NSE index derivatives, starting with NIFTY 50 and NIFTY weekly options |
 | Initial scope | Research, historical backtesting, live paper trading |
@@ -21,6 +22,10 @@
 | 1.1 | **ML scope widened to roles** (general, strategy meta/gated, regime, pattern, overnight) with a label registry and a holdout lifecycle (ADR-023, ADR-015 accepted) | Owner wants to explore many models, including strategy-specific ones. |
 | 1.1 | **Pine porting protocol** (ADR-024) and **`ml` moved above `simulation` in the layer stack** (ADR-025) | Pine ports are the owner's main strategy source; v1.0's layering forbade ML from calling the Mode B engine it needs. |
 | 1.1 | Option snapshots collect nearest **and next** weekly expiry (LLD §4.9.3) | Overnight and roll-over strategies need the next expiry; costs ≈ 60 extra calls per 30 min. |
+| 1.2 | **Durable event delivery** (P14, ADR-026, LLD §2.7): journal for control events, transactional outbox for trading events, checkpoints in the effect transaction, quotes never replayed | v1.1 promised checkpoint replay over a transport that stored nothing |
+| 1.2 | **Paper/live isolation** (P15, ADR-027, LLD §10.5): schemas + roles + process + credential + installed-code separation, three-lock live arming | v1.1 said "separate schemas" but the DDL had one set of tables |
+| 1.2 | **Option risk semantics and exit priority** (ADR-028, LLD §8.6.8–8.6.9); LTP removed from P2's executable sources; Mode C quote fills (ADR-035, LLD §8.4.8) | An underlying stop does not bound option loss; LTP is not executable |
+| 1.2 | **Manual paper account** (ADR-029), **deployment state machine** (ADR-030), **strategy visualization** (ADR-031), **server-side replay** (ADR-032), **live option chain** (ADR-033), **metric inspector** (ADR-034), **coverage matrix and eligibility gate** (ADR-036) | Owner requirements of 2026-10-11 |
 
 **Authority rule.** HLD says *what the system is and why*. LLD says *exactly how to build it*. If they disagree, stop and record the conflict in the decision register (§16); do not choose silently.
 
@@ -36,7 +41,7 @@ QuantView is a TradingView-inspired research and trading platform with a quantit
 1. See validated historical and live NIFTY charts, indicators and option-chain data.
 2. Author strategies (declarative spec first, Python second) and see their signals on the chart.
 3. Run causally correct backtests that never see the future and never invent option prices.
-4. Paper trade the same strategies against live data with a real order lifecycle, ledger, charges and risk gates.
+4. Paper trade the same strategies against live data with a real order lifecycle, ledger, charges and risk gates — and take discretionary manual paper trades at any time in a **separate account** with its own ledger and P&L.
 5. Train and deploy ML signal models only after they beat simple baselines out of sample.
 6. Eventually route approved orders to Upstox, behind separate safeguards.
 
@@ -62,7 +67,7 @@ Final success is the full chain: data → features → strategy → backtest →
 | ID | Invariant | Enforced by |
 |---|---|---|
 | P1 | **No look-ahead.** A decision at time `t` may use only records with `available_at <= t`. | As-of join API; truncate-and-recompute test (LLD §5.1.7); simulation clock |
-| P2 | **No invented option prices.** Actual-options P&L uses only observed bid/ask/LTP from stored snapshots or recorded quotes. Synthetic premiums never enter fills, ledger or the headline metric. | `ResultKind` type separation; fill-model whitelist per mode (LLD §8) |
+| P2 | **No invented option prices.** Actual-options P&L uses only observed **bid/ask** from stored snapshots or recorded quotes. LTP is display/feature data and is never an executable price, mark or trigger (LLD §8.4.8). Synthetic premiums never enter fills, ledger or the headline metric. | `ResultKind` type separation; fill-model whitelist per mode (LLD §8) |
 | P3 | **Result kinds are never mixed.** `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_ESTIMATE`, `PAPER`, `LIVE` are distinct types with distinct fields. | Pydantic discriminated unions; DB check constraints |
 | P4 | **One strategy contract, many environments.** Backtest, paper and live consume the same `Decision` objects through the same risk and order lifecycle. Only the clock, data feed and fill source differ. | `Engine` composition (LLD §8.1) |
 | P5 | **Raw data is immutable.** Originals are never overwritten, repaired or deleted. Normalised and derived data is versioned and reproducible from raw. | Read-only raw directory; checksums; migration rules (LLD §4.1) |
@@ -74,6 +79,8 @@ Final success is the full chain: data → features → strategy → backtest →
 | P11 | **Boundaries are mechanical.** Module boundaries are enforced by import-linter in CI, not by convention. | LLD §1.3 |
 | P12 | **Evidence before claims.** No gate is "passed" without a recorded artifact (report, test output, checksum). | Completion report (LLD §17.3) |
 | P13 | **Risk is layered; strategies tighten, owners loosen.** Hard safety rules are never overridable. Account ceilings are owner policy. A strategy may declare its own risk only at or below the ceilings. Relaxing ceilings is possible only in an explicitly labelled research run, or by the owner publishing a new versioned account profile. | Risk engine rule classes and `RESEARCH_RELAXED` labelling (LLD §8.6) |
+| P14 | **Events are durable before they are acted on.** Control events are journaled (fsync) before delivery; trading events are written in the same transaction as the state they describe; consumer checkpoints advance in the same transaction as the effects; market quotes are current-or-absent and are never replayed. | LLD §2.7; T-EV-* |
+| P15 | **Accounts never share accounting, and mode/origin are always recorded.** Every account has a kind (`STRATEGY`/`MANUAL`) and mode; every order, fill and ledger event carries `account_mode` and `origin`; paper cannot reach broker code or credentials. | Composite FKs and triggers (LLD §9.5.1), §10.5; T-ISO-*, T-MN-* |
 
 ---
 
@@ -106,7 +113,7 @@ flowchart LR
 | C4 | WebSocket v3: 2 connections per non-Plus user; modes `ltpc`, `full` (5-level depth + greeks), `option_greeks`; `full_d30` is Plus-only. | Quote recorder uses `full` for ≈ 45 instruments on one connection; limits re-verified in Phase 0 and stored in config. |
 | C5 | NIFTY weekly expiry is Tuesday for contracts expiring on or after 2025-09-02; earlier Thursday. Lot size is 65 for expiries from 2026-01-06; 75 before (back to Nov 2024). | Expiry, lot size and strike step are effective-dated reference data (LLD §3). |
 | C6 | Options STT on premium sold: 0.0625% → 0.10% (2024-10-01) → 0.15% (2026-04-01). Brokerage on Upstox options: flat ₹20 per executed order. | Cost model is effective-dated and verified against owner contract notes (LLD §8.5). |
-| C7 | Owner develops on Windows (repo `C:\Algo\Options`); collector currently started manually; `Data/` is git-ignored. | Collector automation, backups and path-agnostic code are Phase 0 work. Case-sensitivity and path rules in LLD §1.2. |
+| C7 | Owner develops on Windows (repo `C:\Algo\quantview`); collector currently started manually; `Data/` is git-ignored. | Collector automation, backups and path-agnostic code are Phase 0 work. Case-sensitivity and path rules in LLD §1.2. |
 | C8 | Solo developer with coding agents. | Fewer moving parts: Parquet + DuckDB for market data, one Postgres for state, one repo, one deployable. |
 | C9 | The owner trades by **buying** NIFTY CE/PE, intraday and overnight (BTST-style: buy near the close, sell the next morning). | v1 supports single-leg long options only, with `duration_profile` INTRADAY or OVERNIGHT (ADR-019). Short options and spreads are out of scope. |
 
@@ -147,7 +154,7 @@ Facts below come from `data_status.md` (2026-10-09) and the repository audit. It
 | D | Live paper trading | Live feed | Simulated on live quotes | `PAPER` | No (adapter has no broker import) |
 | E | Live broker execution | Live feed | Broker-reported | `LIVE` | Yes — disabled by default, Phase 9 gate |
 
-The mode is stored on every run, order, fill and ledger event, and shown in the UI header. Paper and live use separate processes, credentials and database schemas.
+The mode is stored on every run, order, fill and ledger event, and shown in the UI header. Paper and live use separate processes, credentials, installed code and database schemas with restricted roles (LLD §10.5). **Mode D has two account kinds** that share infrastructure but never accounting: *strategy* paper accounts (driven by deployed strategies) and one *manual* paper account (driven by the owner's tickets). Orders carry `origin = STRATEGY | MANUAL`.
 
 **Duration (v1.1).** Every strategy declares `duration_profile ∈ {INTRADAY, OVERNIGHT}`. INTRADAY positions are flattened at `force_flat_time`. OVERNIGHT positions are carried across sessions. Mode B can evaluate overnight strategies over the full 2022→today candle history because it needs only index candles (entry near the close, exit at the next session's open bar). Mode C can evaluate overnight strategies only where the option snapshots cover the next morning's open; coverage is reported and unresolved exits are never invented (LLD §8.4.7).
 
@@ -236,11 +243,12 @@ flowchart TD
 | `collector-live` | `python -m quantview.apps.collect_live` | Scheduled 09:00 IST | Ticks, live candles, option quotes, near-month futures quotes and candles (Parquet) | One WebSocket connection; candle builder + quote recorder in one process |
 | `eod-jobs` | `python -m quantview.apps.eod` | 16:30 IST | Historical candle fetch, reconciliation, compaction, backup | Idempotent; safe to rerun |
 | `api` | `uvicorn quantview.api.main:app` | Always on | Postgres (state), reads Parquet | Also serves WebSocket to the UI |
-| `paper-runner` | `python -m quantview.apps.paper_runner` | Per deployment | Postgres (orders, ledger), events | Subscribes to live events; never imports broker SDK |
+| `paper-runner` | `python -m quantview.apps.paper_runner` | During market hours (one process) | Postgres `qv_paper` (orders, fills, ledger, outbox) | Hosts strategy deployments **and** the manual-account executor; sole writer for paper accounts; consumes the control journal with checkpoints; no broker SDK, no broker credentials |
+| `live-executor` | `python -m quantview.apps.live_executor` | Phase 9 only; absent before the gate | Postgres `qv_live` | Separate process, credentials and installed extras; starts `DISARMED` (LLD §10.5) |
 | `backtest-worker` | In-process task or `python -m quantview.apps.backtest` | On demand | Postgres (runs), Parquet (result artifacts) | CPU-bound; separate process to keep the API responsive |
 | `frontend` | `next start` | Always on | — | Talks only to `api` |
 
-Processes communicate through (a) files/Parquet partitions and (b) Postgres tables, plus an in-process event bus inside each process. No external broker in v1. Live events reach `paper-runner` and `api` through a local UNIX-domain/TCP socket event stream published by `collector-live` (LLD §4.10) or, for single-process dev mode, an in-memory bus.
+Processes communicate through (a) files/Parquet partitions, (b) Postgres tables (including a transactional **outbox** and **order-command queue**), and (c) a **durable local control journal** written by `collect-live`. No external broker in v1 (ADR-026). Control events (finalized candles, feed-state changes, kill switch) are journaled with fsync and replayed from consumer checkpoints after any restart; telemetry (quotes, provisional candles) is streamed best-effort over a local socket and is never replayed — a gap means *stale*, not *catch up*. Trading events reach the UI through the outbox, so a reconnecting browser resyncs exactly once. LLD §2.7 is the contract.
 
 ## 5.3 Dependency layers (enforced)
 ```
@@ -264,6 +272,12 @@ Rules: a package may import only from lower layers; `simulation`, `research` and
 ### Live path (paper)
 `WebSocket tick → validate → candle builder → provisional/final candle events → incremental features → strategy runner → contract selection → risk → paper adapter (fill on live quote) → ledger → UI events`
 After the session: `historical candle fetch → reconcile with live-built candles → revision records` (decisions already made are never rewritten).
+
+### Manual paper path (v1.2)
+`Order ticket → API validate (dry run) → order_command (idempotent, TTL) → paper-runner (sole writer) → risk (HARD enforced, ceilings advisory) → paper adapter (fill on live quote) → manual account ledger → outbox → UI`. No strategy, selector or strategy risk profile is involved.
+
+### Strategy visualization path (v1.2)
+`persisted decisions/orders/fills + persisted deployment feature rows → TradeEventRepository / FeatureSeriesRepository → API → chart groups (one per deployment)`. Visibility preferences live in a UI-only table; toggling them can never reach trading tables.
 
 ### Backtest path
 `RunConfig → DataProvider (as-of) → Clock → features → strategy → selection → risk → fill model → ledger → metrics → RunManifest + artifacts`
@@ -295,7 +309,7 @@ Each module lists purpose, ownership, interface, and the LLD section that specif
 | `risk` | L4 | Approve or reject intents | Rule set, risk profiles, kill switch | `RiskEngine.evaluate()` | §8.6 |
 | `ledger` | L4 | Auditable accounting | Journal, positions projection, P&L | `Ledger.post_*()`, `Ledger.rebuild()` | §9 |
 | `execution` | L5 | Order interface and adapters | Order state machine types, paper adapter, (future) Upstox adapter | `ExecutionAdapter` protocol | §8.7, §10 |
-| `simulation` | L6 | Backtest engines, paper runner, fill/cost models, metrics | Run manifests, reports | `BacktestEngine`, `PaperRunner`, `FillModel`, `CostModel` | §8 |
+| `simulation` | L6 | Backtest engines, paper runner (strategy deployments + manual-account executor), chart/event replay, fill/cost models, metrics and metric details | Run manifests, reports | `BacktestEngine`, `PaperRunner`, `FillModel`, `CostModel` | §8 |
 | `api` | L7 | REST + WebSocket gateway | Request/response models | OpenAPI schema | §12 |
 | `frontend` | — | Visual workspaces | Components, chart adapter | — | §13 |
 
@@ -336,7 +350,7 @@ Each module lists purpose, ownership, interface, and the LLD section that specif
 All instants are stored as UTC with microsecond precision and rendered in `Asia/Kolkata`.
 
 ## 7.3 Quality states
-Every record gets `quality_flags[]` (empty = clean). A *dataset-level* status is derived per `(dataset, session_date)`: `CLEAN`, `DEGRADED` (known gaps within tolerance), `UNUSABLE`, `UNVERIFIED` (calendar not confirmed). Backtests declare the minimum status they accept; the default is `CLEAN` or `DEGRADED` with excluded intervals reported.
+Every record gets `quality_flags[]` (empty = clean). A *dataset-level* status is derived per `(dataset, session_date)`: `CLEAN`, `DEGRADED` (known gaps within tolerance), `UNUSABLE`, `UNVERIFIED` (calendar not confirmed). Backtests declare the minimum status they accept; the default is `CLEAN` or `DEGRADED` with excluded intervals reported. **[v1.2]** The calendar is versioned; a coverage matrix (session / expiry / strike / source schema / quote availability) and absence reason codes separate closed markets from collector failures, stale quotes and invalid data; a run is refused when its eligibility gate fails, and every report shows the eligibility result (LLD §4.4.1).
 
 ## 7.4 Missing-data policy (summary; rules in LLD §4.4)
 | Situation | Treatment |
@@ -347,6 +361,8 @@ Every record gets `quality_flags[]` (empty = clean). A *dataset-level* status is
 | Collector outage | Flag `COLLECTOR_GAP`; strategies needing fresh data are ineligible |
 | Option snapshot late/missing | Decision rejected if latest snapshot older than `max_snapshot_age_s` |
 | Schema lacks field (e.g. v2 LTP) | Field null, `greeks_status`/`ltp_status` explain |
+
+**Absence is explained, never filled (v1.2).** Every expected-but-absent observation has exactly one reason code (`CLOSED_HOLIDAY`, `COLLECTOR_GAP`, `REQUEST_FAILED`, `PROVIDER_OMITTED`, `SCHEMA_NOT_COLLECTED`, `QUOTE_ONE_SIDED`, …). Executable option prices are never imputed.
 
 ## 7.5 Backups
 Nightly checksummed copy of `data/raw`, `data/canonical`, `data/quality` and a Postgres dump to a second physical location (external drive or cloud bucket), with a monthly restore drill that rebuilds canonical data from raw and compares checksums. The option-chain history is irreplaceable and is backed up first.
@@ -374,6 +390,8 @@ Event ordering is deterministic: `(available_at, stream_priority, sequence)`. St
 
 **Risk in simulation (v1.1).** Mode C and paper run the layered risk engine (§9, LLD §8.6) with an account profile whose equity is a parameter. For strategy research that should not be distorted by account size, runs use the `research_relaxed` profile with fixed 1 lot: ceilings are measured and reported but not enforced, and every such result carries `risk_mode = RESEARCH_RELAXED` and cannot be deployed to paper without an enforced re-run of the same strategy version or an explicit, audited acknowledgement (LLD §8.6.5).
 
+**Option execution and risk (v1.2, ADR-028, ADR-035).** An underlying stop is a *trigger for an exit decision*, not a bound on premium loss; the only guaranteed bound on a long option is premium paid plus charges. Risk therefore uses an explicit basis — planned premium stop (intraday, premium stop present) or worst-case outlay (everything else, and overnight by default) — and an entry whose risk cannot be quantified is rejected (RK-22, hard). A one-lot fallback changes sizing only and is still subject to every hard and affordability rule. Exits follow a fixed priority ladder (operator > risk > timers > stops > strategy signal). Mode C fills use bid/ask only, from 30-second snapshots or — only where the recorder actually ran — recorded WebSocket quotes; fills are labelled with their source, ambiguous/unresolved exits are bounded in every report, and no claim is made about quote history before recording began.
+
 ---
 
 # 9. Risk, paper trading and live-readiness (overview)
@@ -383,21 +401,28 @@ Event ordering is deterministic: `(available_at, stream_priority, sequence)`. St
 - **Paper trading** uses the same order state machine as live; fills are labelled `SIMULATED` with the fill-model name; every restart replays unacknowledged events idempotently.
 - **Live execution** is a separate adapter behind an explicit enable flag, separate credentials and a manual go/no-go; see Phase 9. Outcome-unknown submissions block resubmission until reconciled.
 
+- **Manual paper account (v1.2, ADR-029).** One `MANUAL` account with its own capital, orders, fills, positions, P&L, charges and ledger. It reuses the order state machine, paper adapter, fill model, cost model and `Ledger` class — not a second engine — and is bound to a profile whose ceilings are *advisory* while hard safety rules (long-only, quote age, feed health, cash, kill switch) stay enforced. It never touches a strategy account.
+- **Deployments (v1.2, ADR-030).** A deployment moves through `CREATED → STARTING → RUNNING ↔ PAUSED_USER/PAUSED_AUTO → DRAINING → STOPPED`, or `ERROR` (an engine-owned *position guardian* keeps stops alive). Stopping defaults to **DRAIN** (no new entries, open position managed to flat); liquidation is an explicit, confirmed `FLATTEN`. A stopped deployment is never silently carrying an unmanaged position.
+- **Visualization is not execution (v1.2, ADR-031).** Per-deployment show/hide of markers, indicators and levels is UI-only state; it cannot pause, stop or alter a deployment, and re-enabling reads persisted history.
+- **Isolation (v1.2, ADR-027).** Paper and live differ by schema, role, process, credentials and installed code; live needs three independent locks.
+
 ---
 
 # 10. Frontend architecture (overview)
 
-| Workspace | Purpose | Key data |
-|---|---|---|
-| Market | Candles, overlays, indicator panes, replay, data-quality ribbon | `/candles`, `/features`, WS candle events |
-| Options | Chain snapshot viewer, freshness, Greeks validity | `/option-chain/*` |
-| Strategy | Spec editor (JSON form first), Python file reference, versions, validation | `/strategies/*` |
-| Backtest | Config, progress, equity, drawdown, metrics, trades, assumptions, coverage | `/backtests/*` |
-| Paper | Deployments, orders, fills, positions, P&L, ledger | `/paper/*`, WS order/account events |
-| Operations | Collector health, feed freshness, gaps, kill switch, audit | `/health`, `/data-quality/*` |
-| Settings | Risk profiles (create, version, compare), paper accounts (equity, profile), strategy risk declarations, instrument subscriptions | `/risk/profiles`, `/paper/accounts` |
+| Workspace | Purpose | Key data | Detail spec |
+|---|---|---|---|
+| Market (`/chart`) | Candles (final vs provisional, visible gaps), indicators, **chart replay**, data-quality ribbon, **strategy overlays** | `/candles`, `/features`, `/replay/*`, `/viz/*` | CHARTING_UX.md |
+| Options (`/options`) | **Live-only** chain: CE \| strike \| PE, per-cell source and freshness, market-closed state | `/live/option-chain`, WS | OPTIONS_CHAIN_UI.md |
+| Research options (`/research/options`) | Historical snapshots, clearly labelled not live | `/research/option-chain/*` | OPTIONS_CHAIN_UI.md §8 |
+| Strategy | Spec editor, validation with feature pins, versions, templates | `/strategies/*` | LLD §13.3 |
+| Backtest | Report with click-to-explain metrics, coverage, assumptions, reproducibility | `/backtests/*` | BACKTESTING_REPORT_SPEC.md |
+| Paper (`/paper`) | Strategy accounts: deployments and controls, orders, fills, positions, ledger, performance | `/paper/*` | PAPER_TRADING_UI.md |
+| Manual (`/paper/manual`) | Manual paper account and order ticket | `/manual/*` | PAPER_TRADING_UI.md §2–3 |
+| Operations | Collector health, feed lag, DQ + coverage matrix, stream/journal status, kill switch (with action), audit | `/health`, `/data-quality/*`, `/ops/*` | LLD §13.3 |
+| Settings | Risk profiles, accounts, manual profile, risk declarations, instrument subscriptions, pinned keys | `/risk/profiles`, `/paper/accounts` | LLD §13.3 |
 
-Rules: the backend is the only source of decisions and numbers; charts display backend-provided series and overlays; every marker carries `run_id`/`strategy_version`; paper/backtest/live views use different colour themes and a persistent banner. Chart library: TradingView **Lightweight Charts** (open source; attribution notice required) behind a `ChartAdapter` interface (LLD §13.2). The commercial Advanced Charting Library is out of scope unless licensed.
+Rules: the backend is the only source of decisions and numbers (including metric formulas and intermediate values, replay data, freshness and chart anchors); charts display backend-provided series and overlays; markers come from persisted order/fill events, never from indicator crossings; every marker carries deployment/strategy-version or `run_id`; paper/backtest/live views use different colour themes and a persistent banner; accuracy outranks visual similarity to TradingView — missing data is shown as a gap, never filled, and provisional candles look different from final ones. Chart library: TradingView **Lightweight Charts** (open source; attribution notice required) behind a `ChartAdapter` interface (LLD §13.2). The commercial Advanced Charting Library and native Pine execution are out of scope unless licensed.
 
 ---
 
@@ -413,7 +438,7 @@ Rules: the backend is the only source of decisions and numbers; charts display b
 | Config | YAML files validated by Pydantic; env vars for secrets | Versionable | — |
 | Logging | `structlog` JSON, correlation IDs | Traceability | — |
 | Scheduling | OS scheduler (Windows Task Scheduler / systemd timers) + in-process APScheduler | No new infra | Multi-host |
-| Event bus | In-process pub/sub; local socket between processes | No broker | > 3 consumers across hosts |
+| Event delivery | Durable local control journal + Postgres transactional outbox + in-process pub/sub; local socket for telemetry only | No broker; measured need required (ADR-026) | > 3 consumers across hosts, or journal lag p95 > 2 s after tuning |
 | ML | scikit-learn, LightGBM (XGBoost optional; any other family only through the same evaluation protocol) | Tabular first; many roles, one governance protocol | Baselines beaten and data justifies deep models |
 | Frontend | Next.js (App Router), React, TanStack Query, Zustand, Tailwind, Lightweight Charts | Standard stack | — |
 | Tests | pytest, hypothesis, import-linter, Playwright (E2E) | Mechanical boundaries | — |
@@ -428,12 +453,12 @@ Rules: the backend is the only source of decisions and numbers; charts display b
 | Area | Requirement |
 |---|---|
 | Secrets | `.env` only, never committed; access tokens in a token file with 0600/ACL; Upstox access token expires daily — the token manager (LLD §4.9) refreshes by owner-approved login flow |
-| Environments | `dev`, `paper`, `live` config profiles; live requires `QV_LIVE_ENABLED=1` **and** a signed-off checklist file |
+| Environments | `dev`, `paper`, `live` config profiles; live requires three independent locks (env flag in the live process only, signed readiness file with expiry, per-session arming); the paper process refuses to start with a live flag or any broker credential (LLD §10.5) |
 | Strategy code | Trusted local modules only in v1; Python strategies loaded by explicit allow-list; arbitrary upload execution is out of scope until a sandbox design exists |
 | Logging | JSON logs with `correlation_id`, `run_id`, `strategy_version`, `order_id`; no secrets |
 | Metrics | Feed lag, candle finalisation lag, reconnect count, snapshot success ratio, DQ status, strategy eval latency, order latency, ledger invariant check result |
 | Health | `/health/live`, `/health/ready`, collector heartbeat files; alerting by local notification (email/Telegram optional) |
-| Recovery | Restart is safe: collectors resume from last committed partition; runners replay from `event_id` checkpoints; ledger rebuild equals live projection |
+| Recovery | Restart is safe: collectors resume from the last committed partition and journal epoch; runners replay the control journal from checkpoints that commit with their effects; quotes are not replayed; ledger rebuild equals live projection; restore and pull-the-plug drills are scheduled (LLD §2.7, §14.3.1) |
 | Audit | Append-only `audit_events` for config changes, deployments, kill-switch use, risk overrides |
 
 ## 12.1 Failure-mode table
@@ -447,6 +472,10 @@ Rules: the backend is the only source of decisions and numbers; charts display b
 | Token expired | 401 | Stop order/data calls; alert | Re-login |
 | Unknown broker order state | Timeout on submit | Mark `UNKNOWN`; block duplicate; reconcile | Manual review |
 | Collector not started | Missing heartbeat by 09:20 | Alert | Start/diagnose |
+| Torn journal write (power loss) | CRC/length check at start-up | Truncate to last good record; new epoch; `producer.restarted` | None |
+| Journal gap / rewind at a consumer | Non-contiguous `seq`, checkpoint beyond tail | Stream `DEGRADED`; new entries blocked | Review; audited checkpoint reset |
+| Paper-runner down | Heartbeat > 15 s | Manual/strategy commands refused (`RUNNER_UNAVAILABLE`); stale commands expire | Restart runner |
+| Quote stream gap | Stale instrument / feed state | Entries blocked; quotes never replayed; exits wait for a valid quote | None unless > 60 s |
 
 ---
 
@@ -462,6 +491,9 @@ Rules: the backend is the only source of decisions and numbers; charts display b
 | Integration | Parquet round trip; Postgres migrations; API contract tests | CI |
 | Data | DQ rule suite per canonical dataset | Reports committed as artifacts |
 | End-to-end | Playwright: chart → run backtest → view report | Phase 5+ |
+| Recovery (v1.2) | Crash-consistency harness, journal truncation/duplicate/gap, runner kill, Postgres outage, restore drills, one real pull-the-plug drill | Invariants hold after every injected crash |
+| Isolation (v1.2) | Fake broker records zero requests; import closure; DB role and trigger tests | Zero failures |
+| UI contract (v1.2) | Replay leak tests, marker↔fill matching, metric formula/inputs, freshness truthfulness | Zero failures; evidence per gate |
 
 A phase gate is *passed* only if its checklist items each have a linked artifact (test log, report, checksum). The agent's completion report (LLD §17.3) must list each item as `PASS` / `FAIL` / `NOT RUN`.
 
@@ -473,17 +505,19 @@ Phases are ordered by dependency, not dates. A phase starts only when the previo
 
 | Phase | Name | Goal | Exit gate (all must pass) |
 |---|---|---|---|
-| 0 | Audit and collector hardening | Know what data is trustworthy; stop losing data | G0.1 Calendar YAML verified against NSE sources for 2021–2026 · G0.2 Audit v2 (calendar-driven) published; session counts equal across timeframes or exceptions listed · G0.3 All expiry folders parsed; missing-day report recomputed · G0.4 Timestamp semantics + option timezone resolved by the LLD §4.3 test · G0.5 1m → higher-timeframe resample matches fetched series ≥ 99.9% of bars · G0.6 Parquet conversion round-trips with checksums · G0.7 Scheduled collectors + heartbeat + nightly backup operating for 10 consecutive sessions with ≥ 95% snapshot coverage · G0.8 Quote recorder (WebSocket: index + ATM±10 options + near-month future + pinned held contracts, depth recorded) writing for ≥ 5 sessions, with a measured `ws_budget.json` (§7.6) · G0.9 Look-ahead test harness in CI |
-| 1 | Skeleton and charts | Repo, CI, API, chart of validated candles | Repo layout per LLD §1; import-linter green; `/candles` serves 1m–1d; chart renders 450k-row history with lazy loading < 1 s per viewport; DQ ribbon shows flagged bars |
-| 2 | Live data | Live candles, option quotes, reconciliation | Builder passes fixture tests; disconnect/reconnect test; EOD reconciliation report over 5 sessions within tolerance (LLD §4.11) |
-| 3 | Feature engine | Tested catalogue | All catalogue features have fixtures; batch/incremental parity; truncate-and-recompute passes |
-| 4 | Strategy engine | Spec + Python strategies, runner | Two reference strategies produce identical signals from spec and Python forms on the same data |
-| 5 | Directional backtester (Mode B) | Leakage-safe spot research, INTRADAY and OVERNIGHT strategies | Determinism, poisoned-future, accounting-free invariants; sensitivity tables; report in UI |
-| 6 | Actual-options backtester (Mode C) | Option P&L from snapshots | Contract selection tests; coverage report; fill + cost tests; Mode S vs Mode C calibration report |
-| 7 | Paper trading + ledger | Live paper accounts (any starting equity; layered risk profiles) | Restart/duplicate/stale tests; ledger rebuild equality; 10 paper sessions without invariant violation; fee reconciliation vs owner's real contract notes within ₹1 per trade |
-| 8 | ML | Baselines, then models in several roles (general, strategy-specific, regime, pattern, overnight) | Walk-forward + purged evaluation; holdout untouched; promotion criteria (LLD §11.8) |
-| 9 | Live broker (optional) | Controlled Upstox execution | Written readiness checklist signed by owner; tiny size; kill switch tested; regulatory check |
+| 0 | Audit and collector hardening | Know what data is trustworthy; stop losing data | G0.1 Calendar YAML verified against NSE sources for 2021–2026 · G0.2 Audit v2 (calendar-driven) published; session counts equal across timeframes or exceptions listed · G0.3 All expiry folders parsed; missing-day report recomputed · G0.4 Timestamp semantics + option timezone resolved by the LLD §4.3 test · G0.5 1m → higher-timeframe resample matches fetched series ≥ 99.9% of bars · G0.6 Parquet conversion round-trips with checksums · G0.7 Scheduled collectors + heartbeat + nightly backup operating for 10 consecutive sessions with ≥ 95% snapshot coverage · G0.8 Quote recorder (WebSocket: index + ATM±10 options + near-month future + pinned held contracts, depth recorded) writing for ≥ 5 sessions, with a measured `ws_budget.json` (§7.6) · G0.9 Look-ahead test harness in CI · **G0.10 Coverage matrix L1–L3 for all history, calendar versioned** · **G0.11 Zero unexplained absences (reason-code audit)** · **G0.12 Event journal passes crash/duplicate/gap/torn-write tests**. *No research result is trusted before G0.2–G0.4 and G0.10–G0.11.* |
+| 1 | Skeleton and charts | Repo, CI, API, chart of validated candles, schemas and roles | Repo layout per LLD §1; import-linter green; `/candles` serves 1m–1d with gap whitespace; chart renders 450k-row history with lazy loading < 1 s per viewport; DQ ribbon shows flagged bars; Postgres schemas/roles and account/order DDL migrated (T-ISO-3/4/5) · **G1.1 Chart fidelity (IST labels, visible gaps, provisional style, marker snapping, memory cap, group isolation)** |
+| 2 | Live data | Live candles, option quotes, reconciliation, **live option chain** | Builder passes fixture tests; disconnect/reconnect test; EOD reconciliation report over 5 sessions within tolerance (LLD §4.11) · **G2.1 Live chain never shows stale/historical data as live; per-cell source and freshness verified in a recorded session (VERIFIED needs owner review)** |
+| 3 | Feature engine, **replay** | Tested catalogue, display/explain metadata, replay | All catalogue features have fixtures; batch/incremental parity; truncate-and-recompute passes · **G3.1 Replay leak-proofing (server-clamped data, poisoned-future, determinism)** |
+| 4 | Strategy engine | Spec + Python strategies, runner, feature pins | Two reference strategies produce identical signals from spec and Python forms on the same data; pins returned by validation |
+| 5 | Directional backtester (Mode B) and **interactive reports** | Leakage-safe spot research, INTRADAY and OVERNIGHT strategies, inspectable metrics | Determinism, poisoned-future, accounting-free invariants; sensitivity tables; report in UI · **G5.1 Metric inspector (formula + inputs from backend), kind separation, eligibility and warnings in reports** |
+| 6 | Actual-options backtester (Mode C) | Option P&L from snapshots and recorded quotes | Contract selection tests; coverage report; fill + cost tests; Mode S vs Mode C calibration report · **G6.1 Quote fills, LTP never executable, exit bounds reported** |
+| 7 | Paper trading, ledger, **manual account, deployments, visualization** | Live paper accounts (any equity; layered risk) with durable events | **7a core** (ledger, layered risk + option semantics, order lifecycle, durable delivery): restart/duplicate/stale tests; ledger rebuild equality; 10 paper sessions without invariant violation; fee reconciliation within ₹1 per trade · **G7.1 Restart safety** · **G7.2 Isolation** — before 7b. **7b manual account** · **G7.3 Independence from strategy accounts**. **7c deployments and visualization** · **G7.4 State machine and stop semantics** · **G7.5 Markers/indicators match persisted events and pinned versions; hiding changes nothing** · **G7.6 Accounting and recovery incl. pull-the-plug drill** |
+| 8 | ML | Baselines, then models in several roles | Walk-forward + purged evaluation; holdout untouched; failed runs and spec edits counted; promotion criteria (LLD §11.8, §11.7.1) |
+| 9 | Live broker (optional) | Controlled Upstox execution | Written readiness checklist signed by owner; three-lock arming; tiny size; kill switch tested; regulatory check; database-isolation review |
 | 10 | Hardening | Performance, ops | Measured triggers only |
+
+*Mapping to the owner's recommended order:* (1) Phase 0 · (2) Phases 1, 3 · (3) Phase 3 (replay) · (4) Phases 4–6 · (5) Phase 7a · (6) 7b · (7) 7c · (8) live-chain **UI is built earlier, in Phase 2**, because it depends only on the recorder and API, not on paper trading (decision D-04; the manual ticket works without it and gains a chain shortcut later) · (9) Phase 8 · (10) Phase 9.
 
 **First end-to-end milestone (end of Phase 5):** pick a documented strategy, run Mode B over 2022-01 → 2026-10 with a walk-forward report, view equity/drawdown/trades on the chart, rerun and get an identical manifest hash.
 
@@ -507,6 +541,13 @@ Phases are ordered by dependency, not dates. A phase starts only when the previo
 | R12 | Small accounts vs 65-unit lots | A single ATM lot can be 30–60% of a ₹20k account; percentage risk rules cannot be honoured | Account-size-independent research profile; explicit `RISK_BELOW_ONE_LOT` rejections surfaced in reports (LLD §8.6) |
 | R13 | WebSocket volume is far larger than snapshot volume | Disk growth, slow scans | Measured budget in G0.8; derived 1-second bars; retention policy (§7.6) |
 | R14 | Overnight holds add gap, theta and IV-change risk that index-only Mode B cannot price | Overstated BTST edge | Overnight hurdle report (LLD §8.12.3); Mode C evidence accumulates from now; labelled `OVERNIGHT` in every report |
+| R15 | Event journal on a consumer laptop: disk write cache can defeat fsync | A "committed" event lost at power cut | `fsync` + drive cache setting documented; crash harness plus one real pull-the-plug drill before G7.6 (LLD §14.3.1) |
+| R16 | Collector token may also be order-capable `[VERIFY S-token-scope]` | Paper/live isolation weaker than intended | Read-only client wrapper, no order modules in `market_data`, token ACL, Phase 9 checklist item (LLD §10.5) |
+| R17 | Underlying stops do not bound option loss; overnight gaps | Overstated safety, larger-than-planned losses | Explicit risk bases, RK-22, overshoot reporting (LLD §8.6.8) |
+| R18 | Worst-case-outlay risk basis can make small accounts unable to trade overnight | Strategy never executes | Feasibility tool prints the basis; owner decision D-06 |
+| R19 | Recorded-quote fills exist only after the recorder started | Mixed-quality Mode C history | Fill-source labels and mix reporting; no claim for earlier dates (LLD §8.4.8) |
+| R20 | Live chain outside the WebSocket band is only as fresh as the 30 s REST snapshot | Misread freshness | Per-cell source/age/freshness from the server; no full-chain real-time claim (OPTIONS_CHAIN_UI.md) |
+| R21 | Single paper-runner is the sole writer for paper accounts | Manual orders unavailable when it is down | Heartbeat-gated API, command TTL, restart safety (LLD §8.8.2) |
 
 ---
 
@@ -539,6 +580,17 @@ Phases are ordered by dependency, not dates. A phase starts only when the previo
 | ADR-023 | Accepted (v1.1) | ML roles: GENERAL, STRATEGY_META, STRATEGY_GATED, REGIME, PATTERN, OVERNIGHT; labels live in a registry; strategy-specific models are bound to a strategy `spec_hash` | Owner wants strategy-specific and general models | ml |
 | ADR-024 | Accepted (v1.1) | Pine Script is never executed; it is ported under the LLD §6.9 protocol with TradingView-export parity tests and look-ahead/repaint review | Pine ports are the main strategy source and the main look-ahead risk | strategies, features |
 | ADR-025 | Accepted (v1.1) | `ml` sits above `simulation` in the layer stack; trained models reach features only through `ExternalFeatureProvider` registered in `apps` | ML evaluation and strategy-outcome labels need the Mode B engine; v1.0's layering forbade that | all |
+| ADR-026 | Proposed (v1.2) | Durable events without a broker: fsync'd control journal (collector-owned, epoch + seq + CRC), Postgres transactional outbox for trading events, consumer checkpoints committed with effects, quotes never replayed, `STALE_REPLAY` entry gating | v1.1 checkpoint replay had nothing to replay from; replaying quotes would fill at vanished prices | shared, market_data, simulation, api |
+| ADR-027 | Proposed (v1.2) | Paper/live isolation by schemas + roles + process + credentials + installed code; three-lock live arming; separate database re-evaluated at Phase 9 | The dangerous path is the credential and order code, not table adjacency | execution, apps, api, storage |
+| ADR-028 | Proposed (v1.2) | Option risk bases (`PLANNED_PREMIUM_STOP` / `WORST_CASE_OUTLAY`), RK-22, one-lot fallback cannot override hard/affordability rules, exit priority ladder, kill-switch actions | An underlying stop is a trigger, not a loss bound | risk, simulation |
+| ADR-029 | Accepted (owner-directed) / ADVISORY mode Proposed | Independent `MANUAL` paper account; single writer; MARKET+LIMIT, DAY; HARD rules enforced, ceilings advisory | Discretionary trading must not touch strategy accounting | ledger, risk, simulation, ui |
+| ADR-030 | Proposed (v1.2) | Deployment state machine with DRAIN default, explicit FLATTEN, position guardian in ERROR, one open deployment per account | A stop must never strand a position or mix attribution | simulation, api, ui |
+| ADR-031 | Accepted (owner-directed) | Visualization is UI-only state; markers from persisted events; per-deployment groups; indicators from persisted series with pinned versions | Seeing a strategy must not change it, and the chart must not recompute a different formula | ui, api |
+| ADR-032 | Proposed (v1.2) | Replay is server-side and clamped to the replay clock; three kinds (CHART, EVENT, BACKTEST) never confused | Client-side hiding cannot guarantee no leakage | simulation, api, ui |
+| ADR-033 | Proposed (v1.2) | Live chain is a hybrid (WebSocket for the subscribed band, REST snapshot elsewhere) with per-cell provenance; `/options` live-only, history in `/research/options` | A 30 s snapshot is not a continuously updating chain | market_data, api, ui |
+| ADR-034 | Accepted (owner-directed) | Metric value and explanation come from one backend code path (`MetricDetail`); the frontend never computes metrics | The explanation must be the calculation | simulation, api, ui |
+| ADR-035 | Proposed (v1.2) | Mode C may use recorded quotes (`QUOTE`, `HYBRID`) where recorder coverage exists; fills labelled by source; LTP never executable | Snapshots cannot see between observations | simulation |
+| ADR-036 | Proposed (v1.2) | Versioned calendar, absence reason codes, three-level coverage matrix, run eligibility gate | Closed markets must not look like failures and weak data must not look like results | market_data, simulation |
 
 Rule: a decision may change only by adding a new ADR that supersedes it, with consequences and migration notes.
 
@@ -560,3 +612,14 @@ Rule: a decision may change only by adding a new ADR that supersedes it, with co
 | BTST | Buy today, sell tomorrow: an OVERNIGHT strategy that enters near the close and exits at the next open |
 | Pinned key | A WebSocket instrument kept subscribed because a position in it is open |
 | Gate | A pass/fail checklist with linked evidence |
+| Control journal | Fsync'd append-only file stream (epoch, seq, CRC) carrying events that must survive restarts |
+| Outbox | Postgres table written in the same transaction as a state change; the source of UI events |
+| Origin | `MANUAL` or `STRATEGY`: who created an order |
+| Account kind | `STRATEGY` or `MANUAL` paper account (never mixed) |
+| Deployment | A strategy version bound to a strategy paper account with its own lifecycle |
+| DRAIN / FLATTEN | Stop policies: manage the open position to flat / liquidate it now (confirmed) |
+| Position guardian | Engine-owned stops and timers that keep running when a deployment is in `ERROR` |
+| Risk basis | How an order's risk amount is computed: planned premium stop or worst-case outlay |
+| Chart anchor | Underlying index level used to place a marker; never an option price |
+| Chart replay / event replay | Replay of market data only / replay of recorded strategy events — never confused |
+| Status words | `DESIGNED`, `IMPLEMENTED`, `TESTED`, `VERIFIED` (LLD Appendix C) |
