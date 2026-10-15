@@ -532,10 +532,11 @@ There is one versioned schema for command line, YAML/JSON config, API, and UI fo
 | `strike_policy` | string | `ATM`, `ITM_1..4`, `OTM_1..4` | Yes | `ATM` | Resolves strike relative to decision-time spot |
 | `mode` | enum | `REALISTIC_ACCOUNT`, `THEORETICAL` | Yes | `REALISTIC_ACCOUNT`| `REALISTIC_ACCOUNT` requires G2a and verified data/margin |
 | `capital_paise` | int64 | `> 0` | Yes (in realistic) | `10000000` (₹1,00,000) | Exact money in integer paise; sizing checked against cash |
-| `sizing_mode` | enum | `FIXED_LOTS`, `PERCENT_CAPITAL`| Yes | `FIXED_LOTS` | Re-checked at actual fill boundary; rejects if unaffordable |
+| `sizing_mode` | enum | `FIXED_LOTS`, `FIXED_RISK_INR`, `PERCENT_CAPITAL`| Yes | `FIXED_LOTS` | Re-checked at actual fill boundary; rejects if unaffordable |
 | `lots` | int32 | `> 0` | If `FIXED_LOTS` | `1` | Rejected with structured reason if capital insufficient |
+| `risk_inr_paise` | int64 nullable| `> 0` | If `FIXED_RISK_INR` | null | Target risk amount in integer paise; sizing derives lots from SL distance |
 | `intrabar_stop_policy`| enum | `STOP_FIRST` | Yes | `STOP_FIRST` | **Invariant**: if both SL and TP touched, stop wins; no optimistic fill |
-| `max_stale_minutes` | int | `1..60` | Yes (in realistic) | `PENDING_OWNER` | Max tolerated missing/flat bars before force-flat at next open |
+| `max_stale_minutes` | int | `1..60` | Yes (in realistic) | `5` | Max tolerated missing/flat bars before force-flat at next open (owner-configurable) |
 | `order_expiry_bars` | int | `1..10` | Yes | `1` | Unfilled market/limit intents cancel after N decision bars |
 | `stop_loss_pct` | float nullable| `0.01 .. 1.0` | No | null | Optional percentage stop from entry fill price |
 | `take_profit_pct` | float nullable| `0.01 .. 5.0` | No | null | Optional percentage target from entry fill price |

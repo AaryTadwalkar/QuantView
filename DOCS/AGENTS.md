@@ -118,7 +118,7 @@ Do **not** edit/replace collector code, change dtype or schemas, start/stop a co
 
 ## 4. Status, task sizing and dependency rules
 
-- Task sizes: `S = 0.5 person-day`, `M = 2 person-days`, `L = 5 person-days` upper-bound planning values. Split tasks larger than L.
+- Task sizes: `S = 0.5 person-day`, `M = 2 person-days`, `L = 5 person-days` upper-bound planning values. Split tasks larger than L. Several tasks introduced in the final repair pass use explicit custom day upper-bounds (e.g., S=1.0d for M6-12/M6-15, M=3.0d for M8-07), bringing the exact sum of the 109 tasks (108 active + 1 retired M1-07) to 258.5 person-days.
 - The current 109-task plan sums to **258.5 person-days** at those upper bounds. This is a planning ceiling, not elapsed time or a delivery promise; it excludes owner waits, unknown data quality, and the required 20-session paper observation.
 - Every `depends_on` entry must be either a task ID in this guide or a gate ID in §5. No free-text dependencies.
 - No task is `IMPLEMENTED`, `TESTED` or `VERIFIED` until its evidence exists. Initially all tasks below are `DESIGNED`.
@@ -128,7 +128,7 @@ Do **not** edit/replace collector code, change dtype or schemas, start/stop a co
 
 | Gate | Meaning | Contributing Tasks (Exact IDs) | Required evidence | Blocks |
 |---|---|---|---|---|
-| G0 — Collectors | Raw capture is durable and observable | `M0-01`, `M0-02`, `M0-03`, `M0-04`, `M0-05`, `M0-06`, `M0-07`, `M0-08`, `M0-09`, `M0-10`, `M0-11`, `M2-01`, `M2-02`, `M2-03`, `M2-04`, `M2-05`, `M2-06`, `M2-07` | Raw-to-manifest reconciliation; raw survives decoder failure; `.partial` recovery; token/restart/heartbeat/duplicate-instance/disk/clock tests; every gap alerts; no unexplained capture loss | Live data-dependent features and M7 runtime |
+| G0 — Collectors | Raw capture is durable and observable | `M0-01`, `M0-02`, `M0-03`, `M0-04`, `M0-05`, `M0-06`, `M0-07`, `M0-08`, `M0-09`, `M0-10`, `M0-11`, `M2-01`, `M2-02`, `M2-03`, `M2-04`, `M2-05`, `M2-06`, `M2-07`, `M2-08`, `M2-09`, `M2-10` | Raw-to-manifest reconciliation; raw survives decoder failure; `.partial` recovery; token/restart/heartbeat/duplicate-instance/disk/clock tests; every gap alerts; no unexplained capture loss | Live data-dependent features and M7 runtime |
 | G1 — Data | Canonical data and eligibility are audited | `M3-01`, `M3-02`, `M3-03`, `M3-04`, `M3-05`, `M3-06`, `M3-07`, `M3-08`, `M3-09`, `M3-10`, `M3-11`, `M3-12` | Full inventory; calendar/contract master; source-semantics table; data eligibility and coverage report; idempotent normalization; zero unexplained duplicate active keys; gaps explicit; current-day daily bars unavailable intraday | Real-data strategy claims and G2a real-data integration |
 | G2a — Single-leg engine | Deterministic long CE/PE engine is correct | `M1-01`, `M1-02`, `M1-03`, `M1-04`, `M1-05`, `M1-06`, `M1-08`, `M1-09`, `M4-01`, `M4-02`, `M4-03`, `M4-04`, `M4-05`, `M4-06`, `M4-07`, `M4-08`, `M4-09`, `M4-10`, `M4-11`, `M4-12`, `M4-13`, `M4-15`, `M4-18`, `M4-20`, `M4-21` | Owner-approved golden expectations; exact paise ledger; fill/stop/EOD/missing-data tests; 3 identical reruns under declared deterministic settings; CLI RunConfig; metrics manifest; long CE/PE cost/slippage report | Baseline single-leg paper runtime |
 | G2b — Position groups and short/multi-leg representation | Group exits/legging/theoretical behaviour correct | `M4-14`, `M4-16`, `M4-17`, `M4-19` | Position-group ledger and exits; leg failure/unwind tests; short/multi-leg theoretical smoke suite; margin guard and visible `THEORETICAL` labels | Short/multi-leg paper features; realistic account use still separately blocked by margin `VERIFY` |
@@ -268,7 +268,7 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M1-01.md`
-- **Acceptance contract:** Check/record: Import-boundary check; package import smoke tests Deliverable target: `apps/web`, `services/collector_snapshot`, `services/collector_ws`, `services/backfill`, `services/api`, `services/worker_compute`, `services/worker_data`, `services/live_daemon`, `packages/*`, `tests`, `config`, `ops` Evidence must support: Clean clone produces the intended layout; imports obey dependency direction
+- **Acceptance contract:** Check/record: Import-boundary check; package import smoke tests Deliverable target: `apps/web`, `services/collector_snapshot`, `services/collector_ws`, `services/backfill`, `services/api`, `services/worker_compute`, `services/worker_data`, `services/live_daemon`, `packages/*` (including `packages/db`), `tests`, `config`, `ops` Evidence must support: Clean clone produces the intended layout; imports obey dependency direction
 
 #### M1-02 — Establish tooling and CI
 
@@ -1083,7 +1083,7 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M6-13.md`
-- **Acceptance contract:** Implement basic drawing tools on the main candle chart: horizontal price line, vertical time line, trend line, and rectangular zone. Drawing objects serialize to JSON (`UtcEpochSec` time, price coordinates, styling) and persist to PostgreSQL `drawings` table via `/api/v1/drawings` REST endpoints. Support drawing reload upon chart navigation and symbol change.
+- **Acceptance contract:** Implement basic drawing tools on the main candle chart: horizontal price line, vertical time line, trend line, and rectangular zone. Drawing objects serialize to JSON (`UtcEpochSec` time, price coordinates, styling) and persist to PostgreSQL `chart_drawings` table via `/api/v1/charts/drawings` REST endpoints. Support drawing reload upon chart navigation and symbol change.
 
 #### M6-14 — UI-1 /paper and /settings screens implementation
 
@@ -1103,7 +1103,7 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M6-15.md`
-- **Acceptance contract:** Formally freeze and validate OpenAPI contracts for UI-3 features in `services/api`: `/api/v1/option-chain/panel`, `/api/v1/option-chain/oi-metrics`, and `/api/v1/layouts` per ENGINE §26. Verify mock and fixture responses conform strictly to pydantic schemas. UI implementation of full chain matrix and multi-chart layouts remains deferred to UI-3/v1.1.
+- **Acceptance contract:** Formally freeze and validate OpenAPI contracts for UI-3 features in `services/api`: `/api/v1/option-chain`, `/api/v1/option-chain/metrics`, and `/api/v1/charts/layouts` per ENGINE §26. Verify mock and fixture responses conform strictly to pydantic schemas. UI implementation of full chain matrix and multi-chart layouts remains deferred to UI-3/v1.1.
 
 
 ### M7 — Live runtime and paper accounts
@@ -1369,38 +1369,38 @@ Every numbered/lettered requirement and substantive question in `my_vision.txt` 
 
 | V-ID | Vision Item Text (from `my_vision.txt`) | Spec Section | Task ID(s) | Status | Architectural & Scope Note |
 |---|---|---|---|---|---|
-| `V-01` | Core full-stack architecture (UI, backend, DB, 10 core modules) | MASTER §1–§3, DATA §1–§3, ENGINE §1 | `M1-01` to `M1-06`, `M6-01` | `COVERED` | Modular monolith in Python/Next.js/PostgreSQL. No unnecessary microservices. |
+| `V-01` | Core full-stack architecture (UI, backend, DB, 10 core modules) | MASTER §1–§3, DATA §1–§3, ENGINE §1 | `M1-01` to `M1-06`, `M6-01` | `COVERED` | Modular monolith in Python/React + Vite + TypeScript SPA/PostgreSQL. No unnecessary microservices. |
 | `V-02` | Dashboard (backtesting, launch chart, strategies, accounts, risk management, capital) | ENGINE §18.1 | `M6-08` | `COVERED` | Central operational navigation dashboard with health widgets. |
 | `V-03` | Interactive chart indicators (standard market indicators + custom Pine-to-Python indicators) | ENGINE §18.1, §21 | `M5-03`, `M5-08`, `M5-11`, `M6-03` | `COVERED` | EMA, SMA, RSI, MACD, ATR, Bollinger, Supertrend, ADX; session VWAP blocked until volume semantics verified. |
 | `V-04` | Indicator settings dialogs & visibility controls (parameters, colors, per-pane toggle) | ENGINE §18.1 | `M6-11` | `COVERED` | Dynamic JSON schema-driven indicator configuration dialog. |
 | `V-05` | Multiple chart types switcher (candlestick, Heikin Ashi, etc.) | ENGINE §18.1, §22 | `M5-09`, `M6-12` | `COVERED` | Heikin Ashi switcher in v1; Renko UI deferred to v1.1 per ADR-007. |
-| `V-06` | Chart drawing tools (lines, boxes, zones with coordinate persistence) | ENGINE §18.1, DATA §2.1 | `M6-13` | `COVERED` | Basic drawings (lines, zones) persisted in PostgreSQL via `/api/v1/drawings`. |
+| `V-06` | Chart drawing tools (lines, boxes, zones with coordinate persistence) | ENGINE §18.1, DATA §2.1 | `M6-13` | `COVERED` | Basic drawings (lines, zones) persisted in PostgreSQL `chart_drawings` table via `/api/v1/charts/drawings`. |
 | `V-07` | Multiple chart layouts (multi-pane, split screens) | ENGINE §18.1, §26 | `M6-15` | `DEFERRED` | UI implementation deferred to UI-3/v1.1; REST API schema frozen in M6-15. |
-| `V-08` | Per-strike option candle chart with trade markers | ENGINE §18.1 | `M6-03b` | `COVERED` | Displays strike-specific option OHLC with execution markers using `UtcEpochSec`. |
+| `V-08` | Per-strike option candle chart with trade markers | DATA §3, ENGINE §2, §18.1, §18.3 | `M6-03b` | `COVERED` | Displays strike-specific option OHLC with execution markers; `UtcEpochSec` integer seconds are the API/UI wire format derived from canonical UTC timestamps. |
 | `V-09` | Option chain live broker panel | ENGINE §18.1, §26 | `M6-15` | `DEFERRED` | Matrix UI deferred to UI-3/v1.1; OpenAPI endpoint schemas frozen in M6-15. |
 | `V-10` | OI levels visualization (separate tabs and on-chart overlay) | ENGINE §18.1, §26 | `M6-15` | `DEFERRED` | Advanced visualization deferred to UI-3/v1.1; schemas frozen in M6-15. |
-| `V-11` | Timeline horizontal axis, price vertical axis (`UtcEpochSec` contract) | ENGINE §18.3, MASTER ADR-041 | `M6-03` | `COVERED` | `UtcEpochSec` integer seconds canonical contract across stores, APIs, and UI. |
+| `V-11` | Timeline horizontal axis, price vertical axis (`UtcEpochSec` contract) | DATA §3, ENGINE §2, §18.3 | `M6-03` | `COVERED` | `UtcEpochSec` integer seconds wire contract for charts, markers, and replay cursor, derived from canonical UTC timestamps. |
 | `V-12` | Same-page backtest results drawer & metrics display linked to chart | ENGINE §18.1, §19, §20 | `M6-04`, `M6-09` | `COVERED` | Results drawer on chart page links trade markers to ledger, fills, and metrics. |
 | `V-13` | On-chart paper trade order placement & draggable SL/TP lines | ENGINE §18.1, §18.3 | `M7-08` | `COVERED` | Server-authoritative draggable SL/TP lines; market orders in v1 paper. |
 | `V-14` | Backtesting terminal (strategy selection, date range from/to, CE/PE/BOTH direction) | ENGINE §19 | `M4-18`, `M6-09` | `COVERED` | Unified RunConfig schema drives CLI, API, and UI form. |
-| `V-15` | Historical candle data ingestion (1m canonical, derived 3m/5m/15m/1h/4h/1d) | DATA §4.1, §4.2, §11.1 | `M3-04`, `M3-07` | `COVERED` | 1m canonical Parquet lake; derived intervals verified against vendor daily bars. |
-| `V-16` | 30-second live option chain snapshots archive & multi-version migration (v1 `prev_oi`, v2, v3) | DATA §4.4, §11.3 | `M0-01`, `M0-06`, `M3-05`, `M3-06` | `COVERED` | Schema migration preserves `prev_oi`, handles missing headers and expiry from directory. |
-| `V-17` | Expired option candle data ingestion (1m OHLC, strike/expiry/lot_size) | DATA §4.3, §11.2 | `M3-01`, `M3-03` | `COVERED` | Canonical expired contracts schema, contract master, and lot size verification. |
+| `V-15` | Historical candle data ingestion (1m canonical, derived 3m/5m/15m/1h/4h/1d) | DATA §4.1, §11.1 | `M3-04`, `M3-07` | `COVERED` | 1m canonical Parquet lake (`DATA §4.1`); derived intervals and data eligibility audit (`DATA §11.1`). |
+| `V-16` | 30-second live option chain snapshots archive & multi-version migration (v1 `prev_oi`, v2, v3) | DATA §4.3, §4.4 | `M0-01`, `M0-06`, `M3-05`, `M3-06` | `COVERED` | Schema migration preserves `prev_oi`, handles missing headers and expiry from directory (`option_snapshot_captures/rows` in `DATA §4.3, §4.4`). |
+| `V-17` | Expired option candle data ingestion (1m OHLC, strike/expiry/lot_size) | DATA §4.2, §11.2 | `M3-01`, `M3-03` | `COVERED` | Canonical expired contracts schema (`option_candles` in `DATA §4.2`), contract master, and required additional datasets (`DATA §11.2`). |
 | `V-18` | WebSocket live tick-by-tick stream research, schema & local storage | DATA §4.5, §11.4 | `M2-05`, `M7-01` | `COVERED` | Upstox WebSocket protobuf field analysis, local FrameBus transport. |
 | `V-19` | Data transition, gap handling & source-semantics audit | DATA §8, §11.5, §11.6, §11.7 | `M3-08`, `M3-09` | `COVERED` | Comprehensive audit: volume/OI units, gaps, lot-size 75->65 transition, eligibility flags. |
 | `V-20` | PostgreSQL operational database design + Parquet/DuckDB hybrid storage | MASTER ADR-002, ADR-004, DATA §2, §2.1 | `M1-04`, `M1-09`, `M4-11` | `COVERED` | PostgreSQL for transactional state/ledger; Parquet/DuckDB for analytical market data. |
-| `V-21` | Snapshot merge design & lazy reconstructed chain view | MASTER ADR-005, DATA §4.4, ENGINE §5 | `M3-05`, `M5-04` | `COVERED` | DuckDB lazy view over normalized snapshots; no default massive stored chain table. |
+| `V-21` | Snapshot merge design & lazy reconstructed chain view | MASTER ADR-006, DATA §4.4, DATA §4.8 | `M3-05`, `M5-04` | `COVERED` | DuckDB lazy view over normalized snapshots; no default massive stored chain table. |
 | `V-22` | Technical indicators compute vs store & monthly content-addressed feature cache | MASTER ADR-007, ENGINE §21 | `M5-01`, `M5-02` | `COVERED` | Stated deviation: on-the-fly computation default; cache conditional on benchmark justification. |
 | `V-23` | Custom PineScript-to-Python conversion & indicator isolation | MASTER ADR-012, ENGINE §9, §21 | `M5-06`, `M5-07`, `M5-08` | `COVERED` | Subprocess isolation with memory/time cap; strict causal confirmation rules. |
 | `V-24` | Price action structure overlay (BOS / CHoCH deterministic detection) | ENGINE §3.3, §21.2 | `M5-06` | `COVERED` | Full deterministic algorithm: swing pivots, break validation, confirmed_at timing. |
 | `V-25` | Chart transforms (Heikin Ashi & Renko brick contracts) | ENGINE §22 | `M5-09`, `M6-12` | `COVERED` | Heikin Ashi UI-ready; Renko mathematical contract defined, UI deferred to v1.1. |
-| `V-26` | Option chain derived features (PCR, OI ROC, ATM Straddle, Delta-band OI, model Greeks) | ENGINE §21.1, §21.3 | `M5-05`, `M5-12` | `COVERED` | Causal evaluators for PCR, OI ROC, ATM straddle, delta-band OI, and model Greeks. |
-| `V-27` | Point-in-time causal backtesting engine (7-step loop, calendar-minute tick clock) | MASTER ADR-006, ADR-008, ENGINE §4, §5, §8 | `M4-01` to `M4-05` | `COVERED` | Deterministic event clock, causal tick delivery, idle skipping, no look-ahead. |
+| `V-26` | Option chain derived features (PCR, OI ROC, ATM Straddle, Delta-band OI, model Greeks) | ENGINE §21.1, DATA §4.8 | `M5-05`, `M5-12` | `COVERED` | Causal evaluators for PCR, OI ROC, ATM straddle, delta-band OI, and model Greeks. |
+| `V-27` | Point-in-time causal backtesting engine (7-step loop, calendar-minute tick clock) | MASTER ADR-008, ADR-009, ENGINE §4, §5, §8 | `M4-01` to `M4-05` | `COVERED` | Deterministic event clock, causal tick delivery, idle skipping, no look-ahead. |
 | `V-28` | Look-ahead bias prevention & execution timing question (Close signal -> next open fill; Open signal -> close fill rejected) | ENGINE §3.1, §4, AGENTS §8 | `M4-02`, `M4-05` | `COVERED` | Explicitly answers question: open-based signal at close entry is rejected; fills at next open. |
-| `V-29` | Point-in-time contract selector & lifecycle management | ENGINE §6 | `M4-04` | `COVERED` | Point-in-time selection by delta/moneyness, expiry bounds, zero silent substitution. |
+| `V-29` | Point-in-time contract selector & lifecycle management | ENGINE §5, MASTER ADR-005 | `M4-04` | `COVERED` | Point-in-time selection by delta/moneyness, expiry bounds, zero silent substitution. |
 | `V-30` | Risk-policy module with configurable pre-backtest toggles & intraday monitoring | ENGINE §7, §19 | `M4-20`, `M6-06` | `COVERED` | Decoupled RiskEvaluator: max trades, daily loss, drawdown, trading window, kill switch. |
-| `V-31` | Append-only financial ledger with integer paise arithmetic | MASTER ADR-001, ADR-010, ENGINE §8 | `M4-01`, `M4-07`, `M4-11` | `COVERED` | Exact paise integer math; append-only PostgreSQL enforcement; projection rebuild. |
+| `V-31` | Append-only financial ledger with integer paise arithmetic | MASTER ADR-002, ADR-011, ENGINE §8 | `M4-01`, `M4-07`, `M4-11` | `COVERED` | Exact paise integer math; append-only PostgreSQL enforcement; projection rebuild. |
 | `V-32` | Backtest metrics manifest (P&L, drawdown, Sharpe, Sortino, DSR) | ENGINE §20 | `M4-15` | `COVERED` | Metrics manifest with exact mathematical formulas and Bailey & López de Prado DSR. |
-| `V-33` | Account segregation (isolated deployments, independent capital/ledger/risk) | MASTER ADR-009, ADR-014, ENGINE §16 | `M6-06`, `M6-14`, `M7-07` | `COVERED` | Isolated process and account boundaries for multi-strategy evaluation. |
+| `V-33` | Account segregation (isolated deployments, independent capital/ledger/risk) | MASTER ADR-011, ADR-014, ENGINE §8 | `M6-06`, `M6-14`, `M7-07` | `COVERED` | Isolated process and account boundaries for multi-strategy evaluation. |
 | `V-34` | Machine learning baselines (R1: price movement, regime classification, strategy meta-labeling) | ENGINE §23 | `M5-10`, `M8-05` | `COVERED` | Research baselines under purged walk-forward; optional strategy integration. |
 | `V-35` | Machine learning research (R2: option-chain/tick patterns; R3: candlestick & chart pattern discovery) | ENGINE §23 | `M8-06`, `M8-07` | `COVERED` | R2 option-chain/tick discovery and R3 candlestick pattern discovery decoupled from WS. |

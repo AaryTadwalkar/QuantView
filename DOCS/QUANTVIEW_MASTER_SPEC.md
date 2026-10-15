@@ -418,7 +418,7 @@ QuantView is structured as a **modular monolith** running on a single dedicated 
 ### 5. Architectural Non-Negotiables
 
 1. **No External Cache / Redis:** No Redis, Valkey, Memcached, or distributed cache infrastructure. State lives in PostgreSQL and Parquet files.
-2. **No Microservices Complexity:** Monolithic codebase in `c:\Algo\quantview`; modular process boundaries managed via standard systemd services.
+2. **No Microservices Complexity:** Monolithic codebase in the repository root inside the Linux/WSL2 filesystem (never /mnt/c per ADR-015); modular process boundaries managed via standard systemd services.
 3. **No Unconditional Feature Cache:** Features are calculated causal-on-demand. A persistent feature cache is added only if benchmarked and justified under M5-02.
 4. **No Real Broker Orders in v1:** All live trading paths in v1 are simulated paper trading (`MANUAL_PAPER`, `STRATEGY_PAPER`). Real order routes do not exist.
 5. **Exact Integer Money:** All cash balances, premiums, fill prices, fees, and ledger entries are represented in integer paise (`1 INR = 100 paise`) or exact `Decimal`/`NUMERIC`. No floating-point math for ledger state.

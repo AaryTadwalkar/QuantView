@@ -29,15 +29,16 @@
 - **Recent Corrections (2026-10-12):** Completed HLD v1.5.1 targeted corrections in `DOCS/HIGH_LEVEL_DESIGN (1).md` per `DOCS/HLD_MANUAL_CORRECTION_GUIDE.md` (Patches 2B–6 applied).
 - **Next Step:** Ready to begin Phase 0 (`T0.1` Archive legacy data with manifest).
 
-## 2026-10-15 — Final Specification Repair Pass & Mechanical Validation
-- **Completed:** Executed the bounded repair pass across all 4 canonical documents (`DOCS/QUANTVIEW_DATA_SPEC.md`, `DOCS/QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md`, `DOCS/QUANTVIEW_MASTER_SPEC.md`, and `DOCS/AGENTS.md`) per `QuantView_Final_Repair_Prompt.md` and user confirmation.
-- **Key Deliverables Applied:**
-  1. *Residue & Schemas:* Deduplicated ENGINE status residue (1 instance); normalized all endpoints to `/api/v1/`; added `runs/{run_id}/metrics.json`, `prev_oi`, and operational PostgreSQL DDL outline in DATA §2.1; removed stale ADR-001 in DATA §9.1; added System Architecture Overview in MASTER.
-  2. *Algorithms & Contracts:* Added Bailey & López de Prado (2014) DSR math correction; defined deterministic BOS/CHoCH algorithm in ENGINE §21.2; specified full RunConfig schema, example, and CLI shape in ENGINE §19; added UI-3 contract skeletons in ENGINE §26.
-  3. *Tasks & Gates:* Added missing tasks (M0-11, M1-07 reserved, M3-12, M4-20, M4-21, M5-11, M5-12, M6-03b, M6-11–15, M8-07); decoupled M5-10; defined exact task ID membership for G0–G6 (0 cycles).
-  4. *Vision Traceability:* Appended full `V-01` through `V-35` matrix to AGENTS.md (32 COVERED, 3 DEFERRED).
-  5. *Recalculated Totals:* Exact count is 109 tasks, 258.5 upper-bound person-days (updated in AGENTS.md §4).
+## 2026-10-15 — Final Specification Repair & Alignment Pass
+- **Completed:** Executed the bounded repair pass and subsequent 7-item surgical text alignment across all 4 canonical documents (`DOCS/QUANTVIEW_DATA_SPEC.md`, `DOCS/QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md`, `DOCS/QUANTVIEW_MASTER_SPEC.md`, and `DOCS/AGENTS.md`).
+- **Key Alignments Applied:**
+  1. *MASTER:* Replaced hardcoded Windows path with Linux/WSL2 repo root per ADR-015 in Architectural Non-Negotiables.
+  2. *DATA & AGENTS:* Standardized `chart_drawings` table name, `('HORIZONTAL_LINE', 'VERTICAL_LINE', 'TREND_LINE', 'RECTANGLE')` enum, and `/api/v1/charts/drawings` endpoint.
+  3. *ENGINE & AGENTS:* Aligned UI-3 endpoint paths to `/api/v1/option-chain`, `/api/v1/option-chain/metrics`, `/api/v1/charts/layouts`.
+  4. *RunConfig Schema:* Added `FIXED_RISK_INR`, `risk_inr_paise`, and `max_stale_minutes: 5` default in ENGINE §19.1.
+  5. *Gates & Skeleton:* Appended `M2-08..M2-10` to Gate G0; explicitly added `packages/db` to `M1-01`; documented custom day bounds in §4 (109 tasks, 258.5 person-days).
+  6. *Traceability Citations:* Aligned V-01 (React+Vite SPA), V-08/11 (DATA §3, ENGINE §2, §18.3 UtcEpochSec), V-15/16/17 (DATA §4.1–§4.4, §11.1–§11.2), and ADR references across V-21, V-26, V-27, V-29, V-31, V-33.
 - **Verification Result:** Automated mechanical test suite `verify_docs.py` passed with 0 errors.
-- **Next Step:** Ready to begin Phase 0 execution (`M0-10` bootstrap verification and `M0-01` read-only inventory).
+- **Next Step:** Awaiting owner go-ahead to execute M0-10 (`python` verification check to `ops/evidence/M0-10.txt`) and M0-01 (read-only inventory to `ops/inventory.md`).
 
 
