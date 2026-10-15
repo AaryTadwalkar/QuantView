@@ -18,7 +18,13 @@
   - Defined safe Phase 1 deterministic vertical slice backtest runner (`T1.7`) with zero broker or option-chain dependencies.
   - Programmatically verified 0 broken links, 12/12 header checks, 100% ID alignment (`P1–P18`, `ADR-001–ADR-041`, `CAP-01–CAP-24`, `RK-01–RK-26`), 10/10 untouched source hashes, and exact integer-paise fixture math (`validation_evidence.json`).
 
+- **[2026-10-15] 4-Document Final Specification Repair Pass & Mechanical Validation:**
+  - Applied bounded repair pass across all 4 canonical specifications (`QUANTVIEW_DATA_SPEC.md`, `QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md`, `QUANTVIEW_MASTER_SPEC.md`, `AGENTS.md`) per `QuantView_Final_Repair_Prompt.md`.
+  - Added System Architecture Overview to MASTER; added PostgreSQL operational schema and `prev_oi` to DATA; standardized routes to `/api/v1/`; corrected Bailey & López de Prado DSR math and added deterministic BOS/CHoCH algorithm to ENGINE; completed RunConfig schema and UI-3 contracts.
+  - Expanded task registry in `AGENTS.md` from 95 tasks (233.5 person-days) to 109 unique tasks (258.5 upper-bound person-days) with 0 graph cycles; added full `V-01` to `V-35` Vision Traceability Matrix.
+  - Automated mechanical validation suite (`verify_docs.py`) passed 100% checks with 0 errors.
+
 ## Implementation & Readiness Status (`Appendix C` of `LOW_LEVEL_DESIGN.md`)
 - **All Capabilities (`CAP-01` – `CAP-24`):** `Design Status = DESIGNED` (`CAP-21` `LIMIT` orders is `DESIGNED (DEFERRED / POST-v1)`), `Implementation Status = PENDING`, `Test Execution Status = NOT_RUN`.
 - **Readiness Verdicts:** **Phase 0 (`T0.1–T0.15`):** `GO` | **Full Build (`Phases 1–8`):** `CONDITIONAL GO` | **Live Execution (`Phase 9`):** `NO-GO`.
-- **Application Code (`src/`, `frontend/`, `tests/`):** Not started (awaiting owner go-ahead for Phase 0 `T0.1`).
+- **Application Code (`src/`, `frontend/`, `tests/`):** Not started (awaiting owner go-ahead for Phase 0 `M0-10` / `T0.1`).

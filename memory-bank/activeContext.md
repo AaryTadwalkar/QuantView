@@ -1,6 +1,6 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
-## Current State of the Union (2026-10-12)
+## Current State of the Union (2026-10-15)
 - **Completed Baseline:** QuantView v1.4 Hardened Implementation Baseline (`v1.4`, `Release Date: 2026-10-12`) across all 12 canonical documents in `c:\Algo\quantview\DOCS\final\`.
 - **Readiness Verdicts:**
   - **Architecture Quality:** `8.5 / 10` (Modular monolith, hybrid PostgreSQL + Parquet/DuckDB storage, 5-layer isolation).
@@ -28,3 +28,16 @@
 - **Historical Sources (`DOCS/person_1/`, `DOCS/person_2/`):** 10/10 files preserved byte-identical; never implement from.
 - **Recent Corrections (2026-10-12):** Completed HLD v1.5.1 targeted corrections in `DOCS/HIGH_LEVEL_DESIGN (1).md` per `DOCS/HLD_MANUAL_CORRECTION_GUIDE.md` (Patches 2B–6 applied).
 - **Next Step:** Ready to begin Phase 0 (`T0.1` Archive legacy data with manifest).
+
+## 2026-10-15 — Final Specification Repair Pass & Mechanical Validation
+- **Completed:** Executed the bounded repair pass across all 4 canonical documents (`DOCS/QUANTVIEW_DATA_SPEC.md`, `DOCS/QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md`, `DOCS/QUANTVIEW_MASTER_SPEC.md`, and `DOCS/AGENTS.md`) per `QuantView_Final_Repair_Prompt.md` and user confirmation.
+- **Key Deliverables Applied:**
+  1. *Residue & Schemas:* Deduplicated ENGINE status residue (1 instance); normalized all endpoints to `/api/v1/`; added `runs/{run_id}/metrics.json`, `prev_oi`, and operational PostgreSQL DDL outline in DATA §2.1; removed stale ADR-001 in DATA §9.1; added System Architecture Overview in MASTER.
+  2. *Algorithms & Contracts:* Added Bailey & López de Prado (2014) DSR math correction; defined deterministic BOS/CHoCH algorithm in ENGINE §21.2; specified full RunConfig schema, example, and CLI shape in ENGINE §19; added UI-3 contract skeletons in ENGINE §26.
+  3. *Tasks & Gates:* Added missing tasks (M0-11, M1-07 reserved, M3-12, M4-20, M4-21, M5-11, M5-12, M6-03b, M6-11–15, M8-07); decoupled M5-10; defined exact task ID membership for G0–G6 (0 cycles).
+  4. *Vision Traceability:* Appended full `V-01` through `V-35` matrix to AGENTS.md (32 COVERED, 3 DEFERRED).
+  5. *Recalculated Totals:* Exact count is 109 tasks, 258.5 upper-bound person-days (updated in AGENTS.md §4).
+- **Verification Result:** Automated mechanical test suite `verify_docs.py` passed with 0 errors.
+- **Next Step:** Ready to begin Phase 0 execution (`M0-10` bootstrap verification and `M0-01` read-only inventory).
+
+
