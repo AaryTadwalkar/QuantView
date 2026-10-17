@@ -6,16 +6,15 @@
 
 ## 0. Required reading and source-of-truth rules
 
-Read in this order:
-
-1. `DOCS/QUANTVIEW_MASTER_SPEC.md` — product scope, architecture decisions, deployment and owner inputs.
-2. `DOCS/QUANTVIEW_DATA_SPEC.md` — source semantics, schemas, data eligibility, manifests and data ownership.
-3. `DOCS/QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md` — strategy timing, fills, risk, ledger, RunConfig, UI, metrics, indicators, transforms and models.
-4. This `DOCS/AGENTS.md` — task order, acceptance evidence, gates, safe execution and change control.
+**Reading protocol for humans and agents:** Readers do NOT need to read the entire multi-specification set before beginning work. Instead, follow this bounded order:
+1. First read **§§0–5 of this `DOCS/AGENTS.md`** to understand non-negotiable rules, environment facts, execution protocol, task sizing, and gate release boundaries.
+2. Then select the active task and jump directly to the authoritative sections cited under that task's **`Spec refs:`** field across `DOCS/QUANTVIEW_MASTER_SPEC.md`, `DOCS/QUANTVIEW_DATA_SPEC.md`, and `DOCS/QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md`.
 
 **Path Convention:** All document references resolve from the repository root under `DOCS/`. All evidence and runtime state paths (e.g. `ops/evidence/...`, `ops/status.yaml`, `data/...`) resolve relative to the repository root.
 
 The old `ARCHITECTURE.md`, `DATA_SPEC.md`, `ENGINE_AND_DEV_GUIDE.md`, `IMPLEMENTATION_PLAN.md`, `CHANGE_LOG.md`, `docs/engine/*`, `docs/status.yaml`, `docs/development.md`, and `docs/vision-traceability.md` are historical source material. They are **not** additional authorities and must not override the four final files. Do not create another parallel spec set.
+
+The four canonical specification files in `DOCS/` (`QUANTVIEW_MASTER_SPEC.md`, `QUANTVIEW_DATA_SPEC.md`, `QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md`, and `AGENTS.md`) are the sole and exclusive authority for system requirements, architecture, schemas, and task execution.
 
 If a conflict appears:
 - Behavioural conflict → `QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md`.
@@ -37,13 +36,18 @@ Do not infer that a task is implemented because a document, file, stub or plan e
 8. **Exact money.** Cash, fills, fees, and ledger amounts use integer paise or `Decimal` with explicit rounding; no binary float for money.
 9. **Immutable provenance.** Raw payloads remain immutable. Dataset/run manifests and code/config/input hashes are pinned. Corrections create revisions, never silent overwrite.
 10. **Single writer per durable dataset.** Follow the writer matrix in `QUANTVIEW_DATA_SPEC.md`. DuckDB query connections read Parquet; no shared multi-process DuckDB writer.
-11. **Optional infrastructure stays optional.** No Redis/Valkey in Compose before Phase 5. No feature cache until benchmark evidence justifies it. Do not add microservices/Kubernetes.
+11. **Optional infrastructure stays optional.** No Redis/Valkey/external cache; optional adapter only if the ADR-002 measured-latency (> 500 ms p95) or restart/resume criteria are met, via an ADR (deferred until M7). No feature cache until benchmark evidence justifies it (M5-02). Do not add microservices/Kubernetes.
 12. **Test-first engine.** Write hand-calculated golden expected results and get approval before implementing money/fill invariants. Correctness gates block performance claims.
 13. **Keep exits/risk alive under degraded data.** Ineligible/stale data blocks new entries, but open-position monitoring, exits and risk checks continue using last valid marks with explicit stale flags.
 14. **No in-process unbounded custom code.** Batch custom features execute in a subprocess with timeout/memory cap. Live feature time-budget breach marks it `UNAVAILABLE`, blocks dependent new entries, continues exits/risk, and alerts.
 15. **No broad architecture rewrite.** Any change to a binding decision requires an ADR with context, decision, alternatives, migration impact, tests, rollback and the files updated in the same change.
 16. **Status discipline.** `DESIGNED` = specified; `IMPLEMENTED` = code exists and was inspected; `TESTED` = actual test passed with retained output; `VERIFIED` = authoritative source/data semantics checked with evidence. Never promote status without evidence.
 17. **Stop at gates.** At every gate, deliver the evidence report and wait for explicit user approval before crossing the gate.
+18. **Early actions priority (M0–M1).** Early in the project, an agent's sole priority is to:
+    - Inventory what exists on disk (`ops/inventory.md`).
+    - Preserve existing raw data files without mutation or deletion.
+    - Verify dependencies, environment facts, and source data semantics.
+    - Strictly avoid inventing features, modifying collector code, or running broad backfills before schemas and contracts are formally locked and approved.
 
 ## 2. Known environment facts and safe discovery
 
@@ -104,7 +108,7 @@ Every task has:
 - `acceptance_spec`: exact expected test, artifact, report or owner approval.
 - `evidence_path`: durable output location.
 
-`command` means execute the exact command and retain its output. `file_check` means inspect a specific artifact/schema/path and retain a report. `owner_attestation` means the agent must not substitute its own guess: it requires explicit owner confirmation or authoritative external evidence. Evidence paths are targets until the artifacts exist.
+`command` means execute the exact command and retain its output. `file_check` means inspect a specific artifact/schema/path and retain a report. For any code, engine, or data `file_check` task, the evidence file must contain the exact pytest command executed and its exit code 0. `owner_attestation` means the agent must not substitute its own guess: it requires explicit owner confirmation or authoritative external evidence. Evidence paths are targets until the artifacts exist.
 
 ### 3.2 M0 bounded exception
 
@@ -114,12 +118,17 @@ Before M0-01 is accepted, only these actions are allowed:
 - copy/checksum verification to a separate destination if the owner has explicitly approved the destination and operation;
 - source/document review without live API calls.
 
-Do **not** edit/replace collector code, change dtype or schemas, start/stop a collector, alter host services, delete files, or run broad downloads before inventory and a task-specific plan are approved. M0-09 requires explicit owner approval of exact date/contract range and request budget before any download. No implicit approval token or free-text dependency is valid.
+Do **not** edit/replace collector code, change dtype or schemas, start/stop a collector, alter host services, delete files, or run broad downloads before inventory and a task-specific plan are approved. M0-06 (backup), M0-07 (operational facts review), and M0-08 (backup restore verification) remain allowed under this exception following M0-01; collector code/schema/download tasks (M0-02, M0-03, M0-04, M0-05, M0-09) strictly require M0-11 contract refinement and explicit owner approval. M0-09 requires explicit owner approval of exact date/contract range and request budget before any download. No implicit approval token or free-text dependency is valid.
 
 ## 4. Status, task sizing and dependency rules
 
-- Task sizes: `S = 0.5 person-day`, `M = 2 person-days`, `L = 5 person-days` upper-bound planning values. Split tasks larger than L. Several tasks introduced in the final repair pass use explicit custom day upper-bounds (e.g., S=1.0d for M6-12/M6-15, M=3.0d for M8-07), bringing the exact sum of the 109 tasks (108 active + 1 retired M1-07) to 258.5 person-days.
-- The current 109-task plan sums to **258.5 person-days** at those upper bounds. This is a planning ceiling, not elapsed time or a delivery promise; it excludes owner waits, unknown data quality, and the required 20-session paper observation.
+- Task sizes: `S = 0.5 person-day`, `M = 2.0 person-days` (with defined 2.5 person-day calibrated slices for split tasks `M4-05`, `M4-22`, `M6-03`, `M6-17`, `M7-02`, `M7-09`, custom `S = 1.0 person-day` for `M6-12`/`M6-15`, and `M = 3.0 person-days` for `M8-07`), `L = 5.0 person-days` upper-bound planning values. All tasks in the registry are strictly <= L (upper bound <= 5.0d). With these calibrated sizes and the addition of UI-1b task `M6-18` (size M = 2.0d), the 114 tasks (113 active + 1 retired M1-07) sum to exactly **262.5 person-days**.
+- The current 114-task plan sums to **262.5 person-days** at those upper bounds. This is a planning ceiling, not elapsed time or a delivery promise; it excludes owner waits, unknown data quality, and the required 20-session paper observation. Early project work (M0–M1) prioritizes inventory, raw preservation, and factual verification before broad implementation.
+- **Early actions sequencing note:** Early project execution must prioritize preservation, baseline tooling, and early unblocked audits:
+  - `M0-03` is the first collector change permitted, executable only after `M0-01` inventory and `M0-11` contract refinement approval.
+  - `M2-03` (WebSocket raw capture) starts as soon as `M1-01` (repository layout) and `M0-07` (operational facts review) are met.
+  - `M3-08` (source-semantics audit) runs as soon as snapshot normalization tasks `M3-01`, `M3-05`, and `M3-06` complete, establishing official volume/OI units and transition rules before downstream feature extraction (M5) or strategy consumption.
+  - `M6-16` (read-only historical and expired-option candle chart viewer) may be built right after `M3-04`/`M3-05` to provide visual validation of normalized Parquet datasets.
 - Every `depends_on` entry must be either a task ID in this guide or a gate ID in §5. No free-text dependencies.
 - No task is `IMPLEMENTED`, `TESTED` or `VERIFIED` until its evidence exists. Initially all tasks below are `DESIGNED`.
 - Parallel work is allowed only where dependencies and single-writer ownership permit it. M2 collectors and M3 audit can overlap after safe inventory; retain separate reports and gates.
@@ -128,14 +137,17 @@ Do **not** edit/replace collector code, change dtype or schemas, start/stop a co
 
 | Gate | Meaning | Contributing Tasks (Exact IDs) | Required evidence | Blocks |
 |---|---|---|---|---|
-| G0 — Collectors | Raw capture is durable and observable | `M0-01`, `M0-02`, `M0-03`, `M0-04`, `M0-05`, `M0-06`, `M0-07`, `M0-08`, `M0-09`, `M0-10`, `M0-11`, `M2-01`, `M2-02`, `M2-03`, `M2-04`, `M2-05`, `M2-06`, `M2-07`, `M2-08`, `M2-09`, `M2-10` | Raw-to-manifest reconciliation; raw survives decoder failure; `.partial` recovery; token/restart/heartbeat/duplicate-instance/disk/clock tests; every gap alerts; no unexplained capture loss | Live data-dependent features and M7 runtime |
+| G0a — Skeleton and tooling | Repository skeleton, tooling, CI, migrations and schema contracts established | `M0-01`, `M0-07`, `M0-10`, `M1-01`, `M1-02`, `M1-03`, `M1-04`, `M1-05`, `M1-06`, `M1-08`, `M1-09`, `M1-10`, `M1-11`, `M1-12` | Clean clone passes tooling, lint, type checks, import boundaries, disposable database migrations, and pre-implementation fact verification; schema modules round-trip | G0 and G2a (both depend on G0a) |
+| G0 — Collectors | Raw capture is durable and observable | `M0-02`, `M0-03`, `M0-04`, `M0-05`, `M0-06`, `M0-08`, `M0-09`, `M0-11`, `M2-01`, `M2-02`, `M2-03`, `M2-04`, `M2-05`, `M2-06`, `M2-07`, `M2-08`, `M2-09`, `M2-10`, `M2-11` | Raw-to-manifest reconciliation; raw survives decoder failure; `.partial` recovery; token/restart/heartbeat/duplicate-instance/disk/clock tests; every gap alerts; no unexplained capture loss | Live data-dependent features and M7 runtime |
 | G1 — Data | Canonical data and eligibility are audited | `M3-01`, `M3-02`, `M3-03`, `M3-04`, `M3-05`, `M3-06`, `M3-07`, `M3-08`, `M3-09`, `M3-10`, `M3-11`, `M3-12` | Full inventory; calendar/contract master; source-semantics table; data eligibility and coverage report; idempotent normalization; zero unexplained duplicate active keys; gaps explicit; current-day daily bars unavailable intraday | Real-data strategy claims and G2a real-data integration |
-| G2a — Single-leg engine | Deterministic long CE/PE engine is correct | `M1-01`, `M1-02`, `M1-03`, `M1-04`, `M1-05`, `M1-06`, `M1-08`, `M1-09`, `M4-01`, `M4-02`, `M4-03`, `M4-04`, `M4-05`, `M4-06`, `M4-07`, `M4-08`, `M4-09`, `M4-10`, `M4-11`, `M4-12`, `M4-13`, `M4-15`, `M4-18`, `M4-20`, `M4-21` | Owner-approved golden expectations; exact paise ledger; fill/stop/EOD/missing-data tests; 3 identical reruns under declared deterministic settings; CLI RunConfig; metrics manifest; long CE/PE cost/slippage report | Baseline single-leg paper runtime |
+| G2a — Single-leg engine | Deterministic long CE/PE engine is correct | `M4-01`, `M4-02`, `M4-03`, `M4-04`, `M4-05`, `M4-06`, `M4-07`, `M4-08`, `M4-09`, `M4-10`, `M4-11`, `M4-12`, `M4-13`, `M4-15`, `M4-18`, `M4-20`, `M4-21`, `M4-22` | Owner-approved golden expectations; exact paise ledger; fill/stop/EOD/missing-data tests; 3 identical reruns under declared deterministic settings; CLI RunConfig; metrics manifest; long CE/PE cost/slippage report | Baseline single-leg paper runtime |
 | G2b — Position groups and short/multi-leg representation | Group exits/legging/theoretical behaviour correct | `M4-14`, `M4-16`, `M4-17`, `M4-19` | Position-group ledger and exits; leg failure/unwind tests; short/multi-leg theoretical smoke suite; margin guard and visible `THEORETICAL` labels | Short/multi-leg paper features; realistic account use still separately blocked by margin `VERIFY` |
 | G3 — Features | Causal features and chain have source-aware outputs | `M5-01`, `M5-02`, `M5-03`, `M5-04`, `M5-05`, `M5-06`, `M5-07`, `M5-08`, `M5-09`, `M5-10`, `M5-11`, `M5-12` | Truncation/no-future tests; memory class/chunk equivalence; optional cache invalidation only if cache exists; chain source tier/missing contracts; observed/model separation | Strategy features that require these sources |
-| G4 — API/UI | Core workflows are usable and auditable | `M6-01`, `M6-02`, `M6-03`, `M6-03b`, `M6-04`, `M6-05`, `M6-06`, `M6-07`, `M6-08`, `M6-09`, `M6-11`, `M6-12`, `M6-13`, `M6-14`, `M6-15` | OpenAPI/schema tests; data-health first; 5k-bar target measured; server-authoritative order lines; UI empty/loading/error states; licence evidence; RunConfig form matches schema | Core app readiness |
-| G5 — Paper runtime | Replay/restart/paper execution are safe | `M7-01`, `M7-02`, `M7-03`, `M7-04`, `M7-05`, `M7-06`, `M7-07`, `M7-08` | Recorded-session replay comparison; no duplicate fills; restart reconciliation; stale-data/kill-switch tests; per-deployment isolation; uptime measured | Trusting paper observations |
+| G4 — API/UI | Core workflows are usable and auditable | `M6-01`, `M6-02`, `M6-03`, `M6-03b`, `M6-04`, `M6-05`, `M6-06`, `M6-07`, `M6-08`, `M6-09`, `M6-11`, `M6-12`, `M6-13`, `M6-14`, `M6-15`, `M6-16`, `M6-17`, `M6-18` | OpenAPI/schema tests; data-health first; 5k-bar target measured; server-authoritative order lines; UI empty/loading/error states; licence evidence; RunConfig form matches schema | Core app readiness |
+| G5 — Paper runtime | Replay/restart/paper execution are safe | `M7-01`, `M7-02`, `M7-03`, `M7-04`, `M7-05`, `M7-06`, `M7-07`, `M7-08`, `M7-09` | Recorded-session replay comparison; no duplicate fills; restart reconciliation; stale-data/kill-switch tests; per-deployment isolation; uptime measured | Trusting paper observations |
 | G6 — Research | Robustness workflow prevents leakage | `M8-01`, `M8-02`, `M8-03`, `M8-04`, `M8-05`, `M8-06`, `M8-07` | Registered hold-out; purged walk-forward/embargo; trial counter; single-use final evaluation; reproducible manifests; model leakage reports | Research conclusions beyond exploratory status |
+
+**Gate dependency rule:** `G0` and `G2a` depend on `G0a`. `M1-07` is retired and exempt from gate membership. Each gate report must include the single command that runs that gate's whole automated suite (`pytest -m gate_<id>`) with its actual command output and exit code 0.
 
 **Targets, not achieved claims:** collector uptime ≥99% of scheduled session minutes; stale alert ≤60 s; restart ≤5 min; raw process-crash loss window ≤1 s of messages with batched fsync and host-crash window ≤1 min; Postgres RPO ≤1 hour during sessions only after a tested hourly logical dump or WAL/PITR setup (otherwise report a ≤24-hour target with replay-based rebuild); 5k-bar server-side data-ready latency ≤300 ms; live quote-to-UI p95 ≤500 ms when measured; cold ~5-year single-strategy run ≤5 min. The ≤1 min cached-run target applies only if an optional cache is benchmark-justified and actually implemented. Correctness gates block performance gates.
 
@@ -150,6 +162,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M0-10 — Create bootstrap `AGENTS.md` before M0 work
 
+- **Spec refs:** MASTER §1, AGENTS §0
+
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** —  
 - **Needs:** owner  
@@ -160,55 +174,67 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M0-01 — Inventory current collector and data
 
+- **Spec refs:** MASTER §1, DATA §1, §11.6, §11.7
+
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M0-10  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/inventory.md`
-- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Read-only inventory; compare file counts and timestamps without mutating source data Deliverable target: `ops/inventory.md`; list of collector command, service state, raw/snapshot paths, disk use, known gaps Do not modify or delete existing collector files or raw data. After M0-01 inventory is accepted, refine this acceptance contract before any collector-touching implementation.
+- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Read-only inventory; compare file counts and timestamps without mutating source data Deliverable target: `ops/inventory.md`; list of collector command, service state, raw/snapshot paths, disk use, known gaps See §3.2 bounded exception.
 
 #### M0-02 — Supervise existing snapshot collector
 
+- **Spec refs:** DATA §4.3, §10, MASTER §4
+
 - **Size:** M (2 person-day upper bound)  
-- **Depends on:** M0-01  
+- **Depends on:** M0-01, M0-11  
 - **Needs:** owner  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `owner_attestation`  
 - **Evidence path:** `ops/evidence/M0-02.md`
-- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Kill-process test; restart test; heartbeat timeout test Deliverable target: systemd service/unit, heartbeat and restart configuration, external dead-man alert wiring Do not modify or delete existing collector files or raw data. After M0-01 inventory is accepted, refine this acceptance contract before any collector-touching implementation.
+- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Kill-process test; restart test; heartbeat timeout test Deliverable target: systemd service/unit, heartbeat and restart configuration, external dead-man alert wiring See §3.2 bounded exception.
 
 #### M0-03 — Preserve numeric precision going forward
 
+- **Spec refs:** DATA §3, §4.3
+
 - **Size:** S (0.5 person-day upper bound)  
-- **Depends on:** M0-01  
+- **Depends on:** M0-01, M0-11  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M0-03.md`
-- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Fixture round-trip and dtype check; compare raw source values to stored values Deliverable target: Snapshot writer change from float16 to float32/float64 where applicable; schema/version note Do not modify or delete existing collector files or raw data. After M0-01 inventory is accepted, refine this acceptance contract before any collector-touching implementation.
+- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Fixture round-trip and dtype check; compare raw source values to stored values Deliverable target: Snapshot writer change from float16 to float32/float64 where applicable; schema/version note See §3.2 bounded exception.
 
 #### M0-04 — Daily instruments-master archive
 
+- **Spec refs:** DATA §4.7, §11.2
+
 - **Size:** M (2 person-day upper bound)  
-- **Depends on:** M0-01  
+- **Depends on:** M0-01, M0-11  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M0-04.md`
-- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Mocked response test; duplicate-day idempotency; parse-failure preserves raw response Deliverable target: Daily raw master capture, metadata for lot size/tick size/listing date, checksum manifest Do not modify or delete existing collector files or raw data. After M0-01 inventory is accepted, refine this acceptance contract before any collector-touching implementation.
+- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Mocked response test; duplicate-day idempotency; parse-failure preserves raw response Deliverable target: Daily raw master capture, metadata for lot size/tick size/listing date, checksum manifest See §3.2 bounded exception.
 
 #### M0-05 — Archive expired-API responses byte-faithfully
 
+- **Spec refs:** DATA §4.2, §11.2
+
 - **Size:** M (2 person-day upper bound)  
-- **Depends on:** M0-01  
+- **Depends on:** M0-01, M0-11  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M0-05.md`
-- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Synthetic binary/JSON payload round-trip; checksum validation; interrupted-write recovery Deliverable target: Raw response archive wrapper: original response body compressed with gzip plus SHA-256 of original bytes and capture metadata Do not modify or delete existing collector files or raw data. After M0-01 inventory is accepted, refine this acceptance contract before any collector-touching implementation.
+- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Synthetic binary/JSON payload round-trip; checksum validation; interrupted-write recovery Deliverable target: Raw response archive wrapper: original response body compressed with gzip plus SHA-256 of original bytes and capture metadata See §3.2 bounded exception.
 
 #### M0-06 — Backup current raw/snapshot data
+
+- **Spec refs:** MASTER §4, DATA §11.6
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M0-01  
@@ -216,9 +242,11 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M0-06.md`
-- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Copy/checksum verification; restore test is tracked by M0-08 Deliverable target: Backup manifest and copy procedure for existing `data/raw` and snapshot files to a second physical local medium (external disk/NAS) Do not modify or delete existing collector files or raw data. After M0-01 inventory is accepted, refine this acceptance contract before any collector-touching implementation.
+- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Copy/checksum verification; restore test is tracked by M0-08 Deliverable target: Backup manifest and copy procedure for existing `data/raw` and snapshot files to a second physical local medium (external disk/NAS) See §3.2 bounded exception.
 
 #### M0-07 — Record critical Upstox operational facts
+
+- **Spec refs:** DATA §11, §11.4, MASTER §5
 
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M0-01  
@@ -226,9 +254,11 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `owner_attestation`  
 - **Evidence path:** `ops/evidence/M0-07.md`
-- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Review official documentation and account-specific behavior; no live tests without approval Deliverable target: Dated VERIFY entries for expired API retention, WebSocket limits and token expiry Do not modify or delete existing collector files or raw data. After M0-01 inventory is accepted, refine this acceptance contract before any collector-touching implementation.
+- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Review official documentation and account-specific behavior; no live tests without approval Deliverable target: Dated VERIFY entries for expired API retention, WebSocket limits and token expiry See §3.2 bounded exception.
 
 #### M0-08 — Verify second-medium backup restore
+
+- **Spec refs:** MASTER §4, DATA §11.6
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M0-06  
@@ -236,12 +266,14 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M0-08.md`
-- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Restore representative raw and snapshot files from the second physical medium into an isolated directory; compare checksums end-to-end Deliverable target: External disk/NAS restore evidence and checksum report Do not modify or delete existing collector files or raw data. After M0-01 inventory is accepted, refine this acceptance contract before any collector-touching implementation.
+- **Acceptance contract:** Pre-inventory safe acceptance only. Check/record: Restore representative raw and snapshot files from the second physical medium into an isolated directory; compare checksums end-to-end Deliverable target: External disk/NAS restore evidence and checksum report See §3.2 bounded exception.
 
 #### M0-09 — Preserve oldest missing expired data if retention rolls
 
+- **Spec refs:** DATA §4.2, §11.2, MASTER §5
+
 - **Size:** S (0.5 person-day upper bound)  
-- **Depends on:** M0-07  
+- **Depends on:** M0-07, M0-11  
 - **Needs:** owner approval/credentials  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `owner_attestation`  
@@ -249,6 +281,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Record retention risk and a proposed bounded request plan. Do not execute a broad download. Before any request, require explicit owner approval of exact date/contract range and request budget; then archive raw response bytes, checksum, and checkpoint evidence. If approval is absent, retain a blocked status and evidence note. Deliverable: ops/evidence/M0-09.md.
 
 #### M0-11 — Post-inventory contract refinement and owner approval
+
+- **Spec refs:** MASTER §1, §5, AGENTS §3.2
 
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M0-01  
@@ -262,6 +296,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M1-01 — Create repository and package boundaries
 
+- **Spec refs:** MASTER §3, DATA §10
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M0-01  
 - **Needs:** —  
@@ -271,6 +307,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Import-boundary check; package import smoke tests Deliverable target: `apps/web`, `services/collector_snapshot`, `services/collector_ws`, `services/backfill`, `services/api`, `services/worker_compute`, `services/worker_data`, `services/live_daemon`, `packages/*` (including `packages/db`), `tests`, `config`, `ops` Evidence must support: Clean clone produces the intended layout; imports obey dependency direction
 
 #### M1-02 — Establish tooling and CI
+
+- **Spec refs:** MASTER §3, AGENTS §1
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M1-01  
@@ -282,6 +320,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M1-03 — Add configuration, logs and correlation IDs
 
+- **Spec refs:** MASTER §3, ENGINE §11.1
+
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M1-01  
 - **Needs:** —  
@@ -291,6 +331,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Config validation, secret-redaction and correlation propagation tests Deliverable target: Typed settings, non-secret example config, structured logs and correlation ID middleware/context Evidence must support: Test output shows malformed config rejected and secrets absent from logs
 
 #### M1-04 — Postgres-only Compose and migration baseline
+
+- **Spec refs:** MASTER §3, DATA §2, §2.1
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M1-01  
@@ -302,6 +344,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M1-05 — Status, ADR and evidence-report templates
 
+- **Spec refs:** MASTER §2, AGENTS §1
+
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M1-01  
 - **Needs:** —  
@@ -311,6 +355,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Template completeness review Deliverable target: `docs/status-template.md`, ADR template, milestone evidence-report template Evidence must support: Templates require status, commands/output, VERIFY status, gaps and next-gate prerequisites
 
 #### M1-06 — Synthetic-data generator stub
+
+- **Spec refs:** DATA §3, ENGINE §1
 
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M1-01  
@@ -322,6 +368,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M1-07 — [RESERVED / RETIRED]
 
+- **Spec refs:** MASTER §3
+
 - **Size:** S (0 person-days)  
 - **Depends on:** None  
 - **Needs:** —  
@@ -331,6 +379,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Task ID intentionally reserved/retired to preserve stable numbering across external specifications and tools.
 
 #### M1-08 — Add machine-readable task/ADR/VERIFY status registry
+
+- **Spec refs:** AGENTS §4, §5
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M1-05  
@@ -342,6 +392,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M1-09 — Canonical machine-readable schema modules
 
+- **Spec refs:** DATA §2.1, §3, §4
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M1-01  
 - **Needs:** —  
@@ -351,6 +403,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Schema round-trip, nullable/decimal/timezone/enum and compatibility tests Deliverable target: Pydantic/PyArrow schema modules in `packages/data/schemas/`, generated schema docs Evidence must support: Canonical schema docs generated from modules; round-trip report retained
 
 #### M1-10 — Production-host and sync configuration decision record
+
+- **Spec refs:** MASTER §4, §5
 
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M1-03, M0-07  
@@ -362,6 +416,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M1-11 — Lightweight Postgres job claim and leased worker runner
 
+- **Spec refs:** DATA §2.1, MASTER §3
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M1-04, M1-03  
 - **Needs:** —  
@@ -371,6 +427,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Concurrent claim, lease expiry, worker crash, duplicate execution and single `worker_data` lease tests Deliverable target: Minimal jobs schema and runner using `FOR UPDATE SKIP LOCKED`, lease/heartbeat/retry fields, `worker_compute` and `worker_data` entrypoints; no separate queue service/library Evidence must support: Exactly one active `worker_data` lease; compute jobs claim safely; expired lease cannot publish canonical data
 
 #### M1-12 — Port existing collectors and download scripts
+
+- **Spec refs:** DATA §4.3, §11.6, MASTER §3
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M0-01, M1-01  
@@ -385,6 +443,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M2-01 — Snapshot collector raw-first rewrite
 
+- **Spec refs:** DATA §4.3, §4.4, §10
+
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M0-02, M1-01  
 - **Needs:** —  
@@ -394,6 +454,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Mocked API tests; raw retained on parse failure; duplicate and interrupted-write tests Deliverable target: `collector_snapshot` adapter, raw response capture, capture header, atomic manifest publish Evidence must support: Raw-to-manifest reconciliation report; no source response lost on decoder failure
 
 #### M2-02 — Snapshot REST budget and priority
+
+- **Spec refs:** DATA §4.3, §11.3
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M2-01, M0-07  
@@ -405,6 +467,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M2-03 — WebSocket raw segment writer
 
+- **Spec refs:** DATA §4.5, §10, ENGINE §10
+
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M1-01, M0-07  
 - **Needs:** —  
@@ -414,6 +478,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Mocked frame stream; kill process at write boundary; checksum and recovery tests Deliverable target: `collector_ws`, `.partial` segment protocol, batched fsync, finalization manifest, connection IDs Evidence must support: Segment/manifest reconciliation; recovered `.partial` content included or quarantined with reason
 
 #### M2-04 — SubscriptionManager and single-owner lease
+
+- **Spec refs:** DATA §2.1, §4.5, MASTER §3
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M2-03  
@@ -425,15 +491,19 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M2-05 — WebSocket decoder and fixtures
 
+- **Spec refs:** DATA §4.5, §11.4
+
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M2-03, M0-07  
 - **Needs:** market-hours/credentials  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M2-05.md`
-- **Acceptance contract:** Inspect current dated official documentation and account-specific capabilities, record exact source URLs/date, distinguish documented fields from fixture-observed fields and unknowns, capture approved representative fixtures, and produce a field-presence/units/availability/reconnect/reset table. Do not invent protobuf fields or claim the feed is a complete tick tape or complete chain. Deliverable target: Versioned protobuf decoder, at least two recorded session fixtures, field-presence diagnostics, and documented field mapping report. Unverified semantics remain `VERIFY`.
+- **Acceptance contract:** Inspect current dated official documentation and account-specific capabilities, record exact source URLs/date, distinguish documented fields from fixture-observed fields and unknowns, capture approved representative fixtures, and produce a field-presence/units/availability/reconnect/reset table. Implement decoded schema per `QUANTVIEW_DATA_SPEC.md §4.5` including `feed_type` (`initial_feed|live_feed|market_info`), `rho_observed`, and `vendor_ohlc` as a list keyed by interval (V3 marketOHLC). Ensure zero ask/bid depth and OI on non-option instruments are flagged in `quality_flags`, never treated as liquid zero quotes. Note `full_d30` requires Upstox Plus. Do not invent protobuf fields or claim the feed is a complete tick tape or complete chain. Deliverable target: Versioned protobuf decoder, at least two recorded session fixtures, field-presence diagnostics, and documented field mapping report. Unverified semantics remain `VERIFY`.
 
 #### M2-06 — Token lifecycle and systemd operations
+
+- **Spec refs:** DATA §10, §11.4, MASTER §4
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M2-03, M1-04  
@@ -445,6 +515,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M2-07 — Checkpointed expired-data backfill
 
+- **Spec refs:** DATA §4.2, §11.2, §11.3
+
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M2-02, M0-07  
 - **Needs:** owner/credentials  
@@ -454,6 +526,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Mocked rate limit, restart from checkpoint, duplicate response, pause/resume tests Deliverable target: `backfill` job, per-contract/range checkpoint, retry/idempotency, throttling Evidence must support: Coverage/checkpoint report; request budget respected; no live broad download without explicit approval
 
 #### M2-08 — Session-day runbook and scheduled jobs
+
+- **Spec refs:** MASTER §4, DATA §10
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M2-01, M2-03, M2-06  
@@ -465,6 +539,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M2-09 — Collector fault-injection suite
 
+- **Spec refs:** DATA §10, ENGINE §10
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M2-01, M2-03, M2-06  
 - **Needs:** —  
@@ -475,6 +551,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M2-10 — Measure live-feed volume and storage growth
 
+- **Spec refs:** DATA §4.5, §11.4, MASTER §4
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M2-03, M2-05  
 - **Needs:** —  
@@ -484,6 +562,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Replay recorded fixtures and measure serialization/compression at representative settings Deliverable target: `reports/feed-volume.md`: observed messages/sec by feed mode, compressed/raw GB per session/day, peak burst, retention projection and disk headroom estimate Evidence must support: Report includes methodology, fixture IDs, p50/p95/peak rates, GB/session and GB/day; host/disk sizing is based on evidence, not guesses
 
 #### M2-11 — Provision production Linux host and read-only sync
+
+- **Spec refs:** MASTER §4, §5
 
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M1-10, M0-06, M2-06, M0-07, M2-10  
@@ -498,6 +578,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M3-01 — Read-only inventory of all datasets
 
+- **Spec refs:** DATA §1, §4, §11.6, §11.7
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M0-01  
 - **Needs:** —  
@@ -507,6 +589,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Repeatable read-only inventory; source checksums Deliverable target: `reports/data-inventory.md`; source paths, schemas, row counts, date coverage, contracts, duplicate/gap stats Evidence must support: Full inventory including expired option candles, snapshots, WS, VIX, futures, daily and intraday series
 
 #### M3-02 — Calendar, holidays and special sessions
+
+- **Spec refs:** DATA §4.7, §7
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M3-01  
@@ -518,6 +602,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M3-03 — Validity-dated contract master
 
+- **Spec refs:** DATA §4.7, §11.2
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M3-01, M3-02  
 - **Needs:** —  
@@ -527,6 +613,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Effective-date selection, no-substitution and first-observation bounds Deliverable target: Contract master schema and normalizer, lot size/tick size/listing metadata, `first_observed_at` fallback Evidence must support: Contract coverage report; no contract selectable before listing date or first-observed bound
 
 #### M3-04 — Canonical vendor underlying 1m and 1d
+
+- **Spec refs:** DATA §4.1, §11.1
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M3-02, M3-03  
@@ -538,6 +626,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M3-05 — Canonical option 1m candles
 
+- **Spec refs:** DATA §4.2, §11.2
+
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M3-03  
 - **Needs:** —  
@@ -547,6 +637,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: OHLC constraints, contract mapping, duplicate active keys, zero/flat bar tests Deliverable target: `lake/option_candles/`, revisioned manifest Evidence must support: Contract/expiry coverage report; no unexplained duplicates; gaps and invalid rows explicit
 
 #### M3-06 — Normalize snapshots v1/v2/v3 and captures
+
+- **Spec refs:** DATA §4.3, §4.4, §11.3
 
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M3-01  
@@ -558,6 +650,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M3-07 — Derive intervals and vendor checksum report
 
+- **Spec refs:** DATA §4.1, §7, §11.1
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M3-04  
 - **Needs:** —  
@@ -567,6 +661,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Session-boundary, partial-bar, daily-availability and checksum tests Deliverable target: Derived 3m/5m/15m/1h/4h from 1m; weekly/monthly from vendor daily; comparison report Evidence must support: Report documents deltas against vendor intervals; daily 1m aggregation is diagnostic only
 
 #### M3-08 — Source-semantics audit
+
+- **Spec refs:** DATA §8, §11, §11.5
 
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M3-01, M3-05, M3-06  
@@ -578,6 +674,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M3-09 — Data eligibility and coverage report
 
+- **Spec refs:** DATA §8, §11.1, §11.6, §11.7
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M3-02, M3-03, M3-04, M3-05, M3-06, M3-07, M3-08  
 - **Needs:** —  
@@ -587,6 +685,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Missing bars, stale data, invalid OHLC, contract validity, warm-up, flat bars and warning policy tests Deliverable target: `data_eligibility` dataset, stable reason codes, chosen backtest period/universe report Evidence must support: Gaps explicit; eligibility reproducible from manifest+policy; period/universe justified by actual coverage
 
 #### M3-10 — Pin and verify Parquet profile
+
+- **Spec refs:** DATA §4, §6
 
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M1-02, M3-04  
@@ -598,6 +698,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M3-11 — Exploratory strategy-family feasibility spike
 
+- **Spec refs:** MASTER §1, ENGINE §1, §23
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M3-09  
 - **Needs:** owner  
@@ -607,6 +709,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Chronological slices, realistic cost ranges where known, null/permutation or simple baseline comparison, leakage review Deliverable target: Small DuckDB/notebook report on a predeclared set of simple directional and premium-selling hypotheses; no full engine or UI dependency Evidence must support: Report states whether any candidate merits a proper backtest; exploratory result is not a profitability claim and does not touch locked hold-out
 
 #### M3-12 — Supporting datasets inventory & canonicalization (india_vix, nifty_futures, rates_dividends)
+
+- **Spec refs:** DATA §4.6, §4.7, §11.2, §11.5
 
 - **Size:** M (2.0 person-day upper bound)  
 - **Depends on:** M3-01, M3-02  
@@ -621,6 +725,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-01 — Domain IDs, time and exact-money types
 
+- **Spec refs:** DATA §3, ENGINE §2, §8
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M1-01  
 - **Needs:** —  
@@ -630,6 +736,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Tick rounding against trader, decimal/paisa conversions, overflow and currency invariants Deliverable target: `packages/domain`: UTC timestamps, contract/order/run IDs, paise/Decimal types, tick quantizer Evidence must support: Unit test report; no binary float enters cash/fee/P&L paths
 
 #### M4-11 — Postgres append-only LedgerWriter enforcement
+
+- **Spec refs:** DATA §2.1, ENGINE §8, MASTER §2
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M1-04, M4-01  
@@ -641,6 +749,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-12 — Strategy registry and plugin loader
 
+- **Spec refs:** DATA §2.1, ENGINE §1, §12
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M1-01, M4-01  
 - **Needs:** —  
@@ -650,6 +760,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Duplicate ID/version, invalid parameter schema, load failure isolation Deliverable target: Versioned strategy registry, entry-point/plugin discovery, schema validation and code hash Evidence must support: Registry lists each strategy/version and refuses invalid or ambiguous plugins
 
 #### M4-13 — Prepare G2a golden expectations and approval
+
+- **Spec refs:** ENGINE §4, §8, AGENTS §1
 
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M4-01  
@@ -661,6 +773,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-02 — Golden event-loop scenarios and pre-implementation sign-off
 
+- **Spec refs:** ENGINE §3, §3.1, §4
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-01, M4-13  
 - **Needs:** owner sign-off  
@@ -670,6 +784,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Use M4-13's owner-approved G2a expected outputs as the test oracle before coding. Synthetic fixtures cover next-open fill, gap-through stop/target, same-bar stop+target, zero-volume flat bar, final-bar EOD, missing data and expiry; G2b-specific short/group expectations are added before M4-19.
 
 #### M4-03 — Calendar-minute loop and event skipping
+
+- **Spec refs:** ENGINE §3, §3.1, §4
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-02, M3-02  
@@ -681,6 +797,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-04 — Contract selector and lifecycle
 
+- **Spec refs:** ENGINE §5, DATA §4.7
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-01, M3-03, M4-13  
 - **Needs:** —  
@@ -689,9 +807,10 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Evidence path:** `ops/evidence/M4-04.md`
 - **Acceptance contract:** Check/record: Missing/ambiguous contract, first-observed bound, expiry-time tests Deliverable target: Point-in-time selector, no substitution, last-entry/force-flat/last-tradable constraints Evidence must support: Decision reason codes and selector evidence; no silent contract swap
 
-#### M4-05 — Order/fill/position/risk invariants
+#### M4-05 — Order/fill/position/risk invariants (engine core)
 
-- **Size:** L (5 person-day upper bound)  
+- **Spec refs:** ENGINE §4, §6, §7
+- **Size:** M (2.5 person-day upper bound)  
 - **Depends on:** M4-02, M4-03, M4-04  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
@@ -699,7 +818,20 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Evidence path:** `ops/evidence/M4-05.md`
 - **Acceptance contract:** Check/record: Property tests for every row of intrabar fill table; zero-volume and stale-wait scenarios Deliverable target: Order lifecycle, position-level stop/target/trailing, stop-first policy, stale-data and EOD behavior Evidence must support: Golden fill table passes; no same-bar optimistic fill; no fills on flat zero-volume bars
 
+#### M4-22 — Engine slippage and fee model integration
+
+- **Spec refs:** ENGINE §4, §6, §8
+- **Size:** M (2.5 person-day upper bound)  
+- **Depends on:** M4-05, M4-06  
+- **Needs:** —  
+- **Initial status:** `DESIGNED`  
+- **Acceptance type:** `file_check`  
+- **Evidence path:** `ops/evidence/M4-22.md`
+- **Acceptance contract:** Narrow strictly to engine fill-loop integration (wiring the fee calculator from M4-06 and slippage models into order fill execution and ledger event generation during backtesting). Confirms zero overlap with M4-06: M4-22 does not author or verify fee rates (owned exclusively by M4-06); it strictly integrates verified calculators into the deterministic engine fill pipeline. Verifies exact integer paise deductions and correct slippage without double-counting.
+
 #### M4-06 — Fee schedule and cost attribution
+
+- **Spec refs:** ENGINE §6, §8, DATA §2.1
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-01, M4-13  
@@ -711,8 +843,10 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-07 — Append-only ledger and projections
 
+- **Spec refs:** DATA §2.1, ENGINE §8, MASTER §2
+
 - **Size:** L (5 person-day upper bound)  
-- **Depends on:** M4-01, M4-05, M4-06  
+- **Depends on:** M4-01, M4-22, M4-06  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
@@ -721,15 +855,19 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-08 — Run manifest, decision context and hold-out guard
 
+- **Spec refs:** DATA §2.1, ENGINE §12, §19
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-03, M4-07, M3-09  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M4-08.md`
-- **Acceptance contract:** Check/record: Correlation ID propagation; overlapping-run refusal; single-use final-evaluation flag; manifest completeness Deliverable target: `runs/{run_id}/manifest.json`, `decisions/`, `config/research.yaml`, trial counter Evidence must support: Each decision has timestamp/features-or-hash/candidates/risk/reasons; hold-out override logged and single-use per strategy version
+- **Acceptance contract:** Check/record: Correlation ID propagation; overlapping-run refusal; single-use final-evaluation flag; manifest completeness Deliverable target: `runs/{run_id}/manifest.json`, `decisions/`, `config/research.yaml`, trial counter Evidence must support: Each decision has timestamp/features-or-hash/candidates/risk/reasons; hold-out override logged and single-use per hold-out range per strategy lineage
 
 #### M4-09 — G2a long CE/PE strategy smoke suite and cost sensitivity
+
+- **Spec refs:** ENGINE §1, §4, §8
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-05, M4-06, M4-07, M4-08, M3-09  
@@ -741,6 +879,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-10 — Backtest benchmark and reproducibility report
 
+- **Spec refs:** ENGINE §4, §19, §20
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-07, M4-08, M4-09  
 - **Needs:** —  
@@ -750,6 +890,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Three identical reruns match declared byte-identical outputs (ledger events, fills, trades, selected contracts and manifest excluding volatile host/created_at fields); money exact in paise; ratio metrics within declared tolerance. Measure cold ~5-year run against ≤5 min target. ≤1 min cached target applies only if M5-02 benchmark justifies and the cache is actually implemented; otherwise report uncached timing.
 
 #### M4-15 — Ledger-derived metrics manifest and metric definitions
+
+- **Spec refs:** ENGINE §20, §20.1, §20.2, §20.3
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-07, M4-08, M4-10  
@@ -761,6 +903,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-14 — G2b position-side, declared-leg and margin-interface contract
 
+- **Spec refs:** ENGINE §2, §8, §14
+
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M4-02, M4-03, M4-04, M4-06, M4-07, M4-11, M4-12, G2a, M4-15  
 - **Needs:** owner sign-off  
@@ -770,6 +914,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Represent long/short CE/PE and one/two-leg groups with explicit legging failure/unwind states. Keep short/multi-leg realistic-account mode blocked until M4-17 verifies margin, buying power, hedge benefit, expiry changes and settlement. Theoretical tests may proceed with labelled assumptions.
 
 #### M4-16 — Position-group exits and legging failure recovery
+
+- **Spec refs:** ENGINE §14, §15, §16
 
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M4-14, M4-05, M4-07  
@@ -781,6 +927,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-17 — Margin/buying-power verification and realistic-mode guard
 
+- **Spec refs:** ENGINE §14, §17, DATA §2.1
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-14, M4-21, M3-08, M3-09  
 - **Needs:** owner/authoritative sources  
@@ -791,15 +939,19 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-18 — Single RunConfig schema and CLI/config launch path
 
+- **Spec refs:** ENGINE §19, §19.1, §19.2, §19.3
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-01, M4-08  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M4-18.md`
-- **Acceptance contract:** Create one versioned RunConfig schema shared by CLI, YAML/JSON config, API and UI. Include dates, strategy/version/params, CE/PE/BOTH, expiry/strike policies, timeframe, capital/sizing, risk toggles, SL/TP/trailing, entry/exit windows, carry, fee version, slippage 0x/1x/2x/3x, fill model/evidence tier, REALISTIC_ACCOUNT/THEORETICAL, hold-out/final_evaluation, seed and frozen manifest IDs. Backtest must launch by CLI before M6. Invalid/unaffordable configs fail with stable reason codes.
+- **Acceptance contract:** Create one versioned RunConfig schema shared by CLI, YAML/JSON config, API and UI. Include dates, strategy/version/params, CE/PE/BOTH, expiry/strike policies (with min_dte/exact_expiry_date/target_delta/exact_strike fields), timeframe (1m..1d), capital_paise (required, no default)/sizing, nullable risk_policy_id and inline risk_controls (conforming to shared RiskRules Pydantic schema with override precedence), SL/TP/trailing as Decimal strings, entry/exit windows (force_flat_time 09:30..15:25), carry, fee version, slippage 0x/1x/2x/3x, fill model/evidence tier, REALISTIC_ACCOUNT/THEORETICAL, hold-out/final_evaluation, seed and frozen manifest IDs. Tests must cover `entry_delay_policy` (including `EXTRA_BARS_SENSITIVITY` with `entry_delay_bars` 1..5, confirming `order_expiry_bars` clock starts after the delay) and enforce the `SENSITIVITY_NOT_BASELINE` run label in manifest and UI. Backtest must launch by CLI before M6. Invalid/unaffordable configs fail with stable reason codes.
 
 #### M4-19 — G2b short/multi-leg theoretical smoke suite
+
+- **Spec refs:** ENGINE §14, §15, §17
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-14, M4-16, M4-17, M4-15, M3-09  
@@ -811,15 +963,19 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M4-20 — Risk-policy evaluator engine and acceptance suite
 
+- **Spec refs:** ENGINE §7, §19, §19.1
+
 - **Size:** M (2.0 person-day upper bound)  
 - **Depends on:** M4-01, M4-05, M4-07  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M4-20.md`
-- **Acceptance contract:** Implement `packages/risk/RiskEvaluator` executing all controls defined in ENGINE §7: max entry fills/day, daily loss ceiling (with realized + unrealized marks and intra-bar overshoot handling), max drawdown ceiling, max open positions/lots/gross exposure, premium/cash limits, trading windows/force-flat timing, consecutive losses and cooldown bars, stale-data entry block and open-position exit policy, VIX/liquidity filter guards, and manual kill switch. Provide a comprehensive deterministic test suite proving each control triggers rejection or exit with stable reason codes. Strategy logic, position structure, and risk policy must remain strictly decoupled.
+- **Acceptance contract:** Implement `packages/risk/RiskEvaluator` executing all controls defined in ENGINE §7 using the shared `RiskRules` Pydantic schema (shared between `DATA §2.1 risk_policies.rules` and `ENGINE §19.1 risk_controls` with inline override precedence): max entry fills/day, daily loss ceiling (with realized + unrealized marks and intra-bar overshoot handling), max drawdown ceiling, max open positions/lots/gross exposure, premium/cash limits, trading windows/force-flat timing (09:30..15:25), consecutive losses and cooldown bars, stale-data entry block and open-position exit policy, min DTE and VIX/liquidity filter guards, and manual kill switch. Provide a comprehensive deterministic test suite proving each control triggers rejection or exit with stable reason codes and freezes the effective policy hash in run manifests. Strategy logic, position structure, and risk policy must remain strictly decoupled.
 
 #### M4-21 — Early margin, buying-power & settlement schedule research
+
+- **Spec refs:** ENGINE §14, §17, DATA §2.1
 
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M4-01  
@@ -834,6 +990,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M5-01 — Feature registry and schemas
 
+- **Spec refs:** ENGINE §3.2, §21, DATA §2.1
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M1-01, M4-01  
 - **Needs:** —  
@@ -843,6 +1001,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Duplicate IDs, schema stability, warm-up declaration tests Deliverable target: Registry/decorator, Pydantic params, generated JSON schema, source tiers and memory class Evidence must support: Registry dump lists every feature's input/output/availability/warm-up/memory class
 
 #### M5-02 — Optional feature cache after benchmark
+
+- **Spec refs:** MASTER §2, ENGINE §21
 
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M5-01, M3-04  
@@ -854,6 +1014,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M5-03 — Built-in causal features
 
+- **Spec refs:** ENGINE §3.2, §21, §21.1
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M5-01  
 - **Needs:** —  
@@ -863,6 +1025,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Known-value, truncation and chunk-equivalence tests Deliverable target: EMA, RSI, ATR, PCR/OI features with metadata Evidence must support: 100% registered causal features pass required cut points and declared tolerance
 
 #### M5-04 — Lazy reconstructed chain
+
+- **Spec refs:** DATA §4.4, §4.8, MASTER §2
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M3-05, M3-06, M5-01  
@@ -874,6 +1038,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M5-05 — Model Greeks for configured liquid ATM band
 
+- **Spec refs:** ENGINE §13, §21, DATA §4.7
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M5-04, M3-12  
 - **Needs:** —  
@@ -883,6 +1049,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Solver failure, no-arbitrage sanity checks, point-in-time input tests Deliverable target: Model IV/Greeks for ATM +/- N liquid contracts, configuration and manifest fields Evidence must support: `model_*` fields remain separate from observed values; N/liquidity rule recorded in manifest
 
 #### M5-06 — BOS/CHoCH and custom conversion acceptance
+
+- **Spec refs:** ENGINE §9, §21, §21.2
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M5-01, M5-03  
@@ -894,6 +1062,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M5-07 — Isolated subprocess feature runner
 
+- **Spec refs:** MASTER §2, ENGINE §9
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M5-01, M1-02  
 - **Needs:** —  
@@ -903,6 +1073,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Timeout, memory exhaustion, malformed output and attempted unavailable dependency tests Deliverable target: Feature subprocess protocol, timeout, memory cap and structured failure result per ADR-012 Evidence must support: Faulty feature is terminated and marked `UNAVAILABLE`; other feature jobs continue; entries are blocked per engine contract
 
 #### M5-08 — Indicator formula/variant catalogue and compatibility tests
+
+- **Spec refs:** ENGINE §21, §21.1, §21.2
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M5-01, M5-03  
@@ -914,6 +1086,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M5-09 — Chart transform registry and Heikin Ashi/Renko contract
 
+- **Spec refs:** ENGINE §18.1, §22
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M5-01, M3-04  
 - **Needs:** —  
@@ -923,6 +1097,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Implement Heikin Ashi as a derived/chart_transform output with exact versioned seed and formulas. Specify Renko brick-size, source, reversal, wick, gap/multiple-brick and confirmation-time rules; Renko UI remains UI-3/v1.1. No transform values may become tradable OHLC. Plugins declare schema, params, memory, warm-up, code hash and causal availability; pass truncation/chunk tests.
 
 #### M5-10 — Frozen model artifact and strategy inference contract
+
+- **Spec refs:** ENGINE §23, DATA §2.1
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M5-01  
@@ -934,6 +1110,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M5-11 — Core indicator implementation (MACD, Bollinger Bands, Supertrend, ADX; VWAP blocked)
 
+- **Spec refs:** ENGINE §21, §21.1
+
 - **Size:** L (5.0 person-day upper bound)  
 - **Depends on:** M5-01, M5-03, M5-08  
 - **Needs:** —  
@@ -943,6 +1121,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Implement vectorized and incremental causal evaluators for catalogued indicators in ENGINE §21: MACD(12,26,9), Bollinger Bands(20,2), Supertrend(10,3), and ADX(14). Implement TradingView/Pine test harness validating output equivalence across 5,000 bars. Verify session VWAP implementation remains strictly blocked/quarantined until M3-08 resolves volume semantics.
 
 #### M5-12 — Option-chain derived features implementation (PCR, OI ROC, ATM Straddle, Delta-band OI)
+
+- **Spec refs:** ENGINE §21, DATA §4.4
 
 - **Size:** M (2.0 person-day upper bound)  
 - **Depends on:** M5-01, M5-04, M3-08  
@@ -957,6 +1137,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M6-01 — FastAPI read/query API and typed client
 
+- **Spec refs:** ENGINE §11, §11.1, §18
+
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M3-09, M4-08  
 - **Needs:** —  
@@ -967,6 +1149,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M6-02 — Data-health and coverage page
 
+- **Spec refs:** DATA §8, ENGINE §18.1
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M6-01, M3-09  
 - **Needs:** —  
@@ -975,9 +1159,10 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Evidence path:** `ops/evidence/M6-02.md`
 - **Acceptance contract:** Check/record: API/UI contract tests; empty/partial data behavior Deliverable target: First UI page for coverage, gaps, eligibility and VERIFY flags Evidence must support: User can inspect missing sessions/contracts and reasons before running research
 
-#### M6-03 — Chart and overlays
+#### M6-03 — Chart and overlays (basic charts)
 
-- **Size:** L (5 person-day upper bound)  
+- **Spec refs:** ENGINE §18, §18.1, §18.3
+- **Size:** M (2.5 person-day upper bound)  
 - **Depends on:** M6-01, M5-03  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
@@ -986,6 +1171,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: 5k-bar benchmark; chart transform correctness Deliverable target: Candle chart, overlays and trade markers; server-authoritative order lines Evidence must support: 5,000-bar data-ready latency ≤300 ms server-side; initial payload ≤5,000 bars
 
 #### M6-04 — Results and audit panel
+
+- **Spec refs:** ENGINE §18.1, §20
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M6-01, M4-08  
@@ -997,6 +1184,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M6-05 — Chart licence and API health
 
+- **Spec refs:** ENGINE §11.1, §18.3, MASTER §5
+
 - **Size:** S (0.5 person-day upper bound)  
 - **Depends on:** M6-03  
 - **Needs:** owner/licence review  
@@ -1006,6 +1195,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Health/heartbeat and stale collector alert tests Deliverable target: Exact library/version licence evidence; process health endpoints Evidence must support: Licence status documented; all processes have health/heartbeat; stale alert ≤60s
 
 #### M6-06 — Accounts and risk-policy CRUD
+
+- **Spec refs:** DATA §2.1, ENGINE §7, §8
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M6-01, M4-04  
@@ -1017,6 +1208,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M6-07 — Backtest launch/configuration commands
 
+- **Spec refs:** ENGINE §11.1, §18.1, §19
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M6-01, M4-08  
 - **Needs:** —  
@@ -1026,6 +1219,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Invalid config, overlapping-run guard, cancellation and command authorization tests Deliverable target: Backtest configuration form, launch/cancel/status command endpoints, job progress and validation Evidence must support: User can configure and launch a bounded run; all commands are logged with correlation IDs and manifest config
 
 #### M6-08 — Dashboard and strategy browser UI
+
+- **Spec refs:** ENGINE §18.1, MASTER §1
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M6-01, M6-02, M4-12  
@@ -1037,6 +1232,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M6-09 — RunConfig-driven backtest form and audit-linked chart flow
 
+- **Spec refs:** ENGINE §18.1, §19, §20
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M6-01, M4-18, M6-03, M6-04  
 - **Needs:** UI test approach PENDING_OWNER  
@@ -1046,6 +1243,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Generate UI form from the exact RunConfig schema used by CLI/API; include all required fields and validation, CE/PE/BOTH, capital, risk toggles, fee/slippage/fill/mode, hold-out and seed. Results panel remains on the chart page and links trade markers to decision context, selected contract, fills, ledger and metrics definitions. UI test framework remains PENDING_OWNER; API/schema/component tests still required.
 
 #### M6-03b — UI-1 Per-strike option chart with trade markers
+
+- **Spec refs:** DATA §3, ENGINE §2, §18.1, §18.3
 
 - **Size:** M (2.0 person-day upper bound)  
 - **Depends on:** M6-01, M6-03, M5-04  
@@ -1057,6 +1256,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M6-11 — UI-1 Schema-driven indicator settings dialogs & visibility controls
 
+- **Spec refs:** ENGINE §18.1, §21
+
 - **Size:** M (2.0 person-day upper bound)  
 - **Depends on:** M6-01, M6-03, M5-01, M5-08  
 - **Needs:** —  
@@ -1066,6 +1267,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Implement interactive settings dialog for all catalogued indicators (EMA, SMA, RSI, MACD, ATR, Bollinger, Supertrend, ADX). Render parameter inputs dynamically from feature registry Pydantic JSON schemas. Allow toggling indicator visibility, color/style, and pane allocation without triggering a full page reload or chart recreation.
 
 #### M6-12 — UI-2 Heikin Ashi chart-type switcher UI
+
+- **Spec refs:** ENGINE §18.1, §18.2, §22
 
 - **Size:** S (1.0 person-day upper bound)  
 - **Depends on:** M6-03, M5-09  
@@ -1077,6 +1280,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M6-13 — UI-2 Basic drawings persistence & rendering
 
+- **Spec refs:** DATA §2.1, ENGINE §18.1
+
 - **Size:** M (2.0 person-day upper bound)  
 - **Depends on:** M6-01, M6-03  
 - **Needs:** —  
@@ -1086,6 +1291,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Implement basic drawing tools on the main candle chart: horizontal price line, vertical time line, trend line, and rectangular zone. Drawing objects serialize to JSON (`UtcEpochSec` time, price coordinates, styling) and persist to PostgreSQL `chart_drawings` table via `/api/v1/charts/drawings` REST endpoints. Support drawing reload upon chart navigation and symbol change.
 
 #### M6-14 — UI-1 /paper and /settings screens implementation
+
+- **Spec refs:** ENGINE §18.1, §18.2, DATA §2.1
 
 - **Size:** M (2.0 person-day upper bound)  
 - **Depends on:** M6-01, M6-06, M6-08  
@@ -1097,6 +1304,7 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M6-15 — UI-3 API and data contract freeze
 
+- **Spec refs:** ENGINE §18.1, §18.2, §26
 - **Size:** S (1.0 person-day upper bound)  
 - **Depends on:** M6-01, M5-04, M5-12  
 - **Needs:** —  
@@ -1105,10 +1313,45 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Evidence path:** `ops/evidence/M6-15.md`
 - **Acceptance contract:** Formally freeze and validate OpenAPI contracts for UI-3 features in `services/api`: `/api/v1/option-chain`, `/api/v1/option-chain/metrics`, and `/api/v1/charts/layouts` per ENGINE §26. Verify mock and fixture responses conform strictly to pydantic schemas. UI implementation of full chain matrix and multi-chart layouts remains deferred to UI-3/v1.1.
 
+#### M6-16 — Read-only historical and expired-option candle chart viewer
+
+- **Spec refs:** DATA §4.1, §4.2, §4.8, ENGINE §18.3
+- **Size:** M (2.0 person-day upper bound)  
+- **Depends on:** M3-04, M3-05  
+- **Needs:** —  
+- **Initial status:** `DESIGNED`  
+- **Acceptance type:** `file_check`  
+- **Evidence path:** `ops/evidence/M6-16.md`
+- **Acceptance contract:** Read-only web/desktop viewer for historical underlying candles and expired-option candle series reading strictly through the read-only DuckDB views defined in DATA (DATA §4.8 `v_candles_underlying`, `v_candles_options`, identical to the query path used by the FastAPI backend), never raw Parquet paths. Supports date, strike, and expiry selection; displays OHLC candles with volume bars and basic navigation controls. Verifies data integrity visually without mutating source data or requiring active backend engine services. (Note: May be built right after M3-04/M3-05 to provide early visual validation of normalized Parquet datasets).
+
+#### M6-17 — Overlays, indicator panes, and marker polish
+
+- **Spec refs:** ENGINE §18, §18.1, §18.3
+- **Size:** M (2.5 person-day upper bound)  
+- **Depends on:** M6-03, M5-03  
+- **Needs:** —  
+- **Initial status:** `DESIGNED`  
+- **Acceptance type:** `file_check`  
+- **Evidence path:** `ops/evidence/M6-17.md`
+- **Acceptance contract:** Check/record: Technical indicator sub-panes (RSI, MACD, EMA overlays), price action markers (BOS/CHoCH markers), trade entry/exit markers, and server-authoritative SL/TP order lines with draggable updates. Deliverable target: Overlays, indicator panes, and marker polish on the primary chart. Note: Multi-pane layout engine and advanced split-screens are moved to UI-3/v1.1 (post-v1 target contract, uncounted in baseline totals). Evidence must support: Render performance meets 5k-bar display target with markers and sub-panes active.
+
+#### M6-18 — UI-1b: minimal OI overlay + read-only option-chain table
+
+- **Spec refs:** ENGINE §18.2, §21.1, §26
+- **Size:** M (2.0 person-day upper bound)  
+- **Depends on:** M3-08, M5-12, M6-03, M6-15  
+- **Needs:** —  
+- **Initial status:** `DESIGNED`  
+- **Acceptance type:** `file_check`  
+- **Evidence path:** `ops/evidence/M6-18.md`
+- **Acceptance contract:** Implement UI-1b baseline features: minimal open interest (OI) overlay on the primary chart and a read-only option-chain table. Execution signals still cannot consume unverified OI. Delivery is strictly conditional on M3-08 reporting verified OI semantics; if M3-08 semantics remain unresolved, OI display is flagged with visible `UNVERIFIED_OI` badge and excluded from strategy signals. Full live order routing matrix and multi-tab OI visualization remain deferred to UI-3/v1.1.
+
 
 ### M7 — Live runtime and paper accounts
 
 #### M7-01 — FrameBus local transport and raw replay
+
+- **Spec refs:** DATA §4.5, ENGINE §10, MASTER §2
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** G0, G1, G2a, M1-04  
@@ -1118,20 +1361,23 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Evidence path:** `ops/evidence/M7-01.md`
 - **Acceptance contract:** Check/record: Duplicate/reordered/gapped frames, restart offset, replay and backpressure tests; measure p95 Deliverable target: `FrameBus` interface with monotonic sequence numbers, local socket/async queue adapter and resume/replay from raw segments; Redis/Valkey adapter remains optional Evidence must support: Local transport passes replay tests; add Redis/Valkey only if p95 exceeds 500 ms or a documented resume requirement justifies it; raw remains durable truth
 
-#### M7-02 — Candle builder and feature warm-up
+#### M7-02 — Streaming candle builder and bar aggregation
 
-- **Size:** L (5 person-day upper bound)  
+- **Spec refs:** DATA §4.5, ENGINE §3.2, §10
+- **Size:** M (2.5 person-day upper bound)  
 - **Depends on:** M7-01, G3  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M7-02.md`
-- **Acceptance contract:** Check/record: Vendor reconciliation, late event, missing minute and warm-up tests Deliverable target: Provisional/closed candle builder, late-event tolerance, feature window restoration Evidence must support: Restart enters `WARMING_UP`; no entries before warm-up and reconciliation complete
+- **Acceptance contract:** Check/record: Provisional and closed candle aggregation from FrameBus ticks, boundary timing (09:15–15:30), late-event tolerance, missing-minute detection, and candle emission. Deliverable target: Resilient streaming candle builder emitting 1-minute and decision-timeframe bars. Evidence must support: No duplicate candle finalizations; late ticks beyond grace period quarantined.
 
 #### M7-03 — Strategy host, risk and paper broker
 
+- **Spec refs:** ENGINE §6, §7, §8, §10
+
 - **Size:** L (5 person-day upper bound)  
-- **Depends on:** M7-02, G2a  
+- **Depends on:** M7-09, G2a  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
@@ -1140,8 +1386,10 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M7-04 — Checkpoint, replay and reconciliation
 
+- **Spec refs:** DATA §2.1, ENGINE §8, §10
+
 - **Size:** L (5 person-day upper bound)  
-- **Depends on:** M7-02, M7-03  
+- **Depends on:** M7-09, M7-03  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
@@ -1149,6 +1397,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Restart at every commit boundary; `.partial` recovery; duplicate fill/fee and failed reconciliation Deliverable target: Durable checkpoint and recovery; idempotent event/ledger replay Evidence must support: Three identical replay runs; no duplicate fills; reconciliation failure blocks entries
 
 #### M7-05 — End-to-end recorded-session comparison
+
+- **Spec refs:** ENGINE §4, §10, §20
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M7-04, G2a  
@@ -1160,6 +1410,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M7-06 — Live operational fault suite
 
+- **Spec refs:** ENGINE §7, §10, MASTER §4
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M7-04  
 - **Needs:** market-hours/credentials  
@@ -1169,6 +1421,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Check/record: Full fault injection in isolated environment Deliverable target: Disk-full, clock jump, duplicate collector lease, token expiry, stale feed, supervisor restart, alert paths Evidence must support: Session uptime ≥99% over measured sessions; every gap alerts; live quote-to-UI p95 ≤500 ms when measured
 
 #### M7-07 — Deployment process isolation and halt behavior
+
+- **Spec refs:** MASTER §2, §3, DATA §2.1
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M7-03, M7-04  
@@ -1180,6 +1434,7 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M7-08 — Manual paper orders and chart SL/TP drag
 
+- **Spec refs:** ENGINE §6, §8, §18.1
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M6-03, M7-03  
 - **Needs:** owner  
@@ -1188,10 +1443,23 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Evidence path:** `ops/evidence/M7-08.md`
 - **Acceptance contract:** Check/record: Order validation, acknowledgement-before-UI-commit, stale version conflict and audit event tests Deliverable target: Manual paper-order placement UI/API and draggable server-authoritative SL/TP chart lines Evidence must support: Manual paper orders are recorded; drag changes only commit after server acknowledgement; no real orders
 
+#### M7-09 — Streaming feature warm-up and state synchronization
+
+- **Spec refs:** ENGINE §3.2, §10, DATA §2.1
+- **Size:** M (2.5 person-day upper bound)  
+- **Depends on:** M7-02, G3  
+- **Needs:** —  
+- **Initial status:** `DESIGNED`  
+- **Acceptance type:** `file_check`  
+- **Evidence path:** `ops/evidence/M7-09.md`
+- **Acceptance contract:** Check/record: Historical bar warm-up of streaming indicators and feature pipelines upon daemon startup or recovery; state synchronization before trading commences. Genuine split of M7-02: M7-02 handles raw candle aggregation; M7-09 handles indicator warm-up and state synchronization. Evidence must support: Restart enters `WARMING_UP`; no strategy signals or order intents dispatched until warm-up and reconciliation are complete.
+
 
 ### M8 — Research and robustness
 
 #### M8-01 — Chronological dataset and leakage guards
+
+- **Spec refs:** DATA §2.1, ENGINE §12, §23
 
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** G1, G3  
@@ -1203,6 +1471,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M8-02 — Purged walk-forward and embargo
 
+- **Spec refs:** ENGINE §12, §23
+
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M8-01, G2a  
 - **Needs:** —  
@@ -1213,15 +1483,19 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M8-03 — Trial counter and final-evaluation control
 
+- **Spec refs:** DATA §2.1, ENGINE §12, §20.3
+
 - **Size:** M (2 person-day upper bound)  
 - **Depends on:** M4-08, M8-01  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M8-03.md`
-- **Acceptance contract:** Check/record: Overlapping run rejection, repeated final-evaluation rejection, audit log Deliverable target: Persistent trial counter and single-use `final_evaluation=true` guard per strategy version Evidence must support: Worker refuses overlapping runs unless allowed; final-evaluation flag logged and single-use per version
+- **Acceptance contract:** Check/record: Overlapping run rejection, repeated final-evaluation rejection, audit log Deliverable target: Persistent trial counter and single-use `final_evaluation=true` guard per hold-out range per strategy lineage Evidence must support: Worker refuses overlapping runs unless allowed; final-evaluation flag logged and single-use per hold-out range per strategy lineage
 
 #### M8-04 — Parameter sweeps and model registry
+
+- **Spec refs:** DATA §2.1, ENGINE §19, §23
 
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M8-02, M8-03  
@@ -1233,6 +1507,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M8-05 — ML baselines (research only)
 
+- **Spec refs:** ENGINE §23, MASTER §1
+
 - **Size:** L (5 person-day upper bound)  
 - **Depends on:** M8-01, M8-02, M8-03, M8-04  
 - **Needs:** —  
@@ -1243,6 +1519,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M8-06 — R2 option-chain and tick pattern research path
 
+- **Spec refs:** ENGINE §23, DATA §4.5
+
 - **Size:** L (5.0 person-day upper bound)  
 - **Depends on:** M8-01, M8-04, M2-05, M5-10  
 - **Needs:** —  
@@ -1252,6 +1530,8 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Acceptance contract:** Research-only discovery on point-in-time option-chain and recorded WebSocket/tick data. Require verified field semantics, manifest provenance, purged walk-forward/embargo, trial counting and hold-out protection. Candidate patterns are not strategies until converted through the frozen model/feature contract, validated out of sample and reviewed. No automatic promotion to paper/live.
 
 #### M8-07 — R3 candle and chart pattern research path
+
+- **Spec refs:** ENGINE §23, DATA §4.1
 
 - **Size:** M (3.0 person-day upper bound)  
 - **Depends on:** M8-01, M8-04, M5-10  
@@ -1267,8 +1547,8 @@ These are solo-developer planning ranges, not commitments. Unknown source semant
 
 | Stage | Purpose | Expected planning range | Exit |
 |---|---|---:|---|
-| M0 | Preservation, inventory, retention facts, backup | 5–8 working days plus later 3-session observation | M0 task evidence; do not confuse with G0 |
-| M1 | Clean repository skeleton, CI, config, logs, migrations, leases | 8–12 working days | Clean clone passes tooling/import/migration checks |
+| M0 (preservation & audit) | Preservation, inventory, retention facts, backup | 5–8 working days plus later 3-session observation | M0 task evidence; do not confuse with G0 |
+| M0 (facts) + M1 / G0a | Bootstrap, inventory, retention facts, repository skeleton, CI, config, migrations | 8–12 working days | G0a: clean clone passes tooling/import/migration and facts verification |
 | M2 + M3 | Collectors and audit in parallel | 3–5 weeks each, overlap allowed | G0 and G1 independently |
 | M4a / G2a | Single-leg long CE/PE engine, ledger, metrics, RunConfig | 3–5 weeks after data/golden prerequisites; engine scaffolding may run earlier on synthetic data | G2a |
 | M4b / G2b | Group exits, short/multi-leg representation, margin guard | 2–4 additional weeks plus external VERIFY wait | G2b theoretical/representation gate; realistic margin eligibility may remain blocked |
@@ -1277,7 +1557,7 @@ These are solo-developer planning ranges, not commitments. Unknown source semant
 | M7 | FrameBus, live daemon, paper broker, replay/recovery | 5–8 weeks | G5 |
 | M8 | Robustness, walk-forward, ML baselines and research | 6–12+ weeks then ongoing | G6 |
 
-Critical path for the first useful single-leg paper system: M0 → M1 → M2/G0 and M3/G1 (parallel where safe) → M4a/G2a → M5/G3 → M6/G4 → M7/G5. A rough calendar expectation is **about 6–9 months to initial paper readiness**, plus at least 20 market sessions of observation (roughly another month if not overlapped). G6 robustness may extend total time to **8–12+ months**. Short/multi-leg paper work adds M4b and may wait on margin/settlement evidence. Recalculate from actual task durations after each milestone; do not treat this estimate as a promise.
+Critical path for the first useful single-leg paper system: G0a (M0 bootstrap/inventory/facts + M1 skeleton) → M2/G0 and M3/G1 (parallel where safe; G0 and G2a depend on G0a) → M4a/G2a → M5/G3 → M6/G4 → M7/G5. A rough calendar expectation for a full-time developer is about 12 months to full completion across the 262.5 person-day plan (or 22–26 months for a solo part-time developer dedicating 10–12 days/month), plus at least 20 market sessions of observation (roughly another month if not overlapped). Short/multi-leg paper work adds M4b and may wait on margin/settlement evidence. Recalculate from actual task durations after each milestone; do not treat this estimate as a promise.
 
 ## 8. Baseline strategy, capital sensitivity and trial accounting
 
@@ -1336,7 +1616,7 @@ Never delete a `VERIFY` item. Close it only with dated evidence and record which
 
 ## 11. Cut list if schedule slips
 
-Cut in this order: ML beyond R1; advanced drawings and saved layouts; Renko implementation; option-chain/OI UI detail until the scheduled v1.1 slice (unless strategy dependency promotes it); multi-account UI polish; model Greeks beyond configured ATM band; nonessential performance work before correctness.
+Cut in this order: ML beyond R1; G2b short-option and multi-leg implementation; advanced drawings and saved layouts; Renko implementation; option-chain/OI UI detail until the scheduled v1.1 slice (unless strategy dependency promotes it); multi-account UI polish; model Greeks beyond configured ATM band; nonessential performance work before correctness.
 
 Never cut: raw-first capture, source preservation, M3 audit/eligibility, exact-money accounting, causal event ordering, golden tests, fee/slippage reporting, ledger idempotency/rebuild, `.partial` recovery, stale-data/risk halts, hold-out/trial accounting, or open `VERIFY` tracking.
 
@@ -1373,22 +1653,22 @@ Every numbered/lettered requirement and substantive question in `my_vision.txt` 
 | `V-02` | Dashboard (backtesting, launch chart, strategies, accounts, risk management, capital) | ENGINE §18.1 | `M6-08` | `COVERED` | Central operational navigation dashboard with health widgets. |
 | `V-03` | Interactive chart indicators (standard market indicators + custom Pine-to-Python indicators) | ENGINE §18.1, §21 | `M5-03`, `M5-08`, `M5-11`, `M6-03` | `COVERED` | EMA, SMA, RSI, MACD, ATR, Bollinger, Supertrend, ADX; session VWAP blocked until volume semantics verified. |
 | `V-04` | Indicator settings dialogs & visibility controls (parameters, colors, per-pane toggle) | ENGINE §18.1 | `M6-11` | `COVERED` | Dynamic JSON schema-driven indicator configuration dialog. |
-| `V-05` | Multiple chart types switcher (candlestick, Heikin Ashi, etc.) | ENGINE §18.1, §22 | `M5-09`, `M6-12` | `COVERED` | Heikin Ashi switcher in v1; Renko UI deferred to v1.1 per ADR-007. |
+| `V-05` | Multiple chart types switcher (candlestick, Heikin Ashi, etc.) | ENGINE §18.1, §22 | `M5-09`, `M6-12` | `COVERED` | Heikin Ashi switcher in v1; Renko UI deferred to v1.1 per MASTER UI release tiers and ENGINE §18.2 (UI-3). |
 | `V-06` | Chart drawing tools (lines, boxes, zones with coordinate persistence) | ENGINE §18.1, DATA §2.1 | `M6-13` | `COVERED` | Basic drawings (lines, zones) persisted in PostgreSQL `chart_drawings` table via `/api/v1/charts/drawings`. |
-| `V-07` | Multiple chart layouts (multi-pane, split screens) | ENGINE §18.1, §26 | `M6-15` | `DEFERRED` | UI implementation deferred to UI-3/v1.1; REST API schema frozen in M6-15. |
+| `V-07` | Multiple chart layouts (multi-pane, split screens) | ENGINE §18.1, §18.3, §26 | `M6-15` | `DEFERRED` | Multi-pane layout engine and split-screen UI deferred to UI-3/v1.1 (post-v1, uncounted in baseline totals) per MASTER UI release tiers and ENGINE §18.2; REST API schema frozen in M6-15; single-pane chart with indicator panes polished in M6-17. |
 | `V-08` | Per-strike option candle chart with trade markers | DATA §3, ENGINE §2, §18.1, §18.3 | `M6-03b` | `COVERED` | Displays strike-specific option OHLC with execution markers; `UtcEpochSec` integer seconds are the API/UI wire format derived from canonical UTC timestamps. |
-| `V-09` | Option chain live broker panel | ENGINE §18.1, §26 | `M6-15` | `DEFERRED` | Matrix UI deferred to UI-3/v1.1; OpenAPI endpoint schemas frozen in M6-15. |
-| `V-10` | OI levels visualization (separate tabs and on-chart overlay) | ENGINE §18.1, §26 | `M6-15` | `DEFERRED` | Advanced visualization deferred to UI-3/v1.1; schemas frozen in M6-15. |
-| `V-11` | Timeline horizontal axis, price vertical axis (`UtcEpochSec` contract) | DATA §3, ENGINE §2, §18.3 | `M6-03` | `COVERED` | `UtcEpochSec` integer seconds wire contract for charts, markers, and replay cursor, derived from canonical UTC timestamps. |
+| `V-09` | Option chain live broker panel | ENGINE §18.1, §18.2, §26 | `M6-15`, `M6-18` | `COVERED` | Minimal read-only option-chain table delivered in M6-18 (UI-1b); full live broker order-routing matrix panel deferred to UI-3/v1.1 per MASTER UI release tiers and ENGINE §18.2; OpenAPI endpoint schemas frozen in M6-15. |
+| `V-10` | OI levels visualization (separate tabs and on-chart overlay) | ENGINE §18.1, §18.2, §21.1, §26 | `M5-12`, `M6-15`, `M6-18` | `COVERED` | Causal OI features computed in M5-12; minimal on-chart OI overlay delivered in M6-18 (UI-1b); advanced standalone OI levels multi-tab visualization deferred to UI-3/v1.1 per ENGINE §18.2; API schemas frozen in M6-15. |
+| `V-11` | Timeline horizontal axis, price vertical axis (`UtcEpochSec` contract) | DATA §3, ENGINE §2, §18.3 | `M6-03`, `M6-16` | `COVERED` | `UtcEpochSec` integer seconds wire contract for charts, markers, and replay cursor, derived from canonical UTC timestamps; implemented in basic chart M6-03 and read-only candle viewer M6-16. |
 | `V-12` | Same-page backtest results drawer & metrics display linked to chart | ENGINE §18.1, §19, §20 | `M6-04`, `M6-09` | `COVERED` | Results drawer on chart page links trade markers to ledger, fills, and metrics. |
 | `V-13` | On-chart paper trade order placement & draggable SL/TP lines | ENGINE §18.1, §18.3 | `M7-08` | `COVERED` | Server-authoritative draggable SL/TP lines; market orders in v1 paper. |
 | `V-14` | Backtesting terminal (strategy selection, date range from/to, CE/PE/BOTH direction) | ENGINE §19 | `M4-18`, `M6-09` | `COVERED` | Unified RunConfig schema drives CLI, API, and UI form. |
-| `V-15` | Historical candle data ingestion (1m canonical, derived 3m/5m/15m/1h/4h/1d) | DATA §4.1, §11.1 | `M3-04`, `M3-07` | `COVERED` | 1m canonical Parquet lake (`DATA §4.1`); derived intervals and data eligibility audit (`DATA §11.1`). |
+| `V-15` | Historical candle data ingestion (1m canonical, derived 3m/5m/15m/1h/4h/1d) | DATA §4.1, §7, §11.1 | `M3-04`, `M3-07`, `M3-09` | `COVERED` | 1m canonical Parquet lake (DATA §4.1), interval derivation rules (DATA §7), and comprehensive data eligibility & coverage audit (DATA §11.1, M3-09). |
 | `V-16` | 30-second live option chain snapshots archive & multi-version migration (v1 `prev_oi`, v2, v3) | DATA §4.3, §4.4 | `M0-01`, `M0-06`, `M3-05`, `M3-06` | `COVERED` | Schema migration preserves `prev_oi`, handles missing headers and expiry from directory (`option_snapshot_captures/rows` in `DATA §4.3, §4.4`). |
 | `V-17` | Expired option candle data ingestion (1m OHLC, strike/expiry/lot_size) | DATA §4.2, §11.2 | `M3-01`, `M3-03` | `COVERED` | Canonical expired contracts schema (`option_candles` in `DATA §4.2`), contract master, and required additional datasets (`DATA §11.2`). |
-| `V-18` | WebSocket live tick-by-tick stream research, schema & local storage | DATA §4.5, §11.4 | `M2-05`, `M7-01` | `COVERED` | Upstox WebSocket protobuf field analysis, local FrameBus transport. |
-| `V-19` | Data transition, gap handling & source-semantics audit | DATA §8, §11.5, §11.6, §11.7 | `M3-08`, `M3-09` | `COVERED` | Comprehensive audit: volume/OI units, gaps, lot-size 75->65 transition, eligibility flags. |
-| `V-20` | PostgreSQL operational database design + Parquet/DuckDB hybrid storage | MASTER ADR-002, ADR-004, DATA §2, §2.1 | `M1-04`, `M1-09`, `M4-11` | `COVERED` | PostgreSQL for transactional state/ledger; Parquet/DuckDB for analytical market data. |
+| `V-18` | WebSocket live tick-by-tick stream research, schema & local storage | DATA §2, §4.5, §11 (source-semantics table); ENGINE §10 | `M2-05`, `M7-01` | `COVERED` | Upstox WebSocket protobuf field analysis, local FrameBus transport. |
+| `V-19` | Data transition, gap handling & source-semantics audit | DATA §8, §11, §11.6, §11.7 | `M3-08`, `M3-09` | `COVERED` | Comprehensive audit: volume/OI units, gaps, lot-size 75->65 transition, eligibility flags. |
+| `V-20` | PostgreSQL operational database design + Parquet/DuckDB hybrid storage | MASTER ADR-002, DATA §2, §2.1 | `M1-04`, `M1-09`, `M4-11` | `COVERED` | PostgreSQL for transactional state/ledger; Parquet/DuckDB for analytical market data. |
 | `V-21` | Snapshot merge design & lazy reconstructed chain view | MASTER ADR-006, DATA §4.4, DATA §4.8 | `M3-05`, `M5-04` | `COVERED` | DuckDB lazy view over normalized snapshots; no default massive stored chain table. |
 | `V-22` | Technical indicators compute vs store & monthly content-addressed feature cache | MASTER ADR-007, ENGINE §21 | `M5-01`, `M5-02` | `COVERED` | Stated deviation: on-the-fly computation default; cache conditional on benchmark justification. |
 | `V-23` | Custom PineScript-to-Python conversion & indicator isolation | MASTER ADR-012, ENGINE §9, §21 | `M5-06`, `M5-07`, `M5-08` | `COVERED` | Subprocess isolation with memory/time cap; strict causal confirmation rules. |
@@ -1398,9 +1678,10 @@ Every numbered/lettered requirement and substantive question in `my_vision.txt` 
 | `V-27` | Point-in-time causal backtesting engine (7-step loop, calendar-minute tick clock) | MASTER ADR-008, ADR-009, ENGINE §4, §5, §8 | `M4-01` to `M4-05` | `COVERED` | Deterministic event clock, causal tick delivery, idle skipping, no look-ahead. |
 | `V-28` | Look-ahead bias prevention & execution timing question (Close signal -> next open fill; Open signal -> close fill rejected) | ENGINE §3.1, §4, AGENTS §8 | `M4-02`, `M4-05` | `COVERED` | Explicitly answers question: open-based signal at close entry is rejected; fills at next open. |
 | `V-29` | Point-in-time contract selector & lifecycle management | ENGINE §5, MASTER ADR-005 | `M4-04` | `COVERED` | Point-in-time selection by delta/moneyness, expiry bounds, zero silent substitution. |
-| `V-30` | Risk-policy module with configurable pre-backtest toggles & intraday monitoring | ENGINE §7, §19 | `M4-20`, `M6-06` | `COVERED` | Decoupled RiskEvaluator: max trades, daily loss, drawdown, trading window, kill switch. |
-| `V-31` | Append-only financial ledger with integer paise arithmetic | MASTER ADR-002, ADR-011, ENGINE §8 | `M4-01`, `M4-07`, `M4-11` | `COVERED` | Exact paise integer math; append-only PostgreSQL enforcement; projection rebuild. |
-| `V-32` | Backtest metrics manifest (P&L, drawdown, Sharpe, Sortino, DSR) | ENGINE §20 | `M4-15` | `COVERED` | Metrics manifest with exact mathematical formulas and Bailey & López de Prado DSR. |
+| `V-30` | Risk-policy module with configurable pre-backtest toggles & intraday monitoring | ENGINE §7, §19 | `M4-20`, `M6-06` | `COVERED` | Decoupled RiskEvaluator executing kill switch, daily loss ceiling, max drawdown, cooldown bars, stale-data halt, VIX/liquidity gates, exposure caps, and trading windows. |
+| `V-31` | Append-only financial ledger with integer paise arithmetic | MASTER ADR-002, ADR-011, DATA §2.1, ENGINE §8 | `M4-01`, `M4-07`, `M4-11`, `M4-22` | `COVERED` | Exact paise integer math; append-only storage in PostgreSQL `ledger_events` (operational/paper) and dedicated per-run Parquet ledger for backtests (MASTER intentional deviations); projection rebuild and fee/slippage integration. |
+| `V-32` | Backtest metrics manifest (P&L, drawdown, Sharpe, Sortino, DSR) | DATA §2.1, ENGINE §20, §20.1, §20.2, §20.3 | `M4-15` | `COVERED` | Comprehensive metrics manifest with exact mathematical formulas, Bailey & López de Prado Deflated Sharpe Ratio (DSR), and cross-trial Sharpe dispersion tracking via `research_trials` columns (DATA §2.1). |
 | `V-33` | Account segregation (isolated deployments, independent capital/ledger/risk) | MASTER ADR-011, ADR-014, ENGINE §8 | `M6-06`, `M6-14`, `M7-07` | `COVERED` | Isolated process and account boundaries for multi-strategy evaluation. |
 | `V-34` | Machine learning baselines (R1: price movement, regime classification, strategy meta-labeling) | ENGINE §23 | `M5-10`, `M8-05` | `COVERED` | Research baselines under purged walk-forward; optional strategy integration. |
 | `V-35` | Machine learning research (R2: option-chain/tick patterns; R3: candlestick & chart pattern discovery) | ENGINE §23 | `M8-06`, `M8-07` | `COVERED` | R2 option-chain/tick discovery and R3 candlestick pattern discovery decoupled from WS. |
+| `V-36` | Live feature engine dependency evaluation (active strategy features + visible chart features) | ENGINE §3.2 | `M5-01`, `M7-02`, `M7-03` | `COVERED` | Live feature engine computes only the union of visible chart features and active strategy features; strategy features continue executing even when hidden from the chart. |

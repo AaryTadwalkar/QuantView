@@ -1,6 +1,6 @@
-# QuantView Architecture — Decision Register
+# QuantView Architecture — Master Specification
 
-**Document type:** Architecture Decision Records (ADRs) only  
+**Document type:** Master Specification (Decision Register, Architecture Overview, and Owner Decisions)  
 **Scope:** Single-user NIFTY 50 options research, backtesting and paper trading  
 **Status vocabulary:** `DESIGNED` = decided on paper; `IMPLEMENTED` = code exists; `TESTED` = automated/manual tests passed; `VERIFIED` = checked against authoritative external behaviour or source data.  
 **Current document status:** decisions are **DESIGNED** unless a project audit supplies evidence otherwise. This document does not claim implementation.
@@ -55,7 +55,7 @@ Parquet/DuckDB optimize local analytical scans while Postgres protects transacti
 **Status:** DESIGNED
 
 **Context**  
-Missed live sessions cannot be reconstructed later. Existing snapshot collection has late starts, gaps, early stops and schema drift. The actual expired-option candle inventory is not yet audited.
+Missed live sessions cannot be reconstructed later. Existing snapshot collection has late starts, gaps, early stops and schema drift. The expired-option candle inventory was audited (M0-01) and only one sample day (2025-04-24) exists; the bulk history is not yet downloaded.
 
 **Decision**  
 Collectors are the first build phase. Run `collector_snapshot` and `collector_ws` independently with restart supervision, clock synchronization, heartbeat/lag metrics and alerts. **`collector_ws` is the sole owner of all Upstox WebSocket connections**. Its `SubscriptionManager` computes the union of subscriptions required by active deployments and chart requests, enforces only empirically verified limits, and exposes the effective subscription set and rejected requests to the UI. `collector_ws` persists raw messages before normalization. Until M7-01 is implemented and tested, it is raw-capture-only; it must not depend on a live consumer. M2 may define a typed no-op producer interface, but actual FrameBus publication/replay begins at M7-01. Replay reads finalized raw segments. Start with local transport and add a Redis/Valkey adapter only if measured latency or resume complexity justifies it. `live_daemon` never opens an Upstox WebSocket. Capture at least two representative market sessions as fixtures before implementing the decoder. Historical backfill jobs are checkpointed, idempotent and lower priority than snapshot capture.
@@ -261,7 +261,7 @@ Recovery guarantees depend on the chosen backup implementation and vendor terms.
 The product needs independently restartable capture and live processes, while a single developer needs to keep deployment and maintenance burden proportionate.
 
 **Decision**  
-Use the modular-monolith process boundaries: `collector_snapshot`, `collector_ws`, checkpointed `backfill`, `api`, `worker_compute`, `worker_data`, `live_daemon`, and `web`. `worker_compute` may run N instances and claims independent jobs with Postgres row leases. `worker_data` has exactly one active instance under an exclusive renewable lease and must stop publishing if the lease expires. `collector_ws` is the only owner of Upstox WebSocket connections. `live_daemon` is independent of API/UI restarts and supervises one OS process per deployment. Start with a lightweight Postgres job runner using `FOR UPDATE SKIP LOCKED` and leases; do not introduce a separate queue framework unless measurements justify it.
+Use the modular-monolith process boundaries: `collector_snapshot`, `collector_ws`, checkpointed `backfill`, `api`, `worker_compute`, `worker_data`, `live_daemon`, and `web`. `worker_compute` may run N instances and claims independent jobs with Postgres row leases. `worker_data` has exactly one active instance under an exclusive renewable lease and must stop publishing if the lease expires. `collector_ws` is the only owner of Upstox WebSocket connections. `live_daemon` is independent of API/UI restarts and supervises one OS process per deployment. Live daemon lease ownership is authoritatively tracked by `deployments.lease_owner` and `heartbeat_at` in PostgreSQL (DATA §2.1); jobs queue rows are non-authoritative lifecycle references. Start with a lightweight Postgres job runner using `FOR UPDATE SKIP LOCKED` and leases; do not introduce a separate queue framework unless measurements justify it.
 
 **Consequences and trade-offs**  
 Process boundaries improve fault isolation but increase operational work. Keep only the boundaries that protect capture, canonical publication, and live deployments; don't split every Python package into a service.
@@ -407,8 +407,8 @@ QuantView is structured as a **modular monolith** running on a single dedicated 
       | 8. Ledger Reconciliation: recompute gross/net P&L, fees, integer-paise balance
       | 9. Compute Metrics: write `metrics.json` (DSR, Sharpe, Sortino, drawdowns)
       | 10. Atomic Publish: rename `staging/runs/{run_id}/` -> `data/runs/{run_id}/`
-      | 11. Register Run: update Postgres `runs` record (status = 'PUBLISHED')
-      | 12. Release Lease: mark job 'COMPLETED'
+      | 11. Register Run: update Postgres `runs` record (status = 'SUCCEEDED')
+      | 12. Release Lease: mark job 'SUCCEEDED'
       v
 [ UI / Report Consumer ]
       |
@@ -417,7 +417,7 @@ QuantView is structured as a **modular monolith** running on a single dedicated 
 
 ### 5. Architectural Non-Negotiables
 
-1. **No External Cache / Redis:** No Redis, Valkey, Memcached, or distributed cache infrastructure. State lives in PostgreSQL and Parquet files.
+1. **No External Cache / Redis:** No Redis/Valkey/external cache; state lives in PostgreSQL and Parquet files. An optional adapter is permitted only if the ADR-002 measured-latency (> 500 ms p95) or restart/resume criteria are met, via an ADR.
 2. **No Microservices Complexity:** Monolithic codebase in the repository root inside the Linux/WSL2 filesystem (never /mnt/c per ADR-015); modular process boundaries managed via standard systemd services.
 3. **No Unconditional Feature Cache:** Features are calculated causal-on-demand. A persistent feature cache is added only if benchmarked and justified under M5-02.
 4. **No Real Broker Orders in v1:** All live trading paths in v1 are simulated paper trading (`MANUAL_PAPER`, `STRATEGY_PAPER`). Real order routes do not exist.
@@ -432,8 +432,9 @@ QuantView is structured as a **modular monolith** running on a single dedicated 
 | Tier | Required scope |
 |---|---|
 | UI-1 core | Dashboard; strategy browser; backtest terminal; candlestick chart; per-strike option chart with trade markers; indicator controls/settings; same-page results panel; accounts/risk/capital; results/audit. |
+| UI-1b promoted sub-slice | Minimal OI overlay + read-only option-chain table; promoted into scope once M3-08 reports verified OI semantics (or owner chooses earlier). Uses §26 contracts. |
 | UI-2 selective | Heikin Ashi view; basic horizontal line and rectangle drawings. |
-| UI-3, scheduled v1.1 and still committed | Renko; saved multi-chart layouts; advanced drawings; option-chain panel; OI tabs/overlays. API/data contracts are specified in `QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md`. If a baseline/candidate uses OI/PCR, promote the required OI UI slice before declaring that strategy fully inspectable. |
+| UI-3, scheduled v1.1 and still committed | Renko; saved multi-chart layouts; advanced drawings; interactive option-chain matrix; multi-tab OI visualizations. API/data contracts are specified in `QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md`. If a baseline/candidate uses OI/PCR, promote the required OI UI slice before declaring that strategy fully inspectable. |
 
 ### Owner decisions
 
@@ -450,7 +451,8 @@ QuantView is structured as a **modular monolith** running on a single dedicated 
 - **Feature persistence/recompute skipping:** the vision proposed skipping already-computed features whenever settings change. QuantView intentionally does not promise universal precomputation or automatic reuse in v1. It computes on demand first and adds content-addressed caching only after a benchmark shows material benefit. If cache is enabled, exact input/code/parameter/state hashes and invalidation tests are mandatory. This avoids persisting every possible parameter combination without evidence that it improves the actual workload.
 - **Snapshot merging:** individual 30-second captures are not merged into a synthetic continuous grid. Capture times, schema versions, missing intervals and field-presence masks are preserved; daily compaction is storage compaction only.
 - **Visual transforms:** Heikin Ashi/Renko are derived display transforms and never replace tradable OHLC.
-- **UI staging:** UI-1 prioritizes the per-strike chart, trade markers, same-page results and indicator settings. Layouts, Renko, advanced drawings and option-chain/OI panels remain scheduled for v1.1 (UI-3), not silently dropped. Promote OI UI earlier if a strategy uses OI/PCR.
+- **UI staging:** UI-1 prioritizes the per-strike chart, trade markers, same-page results and indicator settings. UI-1b (minimal OI overlay + read-only option-chain table) is promoted into scope once M3-08 reports verified OI semantics (or earlier by owner choice). Layouts, Renko, and advanced drawings remain scheduled for v1.1 (UI-3).
+- **Run ledger storage:** The vision describes exporting run ledgers into database tables. QuantView stores backtest run ledgers as partitioned Parquet artifacts with a PostgreSQL index row (`runs`), keeping the transactional database lean while preserving exact-money replayability.
 - **Live data semantics:** a WebSocket quote/update stream is not assumed to be a complete tick tape or a complete option chain; actual feed fields and semantics require recorded fixtures and VERIFY evidence.
 
 ### Authority of the final spec set
@@ -464,222 +466,3 @@ Detailed, executable bar/order/fill semantics live only in `QUANTVIEW_ENGINE_UI_
 ## Decision implementation status
 
 No ADR becomes `IMPLEMENTED`, `TESTED` or `VERIFIED` solely because it is written here. Each status change must link to code, test output, data audit, or external source evidence in the project decision log.
-
-
-## Appendix A — Original vision input preserved for completeness
-
-Binding decisions and explicit contracts above resolve the open questions in this original input. The appendix preserves the user's original wording so no requirement is silently discarded; it is not permission to guess where a question is unanswered.
-
-# I want a full scaleable system similar to trading view and broker mixed.
-
-I want a full-stack app where there is a UI, there is a backend, and there is a database.
-### core modules(as far i can think of):
-1.frontend
-2.real time data injestion
-3.DB and real time data storage in proper format
-4.features
-5.strategies and strategies family
-6.backtesting 
-7.risk management
-8.ledger
-9.accounts
-10. machine learning and research
-
-
-
-List down some features I want on frontend:
-# 1.Dashboard, where i there are options to to go backtesting section, launch chart, see strategies,able to see accounts we have, handle risk management and capital, of the accounts
-
-2. Interactive chart like trading view with following feature
-A. should be able to put on indicators like trading view(general indicators in market+ my custom indicators)
-B. multiple chart types i can switch from like candlestick, heiken ashi, etc
-C. should be able to draw and put on lines, boxes, etc.
-D. shound be able to put chart in different layout.
-E. should be able to put on chart of differnt strike prices
-F. see option chain like brokers live.
-G. visualization of oi levels in seperate tabs, and ON chart as a overlay
-H. see timeline on bottom scale and price on vertical scale.
-I. should be able to pull the chart up and on same page, see backtesting results , able to backtest strategies, see metrices values of backtesting results. just like trading view
-J. should be able to place paper trade order directly on chart and see its position on chart itself and should be able to put target and stoploss by dragging the sla nd tp level accross chart like most brokers nowadays
-
-3. BACKTESTING TERMINAL
-A. existing strategy in system i should be able to backtest.
-B. set date range from and too
-C. if a strategy is bidirectional(CE/PE) then i should i have option to CE or PE, or both.
-D. other backtesting options( you expand) 
-
-## AS I DEFINE BACKEND I WILL MENTION PLACES WHERE THINGS SHOULD BE AVALAIABLE TO FRONTEND OR BACKEND SETTING THAT SHOULD BE MODIFIABLE IN FRONTEND SO NOTE THAT IN FRONTEND
-## if you think there are some additions to frontend based on backend requirements, add them.
--------------------------------------------------------------------------------
-## BACKEND
-
-### data injestion
-# 1. Current state of data injestion and Data base
-A. 
-we have api of upstox which return historical candlestick data
-schema:
-timestamp,open,high,low,close,volume,open_interest
-2022-01-03 09:15:00+05:30,17387.15,17438.4,17387.15,17428.9,0,0
-2022-01-03 09:16:00+05:30,17428.4,17451.45,17428.4,17450.55,0,0
-2022-01-03 09:17:00+05:30,17450.05,17459.55,17442.05,17457.7,0,0
-2022-01-03 09:18:00+05:30,17455.95,17465.75,17455.3,17464.55,0,0
-2022-01-03 09:19:00+05:30,17465.25,17474.65,17462.15,17473.2,0,0
-
-we have 1min/3min/5min/15min/1h/1d interval candlestick data
-- Candlestick Data Summary
-| Timeframe | Total Rows | Start Date | End Date |
-|---|---|---|---|
-| 1m | 451,952 | 2022-01-03 09:15:00 | 2026-10-08 15:29:00 |
-| 3m | 144,428 | 2022-01-03 09:15:00 | 2026-10-08 15:27:00 |
-| 5m | 86,728 | 2022-01-03 09:15:00 | 2026-10-08 15:25:00 |
-| 15m | 28,944 | 2022-01-03 09:15:00 | 2026-10-08 15:15:00 |
-| 1h | 8,232 | 2022-01-03 09:15:00 | 2026-10-08 15:15:00 |
-| 4h | 2,352 | 2022-01-03 09:15:00 | 2026-10-08 13:15:00 |
-| 1d | 1,410 | 2021-02-01 00:00:00 | 2026-10-08 00:00:00 |
-
-
-
--------------------------------------------------------------------------------
-B.we have live option chain snapshots since
-- **Data Collection Start Date**: 2026-01-20
-- **Data Collection End Date**: 2026-10-09
-these snapshots are taken every 30 sec with the schema being
-schema:
-timestamp,spot_price,strike,type,oi,volume,ltp,bid,ask,bid_qty,ask_qty,chng,chng_oi,iv,delta,gamma,theta,vega
-2026-07-27 09:42:33.713525,23947.0,21100.0,CE,26260.0,260,2860.0,2836.0,2876.6,65,65,0,0,0.927734375,0.9912,0.0,-12.4566,0.3334
-2026-07-27 09:42:33.713525,23947.0,21100.0,PE,2629705.0,310245,0.55,0.55,0.6,85215,81445,0,0,0.751953125,-0.0018,0.0,-2.3986,0.0792
-SAVE_DIR = (
-    PROJECT_ROOT /
-    "Data/live/option_chain/nifty" /
-    EXPIRY_DATE /
-    TRADE_DATE /
-    "snapshots"
-)
-### Option Chain Schema Changes
-- **v1 (2026-01-20 10:15:54)**: ('timestamp', 'strike', 'type', 'ltp', 'oi', 'prev_oi', 'volume', 'bid', 'ask')
-- **v2 (2026-01-23 09:35:22)**: ('timestamp', 'strike', 'type', 'oi', 'volume', 'bid', 'ask')
-- **v3 (2026-02-12 09:15:27)**: ('timestamp', 'spot_price', 'strike', 'type', 'oi', 'volume', 'ltp', 'bid', 'ask', 'bid_qty', 'ask_qty', 'chng', 'chng_oi', 'iv', 'delta', 'gamma', 'theta', 'vega')
-# many times snapshots are inconsistent due to hardware error. like hardware started at 10:30 instead of 9:15, etc
-
-
--------------------------------------------------------------------------------
-C.we have upstox api endpoint which provide: historical option chain candle
-- we get historical expired contracts with ohlc levels per strike price
-INTERVAL: 1min 
-schema:
-timestamp,instrument_key,trading_symbol,expiry,strike,option_type,lot_size,open,high,low,close,volume,oi,source,interval
-2025-04-24 09:23:00+05:30,NSE_FO|79196|24-04-2025,NIFTY 20350 CE 24 APR 25,2025-04-24,20350.0,CE,75,3997.8,3997.8,3962.1,3962.25,75,31200,upstox_expired_historical_candle,1minute
-2025-04-24 09:24:00+05:30,NSE_FO|79196|24-04-2025,NIFTY 20350 CE 24 APR 25,2025-04-24,20350.0,CE,75,3962.25,3962.25,3962.25,3962.25,0,31200,upstox_expired_historical_candle,1minute
-
-schema design:
-- timestamp sorted
--each timestamp has all the strike price then for next time stamp we have alll the strikeprice again
--so every min timestamp will have x value strikeprice till y strikeprice
-eg: for 9:15 spot price is 24800, we have strike price from NIFTY 20350 CE till  NIFTY 26100 CE
-alternating with CE and PE
-dummy data
-timestamp,instrument_key,underlying,expiry,strike,option_type,close,volume....
-2025-04-24 09:15:00,NSE_FO|79196,NIFTY,2025-04-24,24200,CE,145.20,8500
-2025-04-24 09:15:00,NSE_FO|79197,NIFTY,2025-04-24,24200,PE,120.00,9200
-2025-04-24 09:15:00,NSE_FO|79205,NIFTY,2025-04-24,24250,CE,115.50,4500
-2025-04-24 09:15:00,NSE_FO|79206,NIFTY,2025-04-24,24250,PE,155.10,11000
-2025-04-24 09:16:00,NSE_FO|79196,NIFTY,2025-04-24,24200,CE,151.00,6200
-2025-04-24 09:16:00,NSE_FO|79197,NIFTY,2025-04-24,24200,PE,112.50,8100
--------------------------------------------------------------------------------
-
-
-## data base design
-Q. as i said i want a live chart we will need a websocket which will steam all the data, so how are we going to design and store the live data we get from websocket?
-Q. for live candle building on chart in live market we will need websocket to poll in live tick by tick data(option chain and general value+ if possible other extra data), main question is what data we get and what extra data we get from existing data?
-Q. check the data we get from websocket and design a schema to store a real time tick by tick data.
-Q. we are having multiple formats of data and multiple schema, how are we going to transition from old historical mifty candlestick data and option candle data(1min interval), while we also have 30sec snapshots since 2026-01-20 while may of them are inconsistent and a schema change in snapshots
-Q. how are we going to design db for fast backtesting and accurate backtesting + accurate charting + other stuff
-Q. how should we design the shapshots how should we merge every seperate 30sec snapshots
-
-# each type what data is usefull:
-1.candlestick data gives values of nifty 50 values
-2.option candle( gives info of ltp ohlc, oi, volume expiry, lot_size, etc)
-3.snapshots record option geeks too 
-4.to be implemented websocket(you have to do reserch of what it returns and what data e have, consider all the data we can get).
--------------------------------------------------------------------------------
-
-## feature extraction
-after the db is set we have to extract all the features
-Q. whether we have to compute and store the computed features in a db or compute the features on the fly is up to you=> you do the analysis based on the whole system and tell me which is better
-
-A. technical indicators:
-1. there should be many standard technical indicators like, rsi, macd, ema, etc
-2. i should be able to make a and add any custom indicators(inspired from any source like trading view indicators(pinescript codes), yt videos, any source) i should be able to turn them into python scriptand system should detect the indicator.
-3. you do the analysis of each indicator and its mathe matical formulas which is better and which is widely used.
-
-B.price action data extraction we should have this as indicator which will overlay on chart and show if price action patterns and changes in trend(Break of Structure (BOS),Change of Character (CHoCH)).
-# we can compute this data and store it for ml training and and easier loading the indicator
-
-C. chart types:
-we should be able to load different charts on the screen for this 
-- we will have to compute each candle according to the chart type formula and store in db for fast fetching
-- chart types like heiken ashi and renko for the start, if i want i should be able to add a python script with the formula and we should easily process data accordingly and store it
-
-D. option chain and option chain data features:
-- things like pcr, delta, oi, rate of change of oi, how oi is changing on multiple strike priceses , etc.
-
-
-
-# we will have to make features db and a live features computation engine for live market
-can the live feature should be modular, it should not compute all the features, just those which are visible on screen, features required for a strategty deployed on paper trade or live.
-
-# each feature should be MODIFIABLE and we should be able to change its settings and values just like trading view from our ui and chart.
-Q. would it be better if we have all the features stored in db for backtesting or backtesting should have a computation eingine to compute features as per strategy.
-option: if anad only if it would be better for storing all the features in a db, we should be able to easily modify the settings of the feature to be computed like in code: EMA(9,15,20,50) but i want EMA45 then i should just append 45 into bracket or place it in bracket and rerun the computation of features 
-
-# when settings modified and recomputation is required, skip allready computed features.
-
-# what i think is we should have different python scripts per main feature or per main feature categories, like oscillators, overlays, price action, oi, option_chain.
-each category should havae its own seperate code and should be able to add new features.
-
--------------------------------------------------------------------------------
-
-### backtesting
-
-my view how backtester works:
-1.it will iterate through candlestick data of nifty 50, while seeing all the data needed for the specific strategy and strategy also seeing them.
-2. a strategy generates a signal to but CE/PE and accordingly.
-3. backtester sees the latest expiry on that specific day of trade signal and according to strategy buys the specified strike price (ITM1/2 or ATM or OTM).
-4. no lookahead bias: if a strategy is using features or logic based on candle close, trade should be taken on next candle open(!. is this correct?).
-if a candle uses open based features and signal, use candle close for entry(Q. is this correct?).
-5. one trade is taken it should be recorded in the ledger specific to that backtest run. and once the backtest is finish the ledger should be exported into db.
-6. strategy will define sl and tp or trailing tp so after trade is taken/ triggered , as the backtest is iterating it will monitor and record the next event may it be sl or tp or trailing sl, it will be recorded in ledger.
-7. after backtest finishes, the evaluation metrices, P/L, drawdown, lost trades, profit trades, etc everything else will be calculated and stored in another manifest for that specific backtest run.
-
-# between step 2-4 i dont know when the strategy signal should go through the risk module, and the risk module options should be configurable and should be turned on and off as per user and strategy(ask user if he wants to keep max trades, max loss, etc other risk options to be turned on and off for backtesting during the start).
-Q. is my view correct, it may be partial and need refinements.
-
-# as i said we will have a ledger and eavluation manifest for the specific backtest run, this should be able to see on FRONTEND in the mentioned frontend flow.
-# for the capital, trades per day, lot sizes, max loss per day, max DD,etc, everything user defined should be taken manually from frontend ui when starting backtest run. after taking these inputs should a backtest start.
--------------------------------------------------------------------------------
-### ledger
-it should be immutable and keep track of all events, in historical backtest, in live paper trade, or any type of events
-
--------------------------------------------------------------------------------
-
-### risk module
-- risk options like max trades per day, max loss per day, trading time, trading timeline, etc.
-Q. i dont know what more is needed you tell me.
-
--------------------------------------------------------------------------------
-## accounts
-main aim of this is to segerate ledger, paper trading evaluation, etc
-if i want to deploy 2-3 strategies for paper trade and want seperate enviroment for eaach of them( no interference to each other and completely seperate evaluation).
-i should be able to set up different accounts with account specific captical and risk rules and ledger, etc
-
--------------------------------------------------------------------------------
-## machine learning and research
-- i want to explore all types of machine learning model to train and try to predict.
-
-- i should be able to incorporate a trained model to a strategy but this is optional and every strategy should not compulsoryly need ml model.
- # 5 things ml model should be able to do(as far as i can think off):
-1. ml model which can predict price moment
-2. ml model should classify the bias and direction of market in future(regime of market).
-3. strategy specific ml model: ml model trained on a specific strategy backtest or a strategy specific which will help a strategy avoid lossing trades and identify winning trades.
-4. ml model self identify and discover patterns in option chain and tick by tick data storage (we will collect after websocket). and help making usefull strategy idesa and strategies.
-5. self discover and identify chart patterns, candlestick patterns, features patterns,etc(if anything it can learn)(generic or widely known and also discover new patterns). if the model gets better we can turn this model into a type of indicator and can use for strategy signals.

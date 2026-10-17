@@ -24,7 +24,23 @@
   - Expanded task registry in `AGENTS.md` from 95 tasks (233.5 person-days) to 109 unique tasks (258.5 upper-bound person-days) with 0 graph cycles; added full `V-01` to `V-35` Vision Traceability Matrix.
   - Automated mechanical validation suite (`verify_docs.py`) passed 100% checks with 0 errors.
 
+- **[2026-10-17] M0-10 & M0-01 — Bootstrap Verification & Read-Only Data/Repository Inventory:**
+  - Verified `DOCS/AGENTS.md` bootstrap integrity contract (`ops/evidence/M0-10.txt`).
+  - Completed comprehensive read-only audit across 86,647 files (~2.21 GB) in `c:\Algo\quantview`.
+  - Audited historical index candles (432,967 1m rows + 18,985 live daily rows = 451,952 total; discovered truncated line 432593 `'2026-10-08 0'`).
+  - Audited 78,535 live option chain snapshots across 121 unique trading days and 35 expiries; classified into v1 (1,036), v2 (8,770), v3 (68,720), 5 null-byte corrupted, and 4 zero-byte empty files.
+  - Recorded 0 second-medium backups (Critical risk for M0-06).
+  - Delivered exhaustive inventory deliverable: `ops/inventory.md`.
+
+- **[2026-10-17] Final Surgical Documentation Fix Pass & Multi-Agent Consistency Lock:**
+  - Applied surgical fixes A1–A6 (DATA), B1–B3 (MASTER), C1 (De-duplication), D1–D6 (ENGINE), E1–E7 (AGENTS) with zero collateral damage and zero new files in `DOCS/`.
+  - Recomputed and validated task registry: 113 total tasks (112 active + retired M1-07), 260.5 person-days (planning ceiling 18–24 months part-time paper readiness).
+  - Split all tasks > L into <= M (2.5d): M4-05 into M4-05 + M4-22; M6-03 into M6-03 + M6-17; M7-02 into M7-02 + M7-09; added M6-16 read-only candle viewer.
+  - Added `- **Spec refs:**` to all 113 tasks with 100% valid cross-references against authoritative spec sections.
+  - Automated verification: `tools/qv_check.py lint DOCS stale.txt` PASSED (0 defects); `ops/verify_docs_consistency.py` PASSED (0 defects).
+
 ## Implementation & Readiness Status (`Appendix C` of `LOW_LEVEL_DESIGN.md`)
+- **M0 Tasks Completed:** `M0-10` (`TESTED`), `M0-01` (`TESTED`).
 - **All Capabilities (`CAP-01` – `CAP-24`):** `Design Status = DESIGNED` (`CAP-21` `LIMIT` orders is `DESIGNED (DEFERRED / POST-v1)`), `Implementation Status = PENDING`, `Test Execution Status = NOT_RUN`.
 - **Readiness Verdicts:** **Phase 0 (`T0.1–T0.15`):** `GO` | **Full Build (`Phases 1–8`):** `CONDITIONAL GO` | **Live Execution (`Phase 9`):** `NO-GO`.
-- **Application Code (`src/`, `frontend/`, `tests/`):** Not started (awaiting owner go-ahead for Phase 0 `M0-10` / `T0.1`).
+- **Application Code (`src/`, `frontend/`, `tests/`):** Awaiting owner review and gate approval of M0-01 before executing M0-11 / M0-06.

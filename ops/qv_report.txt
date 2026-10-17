@@ -1,0 +1,49 @@
+== QV REPORT ==
+python=3.11.9 os=Windows-10-10.0.26300-SP0
+
+-- files in DOCS (bytes, lines, sha12) --
+AGENTS.md                                          115399  1675 1137dc56c512
+QUANTVIEW_DATA_SPEC.md                              53042   413 3c478d60243d
+QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md               117946  1051 9008909ec7d4
+QUANTVIEW_MASTER_SPEC.md                            45854   469 6a50e66d09f0
+
+-- DOCS vs DOCS_before --
+QUANTVIEW_MASTER_SPEC.md: DIFFERENT/MISSING
+QUANTVIEW_DATA_SPEC.md: DIFFERENT/MISSING
+QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md: DIFFERENT/MISSING
+AGENTS.md: DIFFERENT/MISSING
+
+-- fix status (what the correction prompt still needs to do) --
+FIX-1 intrabar_stop_policy enum                DONE
+FIX-2 risk_controls min_dte rename             DONE
+FIX-3 final_eval -> final_evaluation           DONE
+FIX-4 slippage_multiplier Decimal string       DONE
+FIX-5 UtcEpochSec defined in DATA              DONE
+FIX-6a V-05 cites ADR-007                      DONE
+FIX-6b V-18 cites DATA 11.4                    DONE
+FIX-6c V-19 cites DATA 11.5                    DONE
+FIX-6d V-20 cites ADR-004                      DONE
+FIX-7 'MASTER §5 owner decisions'              DONE
+FIX-8 hold-out per lineage (optional D3)       DONE
+
+-- lint (with default stale list) --
+tasks=113 active=112 days=260.5 gates=G0a,G0,G1,G2a,G2b,G3,G4,G5,G6
+LINT: PASS (0)
+
+-- environment / git safety --
+git: C:\Program Files\Git\cmd\git.EXE
+docker: C:\Program Files\Docker\Docker\resources\bin\docker.EXE
+node: NOT FOUND
+npm: NOT FOUND
+wsl: C:\WINDOWS\system32\wsl.EXE
+psql: NOT FOUND
+docker daemon: permission denied while trying to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine
+git check-ignore .env Data: .gitignore:6:.env	.env
+.gitignore:9:Data/	Data
+git tracks .env?: (no output)
+git history of .env: (no output)
+git status DOCS: M DOCS/AGENTS.md
+ M DOCS/QUANTVIEW_DATA_SPEC.md
+ M DOCS/QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md
+ M DOCS/QUANTVIEW_MASTER_SPEC.md
+ D DOCS/quantview_doc_analysis.md

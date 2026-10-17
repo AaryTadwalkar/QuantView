@@ -54,7 +54,7 @@ A strategy implementation provides:
 - Order intents identify the intended position effect and side: `BUY_TO_OPEN`, `SELL_TO_OPEN`, `SELL_TO_CLOSE`, or `BUY_TO_CLOSE`; a strategy may also emit a market `EXIT` intent against a specific position/leg. A market `EXIT` follows the same next-eligible-contract-bar-open fill rule as other queued intents, including tick quantization against the trader; it does not fill on the signal bar. Position stop/target/trailing protection remains engine-owned as specified in §4.
 - declared `legs` for a strategy position/group (each leg has option type, long/short side, contract selector, sizing and exit policy); one-leg strategies are the first implementation slice. Multi-leg orders are not presumed atomic: leg-level fill, missing-leg, partial-execution and unwind behavior must be modelled and tested before realistic-account enablement.
 - serializable `state` for daemon restart/replay.
-- stable strategy ID, code hash, parameter schema and declared version.
+- stable strategy ID, `lineage_id`, code hash, parameter schema and declared version.
 
 `ctx` contains the decision time, current closed bars, point-in-time features, selected contract candidates, current positions/account state and quality/freshness metadata. It must not expose future rows or mutable engine internals. Strategy code cannot query DB/broker directly.
 
@@ -76,7 +76,7 @@ BOS/CHoCH and pivots must expose `pivot_time` and `confirmed_at`. Future-confirm
 
 The **master loop is the exchange calendar-minute grid**, not the union of observed contract bars. At minute `m`, “contract bar `k`” means that minute’s bar for each held or candidate contract. Per-minute work is limited to held contracts plus contracts needed for an active decision/pending order; when flat with no pending orders, skip directly to the next strategy decision time. Strategy decisions may be slower (for example, every completed 5m bar), but risk and held-position exits remain on the 1m grid. Benchmark the idle-skip and held-position paths. For each eligible contract bar `k` with start `s` and end `e`, process events in this exact order:
 
-1. **At open of bar k:** apply the configured slippage/fill policy, then quantize the simulated fill price to contract tick size against the trader (buy price rounds up; sell price rounds down), then convert fill cash amounts to integer paise or `Decimal` at this fill boundary. No float multiplication may feed cash, fees or realized P&L. Fill orders queued before this open at the quantized price. If a stop/target is already crossed at the open, use the open price, not the trigger level. Re-check position-side-specific exposure caps at the actual fill: long entries must satisfy premium/cash limits; short entries must satisfy the selected margin/buying-power and worst-case-risk policy. Reject with a structured reason if a constraint is exceeded. Sizing at decision uses last close plus a configurable safety buffer.
+1. **At open of bar k:** apply the configured slippage/fill policy, then at the fill boundary: (a) validate `abs(price*100 - round(price*100)) < 1e-6` — else flag and reject the fill with stable reason code `PRICE_NOT_QUANTIZABLE`; (b) set `price_paise = int(round(price * 100))`; (c) apply slippage in integer paise; (d) quantize using `tick_paise` from the effective-dated contract master for that trade date (never a hardcoded constant) — buy rounds up to the nearest tick, sell rounds down to the nearest tick — using integer arithmetic only. Parquet candle columns remain `float64` and are not affected by this quantization. A required property test: for every `k` where `k * tick_paise` is representable, `quantize(k * tick_paise / 100) == k * tick_paise`. No float multiplication may feed cash, fees or realized P&L. Fill orders queued before this open at the quantized price. If a stop/target is already crossed at the open, use the open price, not the trigger level. Re-check position-side-specific exposure caps at the actual fill: long entries must satisfy premium/cash limits; short entries must satisfy the selected margin/buying-power and worst-case-risk policy. Reject with a structured reason if a constraint is exceeded. Sizing at decision uses last close plus a configurable safety buffer.
 2. **Intrabar:** evaluate active position stop, target and trailing attributes using bar high/low. Positions opened at the open are exposed to the full bar. If stop and target are both touched and finer data cannot resolve order, stop wins by default. Trailing levels are computed from completed bars only, then treated as a stop; they never use a future or unfinished bar.
 3. **At close of bar k:** update mark-to-market in the equity series (not as a ledger event); make the bar and features with `available_at <= e` visible; accept snapshot/WS observations only if `received_at <= e` and fresh enough; process required end-of-day exits; call strategy on its own timeframe's newly closed bars; resolve contract at this decision time; apply pre-trade risk; queue accepted order intents for the next eligible contract bar open.
 4. **After fills:** record fill/fees and run post-fill risk checks/halts. A risk-halt flatten is a market exit queued for the next eligible bar open, subject to stale/expiry/EOD safety rules.
@@ -121,8 +121,8 @@ Data eligibility is evaluated per session × contract × interval. `INELIGIBLE` 
 
 Supported v1 policies:
 
-- Expiry: nearest, nearest excluding 0DTE, minimum DTE, explicit expiry, monthly (all resolved using point-in-time contract master).
-- Strike: ATM based on last closed underlying close and valid strike step; ITM/OTM by step count; target model delta; exact strike.
+- Expiry policies (`expiry_policy`): `NEAREST_ELIGIBLE`, `NEAREST_EXCLUDING_0DTE`, `MIN_DTE` (requires `min_dte`), `EXACT_DATE` (requires `exact_expiry_date`), `MONTHLY` (all resolved using point-in-time contract master).
+- Strike policies (`strike_policy`): `ATM` based on last closed underlying close and valid strike step, `ITM_1..10`, `OTM_1..10`, `TARGET_DELTA` (requires `target_delta`), and `EXACT_STRIKE` (requires `exact_strike`).
 - Side: CE, PE or both if strategy supports it.
 - Liquidity gate: reject zero-volume/flat-bar contracts or require recent traded volume/spread criteria, according to strategy config.
 
@@ -130,7 +130,7 @@ Contract resolution must return a contract valid at decision time, with lot size
 
 V1 is not long-only. The contract must support long and short CE/PE positions, multiple independent deployments, and declared multi-leg strategy groups. Implement and validate single-leg long/short semantics first. Realistic-account short entries require a versioned buying-power/margin model; until its source assumptions are verified, any such run is either blocked from account-feasibility claims or explicitly marked `THEORETICAL`. Multi-leg realistic-account runs remain disabled until legging, missing-leg/unwind, margin and reconciliation tests pass. There is no hard-coded ten-strike strategy requirement or name-based whitelist.
 
-Define and version `last_entry_time`, `force_flat_time` and `last_tradable_time` separately. `force_flat_time` is configurable but must be no later than 15:25 Asia/Kolkata in v1 so the exit can fill at a real next-bar open; if an exit is first decided on the final available bar, fill at that bar's close with `EOD_CLOSE_FILL` and a slippage penalty. `carry_overnight=false` means flatten by configured time. If enabled, handle overnight gaps, next-open exit logic and expiry. The official settlement reference remains `VERIFY`; do not assume it equals the last 1m close or vendor 1d close. A missing settlement price leaves the position `UNSETTLED` and adds a run `WARNING`. Holiday-shifted expiries come from the versioned contract master. Settlement/exercise for ITM options follows a distinct charge path, including applicable STT on intrinsic value; rates and calculation basis remain `VERIFY` until reconciled. OTM settlement treatment also follows verified contract/exchange rules.
+Define and version `last_entry_time`, `force_flat_time` and `last_tradable_time` separately. `force_flat_time` is configurable within 09:30..15:25 Asia/Kolkata in v1 so the exit can fill at a real next-bar open; if an exit is first decided on the final available bar, fill at that bar's close with `EOD_CLOSE_FILL` and a slippage penalty. `overnight_carry=false` means flatten by configured force-flat time before expiry. When `overnight_carry=true`, margin verification is required only for positions with any short leg (single-leg long CE/PE needs none); always force-flat before expiry unless carry/settlement is explicitly enabled and tested. The official settlement reference remains `VERIFY`; do not assume it equals the last 1m close or vendor 1d close. A missing settlement price leaves the position `UNSETTLED` and adds a run `WARNING`. Holiday-shifted expiries come from the versioned contract master. Settlement/exercise for ITM options follows a distinct charge path, including applicable STT on intrinsic value; rates and calculation basis remain `VERIFY` until reconciled. OTM settlement treatment also follows verified contract/exchange rules.
 
 ## 6. Fill models, slippage and fees
 
@@ -181,6 +181,8 @@ Independent optional controls:
 
 Each optional setting can be independently disabled, but simulation invariants cannot be disabled in realistic mode. Sizing options: fixed lots, fixed INR risk or percentage of capital; minimum tradable size is one lot. Long-option exposure includes premium paid plus costs/gaps; short-option sizing must account for margin/buying power and the selected worst-case-risk policy. INR-based caps should be available because a single lot can consume a large share of a small account.
 
+The **`RiskRules` Pydantic schema** (authoritative definition in `packages/risk/`) is the shared type used by both `DATA §2.1 risk_policies.rules` (JSONB) and the inline `risk_controls` field in §19.1. This schema defines all control fields referenced above. See §19.1 for the field-by-field reference and override/precedence rules.
+
 Modes:
 - `REALISTIC_ACCOUNT`: applies account capital, lots, fees, slippage and risk policy.
 - `THEORETICAL`: for analysis only; UI/report must prominently label it and never imply account feasibility.
@@ -193,18 +195,18 @@ Max-trades counts entry fills, not signals or exits. Daily loss includes realize
 
 The Postgres `LedgerWriter` appends events only: enforce this with a dedicated application role that has no UPDATE/DELETE privileges and a database trigger rejecting UPDATE/DELETE on immutable event tables. Projections are rebuildable. Append and idempotency-key enforcement occur in one transaction; use the unique event/idempotency constraint to prevent duplicate financial events after retries.
 
-Events are append-only and include at least: `sequence_number`, `event_id`, `idempotency_key`, `account_id`, `run_id`/`deployment_id`, `event_type`, `event_time`, `recorded_at`, `correlation_id`, `schema_version`, and typed payload. Require the same `correlation_id` to propagate signal → intent → order → fill → ledger; do not regenerate it at each stage. Event types include order intent, accepted/rejected order, fill, fee, stop/target update, risk breach, cash movement, settlement, and correction/compensating event. Mark-to-market observations belong in the equity series, not the financial ledger.
+Events are append-only and include at least: `sequence_num`, `event_id`, `idempotency_key`, `account_id`, `run_id`/`deployment_id`, `event_type`, `event_time`, `recorded_at`, `correlation_id`, `schema_version`, and typed payload. Require the same `correlation_id` to propagate signal → intent → order → fill → ledger; do not regenerate it at each stage. Event types are authoritatively defined by the canonical enum in `QUANTVIEW_DATA_SPEC.md §2.1 ledger_events.event_type` (including cash movement events `DEPOSIT` and `WITHDRAWAL`, trade/order lifecycle events, `FEE`, and margin events `MARGIN_RESERVED` and `MARGIN_RELEASED` used only when short/multi-leg realistic mode is enabled under `VERIFY`). Mark-to-market observations belong in the equity series, not the financial ledger. The `FEE` ledger event is the sole authoritative fee record; `paper_fills.fee_paise` is a denormalized convenience copy required to equal the sum of its linked `FEE` events (enforced as a reconciliation check in projection-rebuild tests). The `LedgerWriter` serialises appends per account via PostgreSQL per-account advisory lock; `sequence_num` is strictly monotonic per account.
 
 - Postgres enforces append-only behaviour for paper ledger: application role cannot UPDATE/DELETE ledger rows; corrections are new compensating events.
 - Backtest events spill to Parquet during the run. Register the completed run and manifest in Postgres only after artifacts validate and persist.
 - One `LedgerWriter` interface has Postgres and Parquet implementations.
 - Projections (positions, cash, equity, open orders, trade summary) are rebuildable by replaying events. Replay must reproduce the same projection hashes.
-- `idempotency_key` prevents duplicate fill/settlement events after retries/restarts. For engine events use `hash(run_or_deployment_id, intent_id, phase)`; for raw WS dedupe use `message_id` from DATA_SPEC. Event ordering is `(event_time, phase_priority from §4, sequence_number)`; live cancel/fill races resolve by first committed sequence. Partial fills are deferred in v1; log a quantity-vs-bar-volume warning rather than implying the whole bar volume was available to QuantView.
+- `idempotency_key` prevents duplicate fill/settlement events after retries/restarts. For engine events use `hash(run_or_deployment_id, intent_id, phase)`; for raw WS dedupe use `message_id` from `QUANTVIEW_DATA_SPEC.md §4.5`. Event ordering is `(event_time, phase_priority from §4, sequence_num)`; live cancel/fill races resolve by first committed sequence. Partial fills are deferred in v1; log a quantity-vs-bar-volume warning rather than implying the whole bar volume was available to QuantView.
 
 **Accounting contract (exact money):**
 
 - `units = lots × lot_size`.
-- At the fill boundary, quantize `fill_price` to the contract tick against the trader (buy rounds up, sell rounds down), then represent price and money as `Decimal` or integer paise. Do not calculate cash using binary floats.
+- At the fill boundary, validate and quantize `fill_price` following the full procedure in §4 step 1 (float validation, `price_paise` integer conversion, integer-paise slippage, then tick-paise quantization from the effective-dated contract master — buy rounds up, sell rounds down — using integer arithmetic only). Represent price and money as `Decimal` or integer paise. Do not calculate cash using binary floats.
 - `entry_value_paise = quantized_entry_price_paise × units`; `exit_value_paise = quantized_exit_price_paise × units`. Quantize/convert before multiplication; use integer arithmetic for cash flows.
 - Cash flow follows transaction side: a buy-to-open or buy-to-close subtracts `entry_value_paise`/`exit_value_paise` and fees; a sell-to-open or sell-to-close adds the proceeds and subtracts fees. Short-sale proceeds are not profit; margin/buying-power reservation is tracked separately.
 - For a long position, `gross_realized_paise = (exit_price_paise - entry_price_paise) × units`; for a short position, `gross_realized_paise = (entry_price_paise - exit_price_paise) × units`. Net realized P&L subtracts entry/exit fees and allocated charges exactly once, all as integer paise.
@@ -216,7 +218,7 @@ Events are append-only and include at least: `sequence_number`, `event_id`, `ide
 
 ### Accounts
 
-Account types: `BACKTEST_VIRTUAL` (one per run), `PAPER`, later `LIVE` behind a release gate. Every deployment belongs to exactly one account. No shared positions, cash, risk state or ledger by default. Shared data/features are allowed. Strategy instances must not mutate another account's state.
+Account types: `BACKTEST_VIRTUAL` (one per run), `PAPER`. `LIVE` is removed from the v1 enum and introduced only by migration behind the future real-order release gate. Every deployment belongs to exactly one account. No shared positions, cash, risk state or ledger by default. Shared data/features are allowed. Strategy instances must not mutate another account's state.
 
 ### Decision-context artifacts
 
@@ -224,7 +226,7 @@ For every strategy decision, write an immutable artifact under `runs/{run_id}/de
 
 ### Run manifest
 
-Freeze before execution: run ID, strategy ID/code hash/parameters, selected contracts/policies, dataset manifest IDs/hashes, calendar and contract-master versions, feature IDs/code hashes/parameter hashes, time zone/session policy, fee schedule version, margin/buying-power model ID and assumption/verification status where relevant, slippage/fill model ID and evidence tier, risk config, seed, engine version, warnings and requested range. Include trial counter and whether a period is locked hold-out. Also record Python/library versions, DuckDB thread count, timezone database version, OS and CPU architecture. A run is `SUCCEEDED` only after all output artifacts are written, validated and registered. Byte-identical reproducibility applies to ledger events, fills, trades, selected contracts and manifest fields excluding `created_at`/host-specific fields; money must match exactly. Ratio/statistical metrics may be tolerance-compared (for example relative 1e-9), with the declared tolerance stored alongside results.
+Freeze before execution: run ID, strategy ID/code hash/parameters, selected contracts/policies, dataset manifest IDs/hashes, calendar and contract-master versions, feature IDs/code hashes/parameter hashes, time zone/session policy, fee schedule version, margin/buying-power model ID and assumption/verification status where relevant, slippage/fill model ID and evidence tier, risk config (including the resolved effective `RiskRules` — merging referenced `risk_policy_id` policy with any inline `risk_controls` overrides — and its SHA-256 hash), seed, engine version, warnings and requested range. Include trial counter and whether a period is locked hold-out. Also record Python/library versions, DuckDB thread count, timezone database version, OS and CPU architecture. A run is `SUCCEEDED` only after all output artifacts are written, validated and registered. Byte-identical reproducibility applies to ledger events, fills, trades, selected contracts and manifest fields excluding `created_at`/host-specific fields; money must match exactly. Ratio/statistical metrics may be tolerance-compared (for example relative 1e-9), with the declared tolerance stored alongside results.
 
 ## 9. Pine-to-Python custom feature contract
 
@@ -298,11 +300,126 @@ UI is a React + Vite + TypeScript SPA. Charting candidate is Lightweight Charts 
 
 Dragging stop/target lines sends a server command; UI commits the change only after server acknowledgement. Include data-health dashboard, backtest audit panel (signal → intent → risk → order → fill → fees with decision-time data), dependency viewer, run comparison, cost sensitivity, paper-vs-backtest reconciliation, trial count and hold-out indicator.
 
+### 11.1 API request and response contracts
+
+All endpoints are mounted under `/api/v1/` and exchange JSON over HTTP/REST. Streaming transport is specified and delivered in M7-07; REST polling is used until then.
+
+**Common wire wrappers:**
+- **Standard envelope and pagination:**
+  ```json
+  {
+    "schema_version": 1,
+    "items": [],
+    "total": 0,
+    "limit": 50,
+    "offset": 0
+  }
+  ```
+- **Error shape with stable reason codes:**
+  ```json
+  {
+    "schema_version": 1,
+    "error": {
+      "code": "STABLE_REASON_CODE",
+      "message": "Human-readable description",
+      "details": {}
+    }
+  }
+  ```
+
+**Endpoint schemas:**
+
+- **Wire price rule:** Chart series prices in UI endpoints are display floats rounded to the contract tick; execution, ledger, order, and position fields are strictly integer paise. Chart floats are never used for order matching or fill simulation.
+
+- `GET /api/v1/charts/series`:
+  - Request Query: `symbol` (str), `interval` (`1m`, `3m`, `5m`, `15m`, `1h`, `4h`, `1d`), `from_sec` (int64 `UtcEpochSec`), `to_sec` (int64 `UtcEpochSec`), `contract_id` (str, nullable).
+  - Response: `{ "schema_version": 1, "symbol": str, "interval": str, "candles": [ { "time": int64, "open": float, "high": float, "low": float, "close": float, "volume": int64, "oi": int64/null } ] }`. Wire timestamps strictly conform to `UtcEpochSec` (`int64` UTC seconds).
+
+- `GET /api/v1/charts/transforms`:
+  - Request Query: `symbol` (str), `transform` (`HEIKIN_ASHI`, `RENKO`), `interval` (str), `from_sec` (int64), `to_sec` (int64), `brick_size` (float, optional for Renko per §22).
+  - Response: `{ "schema_version": 1, "symbol": str, "transform": str, "candles": [ { "time": int64, "open": float, "high": float, "low": float, "close": float, "volume": int64 } ] }`.
+
+- `/api/v1/charts/drawings`:
+  - `GET`: Query `chart_id` (str), `contract_id` (str, nullable). Response: paginated items of `chart_drawings` (DATA §2.1: `drawing_id`, `chart_id`, `contract_id`, `drawing_type` enum `HORIZONTAL_LINE`, `VERTICAL_LINE`, `TREND_LINE`, `RECTANGLE`, `anchors`, `style`, `schema_version`, `version`, `created_at`, `updated_at`).
+  - `POST`: Body matching `chart_drawings` create schema. Response: created drawing entity.
+  - `PUT /api/v1/charts/drawings/{drawing_id}`: Body with updated `anchors`/`style` and `version` (optimistic lock). Response: updated entity.
+  - `DELETE /api/v1/charts/drawings/{drawing_id}`: Response: `{ "schema_version": 1, "deleted": true, "drawing_id": str }`.
+
+- `GET /api/v1/features`:
+  - Request Query: optional `category`, `is_active` (bool).
+  - Response: paginated list of items from `features_registry` (DATA §2.1: `feature_id`, `version`, `category`, `code_hash`, `params_schema`, `source_tiers`, `memory_class`, `is_active`, `created_at`).
+
+- `POST /api/v1/features/{id}/compute`:
+  - Request Body: `{ "symbol": str, "interval": str, "from_sec": int64, "to_sec": int64, "params": {} }`.
+  - Response: `{ "schema_version": 1, "feature_id": str, "version": str, "timestamps": [int64], "columns": { "<col_name>": [float] }, "quality_flags": [str] }`.
+
+- `GET /api/v1/features/{id}/metadata`:
+  - Response: `{ "schema_version": 1, "feature_id": str, "version": str, "category": str, "code_hash": str, "params_schema": {}, "source_tiers": [str], "memory_class": str, "is_active": bool, "created_at": str }`.
+
+- `GET /api/v1/contracts`:
+  - Request Query: `underlying` (str), `expiry_date` (ISO date, optional), `strike` (Decimal string, optional), `option_type` (`CE`, `PE`, optional).
+  - Response: paginated list of contract records (DATA §6: `contract_id`, `symbol`, `underlying`, `expiry_date`, `strike`, `option_type`, `lot_size`, `tick_paise`, `trading_symbol`, `is_active`).
+
+- `GET /api/v1/strategies`:
+  - Request Query: optional `family`, `is_active`.
+  - Response: paginated list of `strategies_registry` rows (DATA §2.1: `strategy_id`, `lineage_id`, `version`, `family`, `code_hash`, `params_schema`, `supported_sides`, `is_active`, `created_at`).
+
+- `/api/v1/runs`:
+  - `GET /api/v1/runs`: Request Query: `strategy_id` (optional), `status` (optional), pagination. Response: paginated `runs` table rows (DATA §2.1: `run_id`, `strategy_id`, `run_config_hash`, `manifest_hash`, `git_commit`, `start_date`, `end_date`, `status`, `metrics_summary`, `created_at`).
+  - `POST /api/v1/runs`: Request Body: `RunConfig` JSON schema (§19.1, including timing parameters `entry_delay_policy` enum `NEXT_BAR_OPEN` [default], `EXTRA_BARS_SENSITIVITY`, and `entry_delay_bars` int `1..5` nullable). Response: `{ "schema_version": 1, "run_id": str, "status": "QUEUED", "job_id": str }`.
+  - `GET /api/v1/runs/{run_id}`: Response: full run execution status and summary metadata.
+  - `GET /api/v1/runs/{run_id}/manifest`: Response: frozen `run_manifest.json` (§8, §19, §20).
+  - `GET /api/v1/runs/{run_id}/metrics`: Response: `metrics.json` (§20).
+  - `GET /api/v1/runs/{run_id}/trades`: Response: paginated closed/open trades array (§20.1) with entry/exit timestamps, fill prices, quantities, gross/net P&L in paise, fee breakdown, and `correlation_id`.
+  - `GET /api/v1/runs/{run_id}/ledger`: Response: paginated `ledger_events` array for the run (DATA §2.1: `sequence_num`, `event_id`, `run_id`, `event_type`, `amount_paise`, `balance_paise`, `idempotency_key`, `correlation_id`, `event_time`, `recorded_at`, `schema_version`, `payload`).
+  - `GET /api/v1/runs/{run_id}/decisions`: Response: paginated decision context artifacts (§8) keyed by `correlation_id` (decision timestamp, features hash/values, candidate contracts, risk checks, decision result/reason code).
+  - `POST /api/v1/runs/{run_id}/cancel`: Request Body: empty or `{ "reason": str }`. Response: `{ "schema_version": 1, "run_id": str, "status": "CANCELLED" }`.
+
+- `/api/v1/accounts`:
+  - `GET`: Query `status` (optional). Response: paginated list of `accounts` (DATA §2.1: `account_id`, `name`, `account_type` enum `BACKTEST_VIRTUAL`, `PAPER`, `initial_capital_paise`, `currency`, `status`, `created_at`).
+  - `POST`: Request Body: `{ "name": str, "account_type": "PAPER", "initial_capital_paise": int64 }`. Response: created account entity.
+
+- `/api/v1/risk-policies`:
+  - `GET`: Query `account_id` (optional), `is_active` (optional). Response: paginated `risk_policies` rows (DATA §2.1: `policy_id`, `account_id`, `version`, `rules`: `RiskRules`, `is_active`, `hash`, `created_at`).
+  - `POST`: Request Body: `{ "account_id": str, "rules": {} }`. Response: created versioned policy entity.
+  - `PUT /api/v1/risk-policies/{policy_id}`: Request Body: updated rules creating new version. Response: new version entity.
+
+- `/api/v1/paper/orders`:
+  - `GET`: Query `deployment_id` (optional), `status` (optional), pagination. Response: paginated list of `paper_orders` (DATA §2.1: `order_id`, `deployment_id`, `client_order_id`, `symbol`, `contract_id`, `position_effect`, `side`, `qty`, `order_type`, `status`, `rejection_reason`, `created_at`).
+  - `POST`: Request Body: `{ "deployment_id": str, "client_order_id": str, "symbol": str, "contract_id": str, "position_effect": str, "qty": int, "order_type": "MARKET" }`. Response: created order entity with initial status (`SUBMITTED` or `REJECTED`).
+
+- `GET /api/v1/paper/positions`:
+  - Request Query: `account_id` (optional), `deployment_id` (optional).
+  - Response: `{ "schema_version": 1, "positions": [ { "position_id": str, "version": int, "deployment_id": str, "contract_id": str, "symbol": str, "side": str, "qty": int, "entry_price_paise": int64, "current_mark_paise": int64, "unrealized_pnl_paise": int64, "realized_pnl_paise": int64, "updated_at": str } ] }`.
+
+- `PATCH /api/v1/paper/positions/{position_id}/exits`:
+  - Request Body: `{ "version": int, "stop_price_paise": int64 (optional), "target_price_paise": int64 (optional), "trailing_stop_pct": str (optional) }`.
+  - Response: updated position entity with incremented `version`.
+  - Error Response: `409 STALE_VERSION` returning current `version` on concurrency conflict.
+  - Behavior: Appends a `STOP_TARGET_UPDATE` ledger event.
+
+- `GET /api/v1/paper/ledger`:
+  - Request Query: `account_id` (str, required), `from_sequence` (int64, optional), pagination.
+  - Response: paginated `ledger_events` rows (DATA §2.1: `sequence_num`, `event_id`, `account_id`, `deployment_id`, `event_type`, `amount_paise`, `balance_paise`, `idempotency_key`, `correlation_id`, `event_time`, `recorded_at`, `schema_version`, `payload`) for the specified account.
+
+- `/api/v1/deployments`:
+  - `GET`: Query `account_id` (optional), `status` (optional). Response: paginated list of `deployments` (DATA §2.1: `deployment_id`, `account_id`, `policy_id`, `strategy_id`, `run_config_hash`, `mode`, `status`, `lease_owner`, `heartbeat_at`).
+  - `POST`: Request Body: deployment creation parameters (`account_id`, `policy_id`, `strategy_id`, `run_config`, `mode`). Response: created deployment row in `PENDING` status.
+  - `POST /api/v1/deployments/{id}/start`: Transitions deployment to `RUNNING` (triggers `live_daemon` lease acquisition and supervisor start). Response: `{ "schema_version": 1, "deployment_id": str, "status": "RUNNING" }`.
+  - `POST /api/v1/deployments/{id}/stop`: Transitions deployment to `STOPPED` (triggers graceful position flattening / risk halt). Response: `{ "schema_version": 1, "deployment_id": str, "status": "STOPPED" }`.
+
+- `GET /api/v1/data/health`:
+  - Response: `{ "schema_version": 1, "collector_status": { "snapshot": str, "ws": str }, "last_heartbeat_at": str, "latest_snapshot_ts": str, "disk_free_gb": float, "active_quarantine_files": int, "unresolved_verify_items": [str] }`.
+
+- `GET /api/v1/data/coverage`:
+  - Request Query: `dataset_key` (str, optional).
+  - Response: `{ "schema_version": 1, "datasets": [ { "dataset_key": str, "start_date": str, "end_date": str, "total_sessions": int, "missing_sessions": int, "known_gaps": [str], "eligibility_status": str } ] }`.
+
 ## 12. Research and ML safeguards
 
-Build chronological datasets with declared label horizon and point-in-time features. Use purged walk-forward with embargo; reserve a locked hold-out period never used during tuning. Count every parameter/model trial. Start with tabular baselines (e.g. gradient-boosted trees) for regime, direction or meta-label filtering. Models are versioned registry artifacts and never auto-deploy.
+Build chronological datasets with declared label horizon and point-in-time features. Use purged walk-forward with embargo; reserve a locked hold-out period never used during tuning. Count every parameter/model trial in PostgreSQL `research_trials`. Start with tabular baselines (e.g. gradient-boosted trees) for regime, direction or meta-label filtering. Models are versioned registry artifacts in PostgreSQL `models_registry` and never auto-deploy. Strategies are registered in `strategies_registry`, and features in `features_registry`.
 
-No post-entry fields in pre-entry predictions, no future-confirmed pivots, no snapshots received after decision time, and no use of future bars in labels/features. Observed snapshot coverage is limited and gappy; reconstructed option candles/model Greeks are a different source tier and must be tracked in the manifest. Register hold-out ranges in configuration. The worker refuses any run overlapping a registered hold-out unless `final_evaluation=true`; this override is logged and single-use per strategy version. A workflow convention alone is not an enforceable hold-out boundary.
+No post-entry fields in pre-entry predictions, no future-confirmed pivots, no snapshots received after decision time, and no use of future bars in labels/features. Observed snapshot coverage is limited and gappy; reconstructed option candles/model Greeks are a different source tier and must be tracked in the manifest. Register hold-out ranges in PostgreSQL `holdout_ranges`. The worker refuses any run overlapping a registered hold-out unless `final_evaluation=true`; this override is logged and enforced single-use per hold-out range per strategy lineage via PostgreSQL `final_evaluation_uses` (`UNIQUE(holdout_config_version, lineage_id)`). The single-use default and unique constraint remain the baseline enforcement. An override path for `final_evaluation_uses` is allowed only with a defect ID from the decision log and reason code `ENGINE_DEFECT`; the strategy lineage and parameters must be unchanged; the run is labelled `HOLDOUT_REUSED` in the manifest and UI; the `research_trials` count is never reset; every use is listed in the run manifest. A workflow convention alone is not an enforceable hold-out boundary.
 
 ## 13. Tests and required evidence
 
@@ -372,13 +489,13 @@ These are proposed v1 targets and must be measured on a named reference machine/
 
 ## 15. Phased build order and gates
 
-**Authority Note:** This section defines the architectural development phases and their substantive engineering criteria. The authoritative task-to-gate membership mapping (exact task IDs belonging to G0, G1, G2a, G2b, G3, G4, G5, G6) is maintained exclusively in `DOCS/AGENTS.md §5` to prevent duplicate maintenance or dependency drift.
+**Authority Note:** This section defines the architectural development phases and their substantive engineering criteria. Phase-to-milestone mapping: Phase 0a = M1, Phase 0 = M0 + M2, Phase 1 = M3, Phase 2 = M4, Phase 3 = M5, Phase 4 = M6, Phase 5 = M7, Phase 6 = M8. The authoritative task-to-gate membership mapping (exact task IDs belonging to G0a, G0, G1, G2a, G2b, G3, G4, G5, G6) is maintained exclusively in `DOCS/AGENTS.md §5` to prevent duplicate maintenance or dependency drift.
 
 ### Phase 0a — Repository skeleton (before collector implementation)
 - Create repository/package skeleton, config loading, structured logging, CI, import-boundary rules and migration scaffolding.
 - Add schema/status conventions and a minimal smoke-test pipeline. This is a proposed schedule, not a completed-work claim.
 
-**Gate:** clean environment can run lint/type/import checks and migrations against a disposable local database; no real collector/hardware integration is implied.
+**Gate (G0a):** clean environment can run lint/type/import checks and migrations against a disposable local database; no real collector/hardware integration is implied.
 
 ### Phase 0 — Collectors first (first priority)
 - Capture the instruments master daily, including lot size, tick size and listing metadata; gzip and SHA-256 archive every expired-API response exactly as downloaded.
@@ -387,7 +504,7 @@ These are proposed v1 targets and must be measured on a named reference machine/
 - Configure systemd supervisor, external dead-man alert, disk-space alert, session-day runbook and permitted offsite backup. Verify data-storage terms before enabling offsite sync.
 - Verify Upstox limits/schema/auth/retention details before setting the production subscription plan.
 
-**Gate:** raw data survives decoder failures; capture manifests reconcile to source; heartbeat and restart tests pass; `VERIFY` questions are explicitly tracked.
+**Gate (G0):** raw data survives decoder failures; capture manifests reconcile to source; heartbeat and restart tests pass; `VERIFY` questions are explicitly tracked.
 
 Phase 0 collector work and the Phase 1 audit may proceed in parallel, but they have separate acceptance gates and must not be treated as interchangeable.
 
@@ -398,36 +515,36 @@ Phase 0 collector work and the Phase 1 audit may proceed in parallel, but they h
 - Derive 3m/5m/15m/1h/4h from 1m and 1w/1M from vendor 1d; compare vendor intraday intervals as checksums only. 1m-derived daily OHLC is diagnostic only.
 - Normalize snapshot v1/v2/v3 into superset schemas with nulls.
 
-**Gate:** all data quality reports exist; no unexplained duplicate keys; gaps are explicit; canonical normalization idempotent; source-semantics table has evidence-backed decisions or explicit unresolved `VERIFY` entries with dependent uses blocked.
+**Gate (G1):** all data quality reports exist; no unexplained duplicate keys; gaps are explicit; canonical normalization idempotent; source-semantics table has evidence-backed decisions or explicit unresolved `VERIFY` entries with dependent uses blocked.
 
 ### Phase 2 — Minimal deterministic backtest
 - Implement the event loop in §4 with long/short CE/PE semantics, next-eligible-bar-open fills, stop-first ambiguity, effective-dated fee model, ledger writer, run manifest and decision-context artifacts. Start with single-leg behavior; add simple multi-leg groups after golden tests.
-- After M3-09 reports actual coverage, the owner selects and signs the locked hold-out range before the first real-data strategy run. Register it with the trial counter in research config. Worker refuses overlapping runs unless `final_evaluation=true`; that flag is logged and single-use per strategy version.
+- After M3-09 reports actual coverage, the owner selects and signs the locked hold-out range before the first real-data strategy run. Register it in PostgreSQL `holdout_ranges` and track trial counts in `research_trials`. Worker refuses overlapping runs unless `final_evaluation=true`; that flag is logged and enforced single-use per hold-out range per strategy lineage via PostgreSQL `final_evaluation_uses`.
 - Build one simple strategy and a hand-computed golden test before adding many strategies.
 
-**Gate:** golden backtest passes; three identical reruns hash-identical under declared deterministic settings; cost breakdown and audit trail reconcile. Performance gates remain non-blocking until all correctness gates pass.
+**Gate (G2a / G2b):** golden backtest passes; three identical reruns hash-identical under declared deterministic settings; cost breakdown and audit trail reconcile. Performance gates remain non-blocking until all correctness gates pass.
 
 ### Phase 3 — Feature registry and reconstructed chain
 - Add built-in EMA/RSI/ATR, OI/PCR features and a lazy DuckDB reconstructed-chain view; materialize only named ML feature sets and configured ATM +/- N liquid-contract model Greeks.
 - Add model IV/Greeks with explicit assumptions/provenance; compare against observed snapshot values only as a diagnostic, not as identity.
 
-**Gate:** no future data; source tiers are visible in outputs. Cache invalidation is tested only if the M5-02 benchmark justifies implementing the optional cache.
+**Gate (G3):** no future data; source tiers are visible in outputs. Cache invalidation is tested only if the M5-02 benchmark justifies implementing the optional cache.
 
 ### Phase 4 — API, chart and results UI
 - Add data-health, audit panel, run comparison and cost sensitivity.
 - Verify chart licence before release.
 
-**Gate:** 5k-bar latency target, chart lines server-authoritative, API schema tests pass.
+**Gate (G4):** 5k-bar latency target, chart lines server-authoritative, API schema tests pass.
 
 ### Phase 5 — Live daemon and paper accounts
 - Compare paper fills to backtest fills and measure slippage.
 
-**Gate:** restart/replay determinism, no duplicate fills, stale-data/kill-switch tests, session uptime target.
+**Gate (G5):** restart/replay determinism, no duplicate fills, stale-data/kill-switch tests, session uptime target.
 
 ### Phase 6 — Research and robustness
 - ML is research-only until separately reviewed and frozen.
 
-**Gate:** leakage tests pass; final evaluation is enforced by a registered, single-use `final_evaluation=true` worker guard per strategy version (not merely by workflow convention); every experiment/run records a manifest and trial-counter update.
+**Gate (G6):** leakage tests pass; final evaluation is enforced by a registered, single-use `final_evaluation=true` worker guard per hold-out range per strategy lineage via PostgreSQL `final_evaluation_uses` (not merely by workflow convention); every experiment/run records a manifest and trial-counter update in PostgreSQL `research_trials`.
 
 ### Future release gate — Real orders
 No real orders in v1. Before enabling a live broker adapter, verify current SEBI/NSE retail-algo rules, current Upstox order/API terms, required approvals/controls, order rate limits, kill-switch and monitoring. A `BrokerPort` interface exists so the simulation is not coupled to the broker.
@@ -468,7 +585,7 @@ No real orders in v1. Before enabling a live broker adapter, verify current SEBI
 
 ## 17. Developer workflow and change control
 
-1. Before coding, read this guide and DATA_SPEC; check the current `dataset_manifest` and status report.
+1. Before coding, read this specification (`QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md`) and `QUANTVIEW_DATA_SPEC.md`; check the current `dataset_manifest` and status report.
 2. Implement one phase/gate at a time. Do not start UI polish while collection/data gates are failing.
 3. Any deviation from a binding decision requires an ADR: context, decision, alternatives, migration impact, tests and rollback plan.
 4. Never mark a task `TESTED` without the command and result; never mark it `VERIFIED` without external/source evidence.
@@ -486,7 +603,7 @@ The frontend is a React + Vite + TypeScript single-user SPA on a private/loopbac
 |---|---|---|---|---|---|
 | Dashboard | `/` | Health summary, collector status, data coverage warnings, latest runs, active paper deployments/accounts, shortcuts to chart/strategies/backtest/accounts/risk/results | `GET /api/v1/health`, `GET /api/v1/data/coverage`, `GET /api/v1/runs?limit=...`, `GET /api/v1/accounts`, `GET /api/v1/deployments` | Distinguish no data, stale feed, partial coverage, API unavailable; never show stale values as live | User can navigate to all core screens; each health indicator links to detail |
 | Strategy browser | `/strategies` | Strategy list, family/tags, version, side support, required features/source tiers, parameter schema, test status | `GET /api/v1/strategies`, `GET /api/v1/strategies/{id}` | Empty registry, invalid plugin, unavailable feature, unverified source semantics are explicit | Select strategy/version; inspect params and supported modes; launch config prefilled from schema |
-| Backtest terminal | `/backtests/new` | Date range, strategy/version/params, CE/PE/both, expiry/strike policy, decision timeframe, capital/lots, risk toggles, SL/TP/trailing, trading windows, carry, fee/slippage/fill/mode/hold-out/seed; launch and job progress | Shared `RunConfig` schema; `POST /api/v1/runs`, `GET /api/v1/runs/{id}`, `POST /api/v1/runs/{id}/cancel` | Validate before submit; show data-eligibility block and structured reason; cancel state and failed jobs visible | UI and CLI validate against the same schema; invalid config cannot create a run |
+| Backtest terminal | `/backtests/new` | Date range, strategy/version/params, CE/PE/both, expiry/strike policy (with min_dte/exact_expiry_date/target_delta/exact_strike inputs), decision timeframe (1m..1d), required capital_paise (no default)/sizing, saved risk_policy_id and inline risk_controls, SL/TP/trailing (Decimal string), trading windows, carry, fee/slippage/fill/mode/hold-out/seed; launch and job progress | Shared `RunConfig` schema; `POST /api/v1/runs`, `GET /api/v1/runs/{id}`, `POST /api/v1/runs/{id}/cancel` | Validate before submit; show data-eligibility block and structured reason; cancel state and failed jobs visible | UI and CLI validate against the same schema; invalid config cannot create a run |
 | Chart workspace | `/chart` | Candles, bottom time axis/side price axis, symbol/expiry/strike selector, interval, indicator list and settings dialogs, trade markers, same-page collapsible results panel; per-strike option chart in UI-1 | `GET /api/v1/charts/series`, `GET /api/v1/contracts`, `GET /api/v1/features`, `GET /api/v1/runs/{id}/trades`, `GET /api/v1/runs/{id}/metrics` | No bars, incomplete session, stale live feed, feature unavailable, unsupported transform, permission/license error | Changing visibility/layout never changes strategy result. Indicator params are schema-driven. Trade markers link to audit. |
 | Accounts, risk and capital | `/accounts` and `/risk` | Separate paper accounts, capital, current cash/equity, position exposure, versioned risk policy, optional rule toggles, run/deployment assignment | `GET/POST /api/v1/accounts`, `GET/POST /api/v1/risk-policies`, `GET /api/v1/deployments` | Empty account, invalid policy, open position with stale mark, unavailable margin evidence | Changes create new policy versions; historical runs retain old version; accounts do not share cash/positions/ledger |
 | Results and audit | `/runs/:runId` | Equity/drawdown, metrics, trade table, cost breakdown, slippage sensitivity, long/short and CE/PE splits, time-of-day/expiry breakdown, decision context, selected contract, feature values, manifest, warnings | `GET /api/v1/runs/{id}`, `GET /api/v1/runs/{id}/metrics`, `GET /api/v1/runs/{id}/trades`, `GET /api/v1/runs/{id}/ledger`, `GET /api/v1/runs/{id}/decisions`, `GET /api/v1/runs/{id}/manifest` | Partial run vs failed run vs complete run are distinct; metrics not available until calculation succeeds | Every metric has a click-to-explain definition; every trade links to its signal/intent/fill/ledger events |
@@ -496,8 +613,9 @@ The frontend is a React + Vite + TypeScript single-user SPA on a private/loopbac
 ### 18.2 UI release tiers
 
 - **UI-1 core:** dashboard; strategy browser; backtest terminal; core candlestick chart; per-strike option chart with trade markers; indicator controls/settings dialogs; same-page results panel; accounts/risk/capital; results/audit.
+- **UI-1b (promoted sub-slice):** minimal OI overlay + read-only option-chain table, promoted into scope once M3-08 reports verified OI semantics (or owner promotes earlier). Uses §26 contracts. Signals still cannot consume unverified OI.
 - **UI-2 selective:** Heikin Ashi view; basic horizontal line and rectangle drawings.
-- **UI-3 (scheduled v1.1, still committed):** Renko; saved multi-chart layouts; advanced drawings; option-chain panel; OI tabs/overlays. API/data contracts must be designed now. If a baseline/candidate strategy depends on OI/PCR, promote the required option-chain/OI UI slice before declaring the strategy fully inspectable.
+- **UI-3 (scheduled v1.1, still committed):** Renko; saved multi-chart layouts; advanced drawings; interactive option-chain matrix; multi-tab OI visualizations. API/data contracts are specified in §26. If a baseline/candidate strategy depends on OI/PCR, promote the required option-chain/OI UI slice before declaring the strategy fully inspectable.
 - UI test stack is `PENDING_OWNER`. Do not silently choose a browser automation framework. Unit/API contract tests are required regardless.
 
 ### 18.3 Chart and order-line invariants
@@ -505,7 +623,7 @@ The frontend is a React + Vite + TypeScript single-user SPA on a private/loopbac
 - Time axis is bottom; price axis is vertical. Chart timeframe and chart transform are display choices, not changes to source truth.
 - Per-strike option charts use the exact selected contract and point-in-time contract master. No silent strike substitution.
 - Trade markers derive from persisted run/deployment artifacts and identify entry/exit, direction, leg/group, timestamp, fill price and event IDs.
-- Order/position stop/target/trailing lines are server-authoritative. Dragging sends a versioned command; UI updates only after acknowledgement. Stale version conflicts must be shown and reconciled.
+- Order/position stop/target/trailing lines are server-authoritative. Dragging sends a versioned command; UI updates only after acknowledgement. Stale version conflicts must be shown and reconciled. Draggable order lines and drawing tools are custom components built on top of the chart library (not provided natively by it) and are sized accordingly as custom engineering tasks in AGENTS.md.
 - Chart visibility, drawings, layout, colors and zoom cannot affect strategy outputs.
 - Heikin Ashi/Renko values are visual transform outputs and must never be used as tradable OHLC unless a future separately approved strategy contract explicitly uses them as features (not fill prices).
 
@@ -514,6 +632,8 @@ The frontend is a React + Vite + TypeScript single-user SPA on a private/loopbac
 There is one versioned schema for command line, YAML/JSON config, API, and UI forms. Backtests must be launchable by CLI before M6 is complete. UI forms are generated from this schema; there must not be separate UI-only defaults.
 
 ### 19.1 Typed `RunConfig` field schema
+
+**RiskRules schema note:** A shared `RiskRules` Pydantic model (in `packages/risk/`) is used by both `DATA §2.1 risk_policies.rules` (JSONB) and the inline `risk_controls` field below. Fields in `risk_controls` override the referenced policy; the run manifest freezes the resolved effective policy and its SHA-256 hash. Trading windows (`entry_window_start`, `last_entry_time`, `force_flat_time`) and `overnight_carry` remain top-level fields. `vix_filter_enabled` remains a top-level field (see §7). Each risk control lives in exactly one place.
 
 | Field | Type | Range / Allowed Values | Required? | Default | Validation & Behaviour Rules |
 |---|---|---|---|---|---|
@@ -527,34 +647,42 @@ There is one versioned schema for command line, YAML/JSON config, API, and UI fo
 | `strategy_version` | string | SemVer | Yes | None | Pinned version; code hash verified against registry |
 | `strategy_params` | object | JSON object | No | `{}` | Validated against strategy's parameter schema |
 | `option_side` | enum | `CE`, `PE`, `BOTH` | Yes | `BOTH` | Determines tradable contract types |
-| `decision_timeframe`| string | `"1m"`, `"3m"`, `"5m"`, `"15m"`| Yes | `"5m"` | Master evaluation clock; risk remains on 1m grid |
-| `expiry_policy` | enum | `NEAREST_ELIGIBLE`, `EXACT_DATE` | Yes | `NEAREST_ELIGIBLE`| Resolves expiry from point-in-time contract master |
-| `strike_policy` | string | `ATM`, `ITM_1..4`, `OTM_1..4` | Yes | `ATM` | Resolves strike relative to decision-time spot |
+| `decision_timeframe`| string | `"1m"`, `"3m"`, `"5m"`, `"15m"`, `"1h"`, `"4h"`, `"1d"` | Yes | `"5m"` | Master evaluation clock; risk remains on 1m grid. `"1d"` requires `overnight_carry=true` (signal available at session close, fills next open); else rejected with stable reason code `DAILY_TF_REQUIRES_CARRY`. `"1h"`/`"4h"` decisions that cannot fill before `force_flat_time` are rejected as entries with reason code `DECISION_TOO_LATE_FOR_FILL`. |
+| `expiry_policy` | enum | `NEAREST_ELIGIBLE`, `NEAREST_EXCLUDING_0DTE`, `MIN_DTE`, `EXACT_DATE`, `MONTHLY` | Yes | `NEAREST_ELIGIBLE` | Resolves expiry from point-in-time contract master. `MIN_DTE` requires `min_dte`. `EXACT_DATE` requires `exact_expiry_date`. |
+| `min_dte` | int nullable | `>= 0` | If `MIN_DTE` | null | Minimum days-to-expiry required; only used when `expiry_policy=MIN_DTE` |
+| `exact_expiry_date` | string nullable | ISO date `YYYY-MM-DD` | If `EXACT_DATE` | null | Exact expiry date; only used when `expiry_policy=EXACT_DATE` |
+| `strike_policy` | string | `ATM`, `ITM_1..10`, `OTM_1..10`, `TARGET_DELTA`, `EXACT_STRIKE` | Yes | `ATM` | Resolves strike relative to decision-time spot. `TARGET_DELTA` requires `target_delta`. `EXACT_STRIKE` requires `exact_strike`. |
+| `target_delta` | Decimal string nullable | e.g. `"0.40"` | If `TARGET_DELTA` | null | Target option delta; only used when `strike_policy=TARGET_DELTA` |
+| `exact_strike` | Decimal string nullable | e.g. `"24000.00"` | If `EXACT_STRIKE` | null | Exact strike price; only used when `strike_policy=EXACT_STRIKE` |
 | `mode` | enum | `REALISTIC_ACCOUNT`, `THEORETICAL` | Yes | `REALISTIC_ACCOUNT`| `REALISTIC_ACCOUNT` requires G2a and verified data/margin |
-| `capital_paise` | int64 | `> 0` | Yes (in realistic) | `10000000` (₹1,00,000) | Exact money in integer paise; sizing checked against cash |
+| `capital_paise` | int64 | `> 0` | **Yes — REQUIRED, no default** | None | Exact money in integer paise; user enters at launch. No single starting capital assumed (see MASTER, section 'Binding UI tiers and owner inputs', subsection 'Owner decisions'). `§19.2` sample value `2000000` is an example only. |
 | `sizing_mode` | enum | `FIXED_LOTS`, `FIXED_RISK_INR`, `PERCENT_CAPITAL`| Yes | `FIXED_LOTS` | Re-checked at actual fill boundary; rejects if unaffordable |
 | `lots` | int32 | `> 0` | If `FIXED_LOTS` | `1` | Rejected with structured reason if capital insufficient |
 | `risk_inr_paise` | int64 nullable| `> 0` | If `FIXED_RISK_INR` | null | Target risk amount in integer paise; sizing derives lots from SL distance |
-| `intrabar_stop_policy`| enum | `STOP_FIRST` | Yes | `STOP_FIRST` | **Invariant**: if both SL and TP touched, stop wins; no optimistic fill |
+| `risk_policy_id` | UUID nullable | Valid UUIDv4, ref `risk_policies.policy_id` | No | null | Optional reference to a saved risk policy; inline `risk_controls` override it; resolved effective policy and hash frozen in run manifest |
+| `risk_controls` | object nullable | `RiskRules` Pydantic schema (same schema as `risk_policies.rules`) | No | null | Inline risk controls; each control is `{enabled: bool, value}`. Controls: `max_entry_fills_per_day`, `daily_loss_limit_paise`, `max_drawdown_pct` (Decimal string), `max_consecutive_losses`, `cooldown_bars`, `max_open_positions`, `max_lots`, `max_premium_per_trade_paise`, `risk_min_dte_entry`, `liquidity_filter`. Overrides referenced policy field-by-field where `enabled=true`. |
+| `intrabar_stop_policy`| enum | `STOP_FIRST`, `TARGET_FIRST_SENSITIVITY` | Yes | `STOP_FIRST` | Baseline: if both SL and TP are touched in one bar, stop wins. `TARGET_FIRST_SENSITIVITY` is permitted only in a run explicitly named as a sensitivity run (see §6); such a run is labelled `SENSITIVITY_NOT_BASELINE` in the manifest and UI and is never the primary result. |
+| `entry_delay_policy` | enum | `NEXT_BAR_OPEN`, `EXTRA_BARS_SENSITIVITY` | No | `NEXT_BAR_OPEN` | Baseline default is `NEXT_BAR_OPEN` (fills at next eligible bar open per §4). `EXTRA_BARS_SENSITIVITY` adds a configurable extra delay in whole 1m bars for timing sensitivity sweeps; such a run is labelled `SENSITIVITY_NOT_BASELINE` in the manifest and UI and is never the primary baseline result. |
+| `entry_delay_bars` | int nullable | `1..5` | If `EXTRA_BARS_SENSITIVITY` | null | Extra entry delay in whole decision bars (1..5); required when `entry_delay_policy=EXTRA_BARS_SENSITIVITY`, otherwise null. When `entry_delay_bars > 0`, the `order_expiry_bars` clock starts after the delay. |
 | `max_stale_minutes` | int | `1..60` | Yes (in realistic) | `5` | Max tolerated missing/flat bars before force-flat at next open (owner-configurable) |
 | `order_expiry_bars` | int | `1..10` | Yes | `1` | Unfilled market/limit intents cancel after N decision bars |
-| `stop_loss_pct` | float nullable| `0.01 .. 1.0` | No | null | Optional percentage stop from entry fill price |
-| `take_profit_pct` | float nullable| `0.01 .. 5.0` | No | null | Optional percentage target from entry fill price |
-| `trailing_stop_pct`| float nullable| `0.01 .. 1.0` | No | null | Computed only from completed bars; never intrabar peak |
+| `stop_loss_pct` | Decimal string nullable | `"0.01"` .. `"1.0"` | No | null | Optional percentage stop from entry fill price; stored as exact Decimal string |
+| `take_profit_pct` | Decimal string nullable | `"0.01"` .. `"5.0"` | No | null | Optional percentage target from entry fill price; stored as exact Decimal string |
+| `trailing_stop_pct`| Decimal string nullable | `"0.01"` .. `"1.0"` | No | null | Computed only from completed bars; never intrabar peak; stored as exact Decimal string |
 | `entry_window_start`| string (HH:MM)| `09:15 .. 15:00` | Yes | `"09:20"` | No entries before this time (Asia/Kolkata) |
 | `last_entry_time` | string (HH:MM)| `09:30 .. 15:15` | Yes | `"15:00"` | New entries blocked after this time |
-| `force_flat_time` | string (HH:MM)| `15:00 .. 15:30` | Yes | `"15:25"` | Intraday force-exit time for open positions |
-| `overnight_carry` | boolean | `true`, `false` | Yes | `false` | v1 default false; true requires margin verification |
+| `force_flat_time` | string (HH:MM)| `09:30 .. 15:25` | Yes | `"15:25"` | Intraday force-exit time for open positions; maximum 15:25 so exit can fill at a real next-bar open |
+| `overnight_carry` | boolean | `true`, `false` | Yes | `false` | v1 default false; margin verification required only for positions with any short leg; single-leg long CE/PE needs none. See ENGINE §5 expiry/settlement rule. |
 | `fee_schedule_version`| string | Registered schedule ID | Yes | `"UPSTOX_2026_V1"` | Exact charge schedule pinned in run manifest |
 | `slippage_model_id`| enum | `FIXED_TICKS`, `PERCENT`, `ZERO`| Yes | `FIXED_TICKS` | Slippage model applied against trader |
 | `slippage_ticks` | int | `>= 0` | If `FIXED_TICKS` | `1` | Adverse tick adjustment to fill price |
-| `slippage_multiplier`| float | `0.0, 1.0, 2.0, 3.0` | Yes | `1.0` | Primary run multiplier; sensitivities written as child rows |
+| `slippage_multiplier`| Decimal string | `"0"`, `"1"`, `"2"`, `"3"` | Yes | `"1"` | Primary run multiplier; sensitivities written as child rows |
 | `risk_free_rate_source`| string | Registered rate series | Yes | `"ZERO_ASSUMPTION"` | Series or explicit zero assumption for Sharpe/Sortino |
 | `vix_filter_enabled`| boolean | `true`, `false` | Yes | `false` | If true, requires canonical `india_vix` dataset from M3-12 |
-| `holdout_config_version`| string nullable| Registered holdout ID | No | null | Overlapping hold-out dates rejected unless `final_eval=true` |
+| `holdout_config_version`| string nullable| Registered holdout ID | No | null | Overlapping hold-out dates rejected unless `final_evaluation=true` |
 | `final_evaluation` | boolean | `true`, `false` | Yes | `false` | Audited single-use flag to evaluate locked holdout period |
 
-*Guardrails:* A run is rejected with a structured error response if any required field is missing or unverified. In `REALISTIC_ACCOUNT` mode, unverified fee schedules or undefined `max_stale_minutes` halt execution.
+*Guardrails:* A run is rejected with a structured error response if any required field is missing or unverified. In `REALISTIC_ACCOUNT` mode, unverified fee schedules or undefined `max_stale_minutes` halt execution. `capital_paise` is always required with no default; runs without it are rejected.
 
 ### 19.2 Canonical `RunConfig` file example (`run_config.json`)
 
@@ -577,14 +705,18 @@ There is one versioned schema for command line, YAML/JSON config, API, and UI fo
   "expiry_policy": "NEAREST_ELIGIBLE",
   "strike_policy": "ATM",
   "mode": "REALISTIC_ACCOUNT",
-  "capital_paise": 10000000,
+  "capital_paise": 2000000,
   "sizing_mode": "FIXED_LOTS",
   "lots": 1,
+  "risk_policy_id": null,
+  "risk_controls": null,
   "intrabar_stop_policy": "STOP_FIRST",
+  "entry_delay_policy": "NEXT_BAR_OPEN",
+  "entry_delay_bars": null,
   "max_stale_minutes": 5,
   "order_expiry_bars": 1,
-  "stop_loss_pct": 0.20,
-  "take_profit_pct": 0.40,
+  "stop_loss_pct": "0.20",
+  "take_profit_pct": "0.40",
   "trailing_stop_pct": null,
   "entry_window_start": "09:20",
   "last_entry_time": "15:00",
@@ -593,7 +725,7 @@ There is one versioned schema for command line, YAML/JSON config, API, and UI fo
   "fee_schedule_version": "UPSTOX_2026_V1",
   "slippage_model_id": "FIXED_TICKS",
   "slippage_ticks": 1,
-  "slippage_multiplier": 1.0,
+  "slippage_multiplier": "1",
   "risk_free_rate_source": "ZERO_ASSUMPTION",
   "vix_filter_enabled": false,
   "holdout_config_version": null,
@@ -671,7 +803,7 @@ All metric outputs include `value`, `unit`, `definition`, `source_event_types`, 
      \[
      SR^* \approx \sigma_{\text{trials}} \cdot \left[ (1 - \gamma)\Phi^{-1}\left(1 - \frac{1}{N}\right) + \gamma\Phi^{-1}\left(1 - \frac{1}{N \cdot e}\right) \right]
      \]
-     where \(\gamma \approx 0.5772156649\) is the Euler–Mascheroni constant, \(\Phi\) is the standard-normal CDF, and \(\sigma_{\text{trials}} = \sqrt{V(\{SR_n\})}\) is the **sample standard deviation across the \(N\) trial Sharpe ratio estimates** (cross-trial dispersion), **NOT** the sampling uncertainty \(\text{Var}(\widehat{SR})\). If trial history has \(N=1\) or cross-trial dispersion is undefined, emit null with reason or use an explicitly declared benchmark dispersion.
+     where \(\gamma \approx 0.5772156649\) is the Euler–Mascheroni constant, \(\Phi\) is the standard-normal CDF, and \(\sigma_{\text{trials}} = \sqrt{V(\{SR_n\})}\) is the **sample standard deviation across the \(N\) trial Sharpe ratio estimates** (cross-trial dispersion), **NOT** the sampling uncertainty \(\text{Var}(\widehat{SR})\). Cross-trial Sharpe dispersion is computed across trials (including run-less trials) from `research_trials.sharpe_daily`, `n_obs`, and `search_space_id` (DATA §2.1). If trial history has \(N=1\) or cross-trial dispersion is undefined, emit null with reason or use an explicitly declared benchmark dispersion.
   3. The resulting Deflated Sharpe Ratio statistic:
      \[
      \text{DSR} = \Phi\left( \frac{\widehat{SR} - SR^*}{\sqrt{\text{Var}(\widehat{SR})}} \right)
@@ -686,7 +818,7 @@ All metric outputs include `value`, `unit`, `definition`, `source_event_types`, 
 - Store metrics schema/version and calculation code hash in run manifest.
 - For floating ratios, either enforce deterministic aggregation/order/threads or declare tolerance-comparison; money totals are exact integer paise.
 - **Trial Accounting Policy:**
-  - Record every configuration and result that could influence strategy or model selection in a machine-readable trial registry (`ops/trials.jsonl`).
+  - Record every configuration and result that could influence strategy or model selection in the authoritative PostgreSQL `research_trials` table (persisting `sharpe_daily`, `n_obs`, `search_space_id` per DATA §2.1 for cross-trial Sharpe dispersion). The filesystem file `ops/trials.jsonl` is a machine-readable export of `research_trials` for external audit and local tooling.
   - Do **not** inflate \(N\) by blindly counting diagnostic sensitivity rows: the 0x/1x/2x/3x slippage sensitivity rows and capital-affordability sweeps (₹10k..₹200k) are child evaluation scenarios belonging to the parent hypothesis run, not independent trials.
   - Count every genuinely tried parameter set, indicator combination, feature subset, or rule variation inspected by the researcher. If \(N\) is unconstrained, document the search space bounds.
 
@@ -702,7 +834,7 @@ The first built-in catalogue is proposed pending owner approval. Every feature d
 | MACD | `EMA(fast)-EMA(slow)`; signal = EMA(MACD, signal_n); histogram = MACD-signal | 12/26/9 | slow EMA plus signal warm-up; closed-bar only | none; infinite |
 | ATR(n) | `TR=max(H-L, abs(H-prevClose), abs(L-prevClose))`; ATR=RMA(TR,n) by default | Wilder RMA, n=14 | needs prior close and declared smoothing warm-up | none; infinite |
 | Bollinger Bands | middle=SMA(close,n); upper/lower=middle ± k × rolling standard deviation | n=20, k=2, population/sample stdev choice explicitly fixed | n closed bars; standard-deviation convention in manifest | none; finite(n) for rolling window |
-| Session VWAP | `sum(typical_price × volume)/sum(volume)`, typical price `(H+L+C)/3` | Reset each verified session | Requires source volume semantics; if unavailable/invalid, feature `UNAVAILABLE`, not fabricated | none; infinite within session, reset by calendar |
+| Session VWAP | `sum(typical_price × volume)/sum(volume)`, typical price `(H+L+C)/3` | Reset each verified session | Requires source volume semantics: index volume is not a measurement, and volume-based features use the NIFTY futures series (dataset from M3-12) once available and verified; otherwise they remain `UNAVAILABLE`, not fabricated | none; infinite within session, reset by calendar |
 | Supertrend | ATR bands around `(H+L)/2`, with final-band carry-forward and direction switching | ATR 10, multiplier 3 common; exact band algorithm versioned | Requires ATR warm-up; closed-bar confirmed only | none; infinite state |
 | ADX(n) | Directional movement + Wilder-smoothed DI+/DI−, then `DX=100×|DI+−DI−|/(DI++DI−)`, ADX=RMA(DX,n) | n=14 | Multiple smoothing windows; formula versioned and known-value tested | none; infinite |
 
@@ -767,11 +899,15 @@ This section establishes the binding, versioned algorithm for swing structure, B
   | `BEARISH` | `close[t] < active_swing_low` | `BEARISH_BOS` | `BEARISH` | Trend continuation |
   | `BEARISH` | `close[t] > active_swing_high` | `BULLISH_CHOCH` | `BULLISH` | Structural trend reversal |
 
+*Note on Convention:* The `NEUTRAL` first-break labelling (`BULLISH_CHOCH` / `BEARISH_CHOCH`) is a nomenclature convention. Downstream strategies should consume `market_bias` transitions (`NEUTRAL` -> `BULLISH`, `BEARISH` -> `BULLISH`, etc.) rather than relying solely on the event label.
+
 #### 4. Ambiguous double-break bar handling
-If an extraordinary bar \(t\) has both `high[t] > active_swing_high` and `low[t] < active_swing_low`:
+The double-break case applies **only to the optional `TOUCH` variant**. Under the default `CLOSE_THROUGH` criterion, a single scalar `close[t]` cannot be both above `active_swing_high` and below `active_swing_low` simultaneously.
+
+Under the optional `TOUCH` variant, if an extraordinary bar \(t\) has both `high[t] > active_swing_high` and `low[t] < active_swing_low`:
 - Flag bar with quality attribute `AMBIGUOUS_DOUBLE_BREAK`.
 - If tick data or 1m sub-bars exist within the decision bar, evaluate the breaks in chronological sequence.
-- If only the current bar's OHLC is available, apply the conservative trend-reversal policy (prior bias breaks first into CHoCH, followed by continuation in the opposite direction).
+- If only the current bar's OHLC is available, apply the conservative trend-reversal policy (prior bias breaks first into CHoCH, followed by continuation in the opposite direction). Do not introduce new enum values.
 
 #### 5. Output record schema
 Each evaluated bar emits:
@@ -824,7 +960,7 @@ Roadmap:
 - **R1 research baselines:** direction/price-movement prediction, market-regime classification, strategy-specific meta-labeling (win/loss filtering). All are research-only.
 - **R2 pattern discovery:** option-chain and tick/WebSocket pattern discovery; blocked until recorded WS sessions, semantics and data-quality gates pass.
 - **R3 pattern-to-indicator:** discovered patterns become a versioned indicator only through the frozen-model contract, with out-of-sample validation and human review.
-- No self-modifying live strategies; no training data from future or overlapping label windows; purged walk-forward with embargo; registered trial counter; hold-out final evaluation is single-use per strategy version.
+- No self-modifying live strategies; no training data from future or overlapping label windows; purged walk-forward with embargo; registered trial counter; hold-out final evaluation is single-use per hold-out range per strategy lineage.
 
 ## 24. Position groups, margin and legging contract
 
