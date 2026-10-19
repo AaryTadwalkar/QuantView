@@ -1,4 +1,0 @@
-﻿final_eval=true
-MASTER §5 owner decisions
-single-use per strategy version
-UNIQUE\(strategy_id, strategy_version\)

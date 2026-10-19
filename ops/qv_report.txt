@@ -2,9 +2,9 @@
 python=3.11.9 os=Windows-10-10.0.26300-SP0
 
 -- files in DOCS (bytes, lines, sha12) --
-AGENTS.md                                          115399  1675 1137dc56c512
-QUANTVIEW_DATA_SPEC.md                              53042   413 3c478d60243d
-QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md               117946  1051 9008909ec7d4
+AGENTS.md                                          118020  1688 de755195c886
+QUANTVIEW_DATA_SPEC.md                              55366   426 9272a91a2e76
+QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md               119180  1059 2ca47b45b110
 QUANTVIEW_MASTER_SPEC.md                            45854   469 6a50e66d09f0
 
 -- DOCS vs DOCS_before --
@@ -27,7 +27,7 @@ FIX-7 'MASTER §5 owner decisions'              DONE
 FIX-8 hold-out per lineage (optional D3)       DONE
 
 -- lint (with default stale list) --
-tasks=113 active=112 days=260.5 gates=G0a,G0,G1,G2a,G2b,G3,G4,G5,G6
+tasks=114 active=113 days=262.5 gates=G0a,G0,G1,G2a,G2b,G3,G4,G5,G6
 LINT: PASS (0)
 
 -- environment / git safety --
@@ -45,5 +45,3 @@ git history of .env: (no output)
 git status DOCS: M DOCS/AGENTS.md
  M DOCS/QUANTVIEW_DATA_SPEC.md
  M DOCS/QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md
- M DOCS/QUANTVIEW_MASTER_SPEC.md
- D DOCS/quantview_doc_analysis.md

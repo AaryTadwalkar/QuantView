@@ -25,8 +25,13 @@
 5. **Cross-Cutting Controls:** `TRACEABILITY_MATRIX.md`, `RECONCILIATION_AND_CHANGE_LOG.md`, `UNRESOLVED_DECISIONS_REGISTER.md`, `SOURCE_OF_TRUTH_INDEX.md`, `VALIDATION_REPORT.md`.
 
 ## Immediate Next Steps & Gates
-- **Completed Final Surgical Pass:** Applied fixes 1–14 across the 4 canonical specs in `DOCS/` (Gates G0a/G0 alignment, UI-1b M6-18, M6-17 overlay polish, M7-02/M7-09 warm-up split, M4-22 narrow scope, M6-16 DuckDB views, entry_delay_bars expiry clock, holdout override tightening, REST position patch exits/wire price rule, tick_paise unification, ledger schema alignment, measured unique dates).
-- **Preservation & Consistency Status:** Verification `tools/qv_check.py lint DOCS stale.txt`: PASS (0 defects; tasks=114 active=113 days=262.5). Verification `ops/verify_docs_consistency.py`: PASS (0 defects across all 12 checks A–L).
-- **Gated State:** M0-01 read-only inventory delivered in `ops/inventory.md`. Specification set fully locked and verified.
+- **Completed Surgical Pass (Read-Only Views, Streaming Tasks & Chart Scope):**
+  - DATA: Added §4.9 defining read-only DuckDB views `v_candles_underlying` and `v_candles_options` (columns, source tables, point-in-time rules); updated M6-16 spec ref and acceptance to §4.9.
+  - ENGINE §11.1: Replaced stale M7-07 citation with owning tasks (FrameBus transport M7-01; consumers M6-05 and M7-08).
+  - AGENTS: De-duplicated chart scope so each of `overlays` (M6-17), `trade markers` (M6-03b), and `order lines` (M7-08) appears in exactly one task; M6-03 focused on basic candle chart rendering & viewport engine.
+  - AGENTS V-09/V-10: Changed status from `COVERED` to `PARTIAL` to accurately reflect UI-1b delivered scope vs deferred UI-3 full panel.
+  - Tooling: Updated `ops/verify_docs_consistency.py` to isolate UI-1b strictly to task bodies that mention it (M6-18) and added Check M verifying every named view/table in task acceptances exists in DATA.
+- **Preservation & Consistency Status:** Verification `tools/qv_check.py lint DOCS stale.txt`: PASS (0 defects; tasks=114 active=113 days=262.5). Verification `ops/verify_docs_consistency.py`: PASS (0 defects across all 13 checks A–M).
+- **Gated State:** M0-01 read-only inventory delivered in `ops/inventory.md`. Specification set fully locked, consistent, and verified.
 - **Next Unblocked Task:** `M0-11` — Post-inventory contract refinement and owner approval.
 - **Owner Action Required:** Review `ops/inventory.md` and approve M0-01 gate; approve destination medium for M0-06 backup before collector or data touching begins.

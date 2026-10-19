@@ -268,11 +268,21 @@ def run_checks():
     print("  Gate order dependency verification complete. Zero forward gate dependencies found.")
 
     print("\n=== CHECK H: UI-1b Referenced by an AGENTS Task ===")
-    ui1b_tasks = [tid for tid, tinfo in tasks.items() if "UI-1b" in tinfo["title"] or "UI-1b" in agents_text[agents_text.find(f"#### {tid}"):agents_text.find(f"#### {tid}")+1200]]
+    ui1b_tasks = []
+    for i, m in enumerate(task_matches):
+        tid = m.group(1)
+        start = m.start()
+        end = task_matches[i+1].start() if i+1 < len(task_matches) else agents_text.find("## 7. Milestone order")
+        task_body = agents_text[start:end]
+        if re.search(r"\bUI-1b\b", task_body):
+            ui1b_tasks.append(tid)
+
     if not ui1b_tasks:
         defects.append("UI-1b is not referenced by any AGENTS task")
+    elif ui1b_tasks != ["M6-18"]:
+        defects.append(f"UI-1b must be found only in task bodies that mention it, but found in: {ui1b_tasks}")
     else:
-        print(f"  UI-1b referenced by task(s): {ui1b_tasks}")
+        print(f"  UI-1b referenced exclusively by task(s): {ui1b_tasks} (verified only in task bodies mentioning UI-1b)")
 
     print("\n=== CHECK I: All Spec Refs Resolve ===")
     spec_ref_lines = re.findall(r"-\s+\*\*Spec refs:\*\*\s*(.*?)$", agents_text, re.MULTILINE)
@@ -345,7 +355,11 @@ def run_checks():
     print("  tick_paise and tick_size naming verified successfully.")
 
     print("\n=== CHECK L: Superset Check against Pre-Patch Snapshot ===")
-    backup_dir = Path("scratch/backup_pre_patch3")
+    backup_dir = Path("scratch/backup_pre_patch4")
+    if not backup_dir.exists():
+        backup_dir = Path("scratch/backup_pre_patch3")
+    if not backup_dir.exists():
+        backup_dir = Path(r"C:\Users\Aary\.gemini\antigravity\brain\8d30a874-d2b3-418b-b85d-ca9185ba802e\scratch\backup_pre_patch4")
     if not backup_dir.exists():
         backup_dir = Path(r"C:\Users\Aary\.gemini\antigravity\brain\8d30a874-d2b3-418b-b85d-ca9185ba802e\scratch\backup_pre_patch3")
     
@@ -381,6 +395,50 @@ def run_checks():
             if missing_vids:
                 defects.append(f"Superset violation in {fname}: missing V-IDs: {missing_vids}")
         print("  Superset check complete: all section headings, ADRs, and V-IDs preserved.")
+
+    print("\n=== CHECK M: Every Named View or Table in Task Acceptance Exists in DATA ===")
+    table_view_refs = set()
+    for i, m in enumerate(task_matches):
+        tid = m.group(1)
+        start = m.start()
+        end = task_matches[i+1].start() if i+1 < len(task_matches) else agents_text.find("## 7. Milestone order")
+        block = agents_text[start:end]
+        
+        ac_match = re.search(r"-\s+\*\*Acceptance contract:\*\*\s*(.*?)(?=\n-|\n####|\n##|$)", block, re.DOTALL)
+        if not ac_match:
+            continue
+        contract = ac_match.group(1)
+        
+        # Match table `name` or `name` table
+        m1 = re.findall(r"`([a-zA-Z0-9_]+)`\s+table\b|\btable\s+`([a-zA-Z0-9_]+)`", contract, re.IGNORECASE)
+        for g1, g2 in m1:
+            name = g1 or g2
+            table_view_refs.add((tid, "table", name))
+            
+        # Match view `name` or `name` view
+        m2 = re.findall(r"`([a-zA-Z0-9_]+)`\s+views?\b|\bviews?\s+`([a-zA-Z0-9_]+)`", contract, re.IGNORECASE)
+        for g1, g2 in m2:
+            name = g1 or g2
+            table_view_refs.add((tid, "view", name))
+            
+        # Match v_... views (e.g. `v_candles_underlying`, `v_candles_options`)
+        m3 = re.findall(r"`(v_[a-zA-Z0-9_]+)`", contract)
+        for name in m3:
+            table_view_refs.add((tid, "view", name))
+
+    missing_in_data = []
+    for tid, kind, name in sorted(table_view_refs):
+        # Verify the table or view exists in DATA_SPEC.md (in backticks or whitespace-delimited)
+        if f"`{name}`" not in data_text and f" {name} " not in data_text and f" {name}\n" not in data_text:
+            missing_in_data.append((tid, kind, name))
+
+    if missing_in_data:
+        for tid, kind, name in missing_in_data:
+            defects.append(f"Task {tid} acceptance cites {kind} `{name}` which does not exist in DATA")
+    else:
+        print(f"  All {len(table_view_refs)} named views/tables cited in task acceptances exist in DATA:")
+        for tid, kind, name in sorted(table_view_refs):
+            print(f"    - Task {tid}: {kind} `{name}` -> Verified in DATA")
 
     print("\n=== SUMMARY OF DEFECTS ===")
     if defects:

@@ -225,6 +225,19 @@ Columns exposed by the view include `as_of_minute`, `available_at`, contract ide
 
 Only use values available at or before the declared `available_at`. An option bar's final close is not available before that bar closes. Spot/forward/volatility inputs must be point-in-time and documented.
 
+### 4.9 Read-only DuckDB candle views: v_candles_underlying and v_candles_options
+
+Analytical query layers (FastAPI candle endpoints, M6-16 visual candle viewer, backtest engine data loader) read historical candle data strictly through two read-only DuckDB views rather than executing ad-hoc file-system scans across raw Parquet directories:
+
+- **`v_candles_underlying`:**
+  - **Source table:** Canonical `underlying_candles` (§4.1), filtered to manifest-resolved active records (`is_active = true`).
+  - **Exposed columns:** `symbol` (underlying), `interval`, `bar_start` (`ts_start`), `bar_end` (`ts_end`), `available_at`, `open`, `high`, `low`, `close`, `volume`, `oi`, `quality_flags`, `source_manifest_hash`, `is_flat_bar`.
+  - **Point-in-time rule:** Intraday queries must enforce `available_at <= query_as_of_time`. For daily bars, `available_at` is official session close; an in-progress session bar is never visible to historical queries.
+- **`v_candles_options`:**
+  - **Source table:** Canonical `option_candles` (§4.2) joined with `contract_master` (§6), filtered to manifest-resolved active records (`is_active = true`).
+  - **Exposed columns:** `contract_id`, `symbol` (underlying), `expiry`, `strike`, `option_type`, `interval`, `bar_start` (`ts_start`), `bar_end` (`ts_end`), `available_at`, `open`, `high`, `low`, `close`, `volume`, `oi`, `quality_flags`, `source_manifest_hash`, `is_flat_bar`.
+  - **Point-in-time rule:** Queries must enforce `available_at <= query_as_of_time`. Contract selection and candle lookup cannot observe bars whose `available_at` exceeds the decision cursor. Unfinalized or in-progress bars cannot be queried or returned in historical simulation.
+
 ## 5. Calendar and session model
 
 Create a versioned `trading_calendar` Parquet dataset with a manifest and a corresponding Postgres index row. Columns:

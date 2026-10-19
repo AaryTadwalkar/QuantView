@@ -1159,7 +1159,7 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Evidence path:** `ops/evidence/M6-02.md`
 - **Acceptance contract:** Check/record: API/UI contract tests; empty/partial data behavior Deliverable target: First UI page for coverage, gaps, eligibility and VERIFY flags Evidence must support: User can inspect missing sessions/contracts and reasons before running research
 
-#### M6-03 — Chart and overlays (basic charts)
+#### M6-03 — Candle chart rendering and viewport engine
 
 - **Spec refs:** ENGINE §18, §18.1, §18.3
 - **Size:** M (2.5 person-day upper bound)  
@@ -1168,7 +1168,7 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M6-03.md`
-- **Acceptance contract:** Check/record: 5k-bar benchmark; chart transform correctness Deliverable target: Candle chart, overlays and trade markers; server-authoritative order lines Evidence must support: 5,000-bar data-ready latency ≤300 ms server-side; initial payload ≤5,000 bars
+- **Acceptance contract:** Check/record: 5k-bar benchmark; chart transform correctness Deliverable target: Basic OHLC candle chart rendering, zooming, panning, and viewport time-axis synchronization Evidence must support: 5,000-bar data-ready latency ≤300 ms server-side; initial payload ≤5,000 bars
 
 #### M6-04 — Results and audit panel
 
@@ -1252,7 +1252,7 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M6-03b.md`
-- **Acceptance contract:** Implement strike-specific option candle chart visualization in the primary UI. Support selecting CE/PE and strike from backtest trade markers or contract selector. Overlay entry, exit, stop-loss, and target execution lines directly on option price candles using `UtcEpochSec` coordinates. Point-in-time checks verify only historical bars up to current replay/audit cursor are visible.
+- **Acceptance contract:** Implement strike-specific option candle chart visualization in the primary UI. Support selecting CE/PE and strike from backtest trade markers or contract selector. Display trade markers (entry, exit, stop-loss, and target execution points) directly on option price candles using `UtcEpochSec` coordinates. Point-in-time checks verify only historical bars up to current replay/audit cursor are visible.
 
 #### M6-11 — UI-1 Schema-driven indicator settings dialogs & visibility controls
 
@@ -1315,16 +1315,16 @@ The task register below is the binding implementation backlog. Tasks are ordered
 
 #### M6-16 — Read-only historical and expired-option candle chart viewer
 
-- **Spec refs:** DATA §4.1, §4.2, §4.8, ENGINE §18.3
+- **Spec refs:** DATA §4.1, §4.2, §4.9, ENGINE §18.3
 - **Size:** M (2.0 person-day upper bound)  
 - **Depends on:** M3-04, M3-05  
 - **Needs:** —  
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M6-16.md`
-- **Acceptance contract:** Read-only web/desktop viewer for historical underlying candles and expired-option candle series reading strictly through the read-only DuckDB views defined in DATA (DATA §4.8 `v_candles_underlying`, `v_candles_options`, identical to the query path used by the FastAPI backend), never raw Parquet paths. Supports date, strike, and expiry selection; displays OHLC candles with volume bars and basic navigation controls. Verifies data integrity visually without mutating source data or requiring active backend engine services. (Note: May be built right after M3-04/M3-05 to provide early visual validation of normalized Parquet datasets).
+- **Acceptance contract:** Read-only web/desktop viewer for historical underlying candles and expired-option candle series reading strictly through the read-only DuckDB views defined in DATA (DATA §4.9 `v_candles_underlying`, `v_candles_options`, identical to the query path used by the FastAPI backend), never raw Parquet paths. Supports date, strike, and expiry selection; displays OHLC candles with volume bars and basic navigation controls. Verifies data integrity visually without mutating source data or requiring active backend engine services. (Note: May be built right after M3-04/M3-05 to provide early visual validation of normalized Parquet datasets).
 
-#### M6-17 — Overlays, indicator panes, and marker polish
+#### M6-17 — Indicator sub-panes and chart overlays
 
 - **Spec refs:** ENGINE §18, §18.1, §18.3
 - **Size:** M (2.5 person-day upper bound)  
@@ -1333,7 +1333,7 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `file_check`  
 - **Evidence path:** `ops/evidence/M6-17.md`
-- **Acceptance contract:** Check/record: Technical indicator sub-panes (RSI, MACD, EMA overlays), price action markers (BOS/CHoCH markers), trade entry/exit markers, and server-authoritative SL/TP order lines with draggable updates. Deliverable target: Overlays, indicator panes, and marker polish on the primary chart. Note: Multi-pane layout engine and advanced split-screens are moved to UI-3/v1.1 (post-v1 target contract, uncounted in baseline totals). Evidence must support: Render performance meets 5k-bar display target with markers and sub-panes active.
+- **Acceptance contract:** Check/record: Technical indicator sub-panes (RSI, MACD) and on-chart indicator overlays (EMA, Bollinger Bands, BOS/CHoCH price-action structure). Deliverable target: Indicator sub-panes and indicator overlays on the primary chart. Note: Multi-pane layout engine and advanced split-screens are moved to UI-3/v1.1 (post-v1 target contract, uncounted in baseline totals). Evidence must support: Render performance meets 5k-bar display target with indicator overlays and sub-panes active.
 
 #### M6-18 — UI-1b: minimal OI overlay + read-only option-chain table
 
@@ -1441,7 +1441,7 @@ The task register below is the binding implementation backlog. Tasks are ordered
 - **Initial status:** `DESIGNED`  
 - **Acceptance type:** `owner_attestation`  
 - **Evidence path:** `ops/evidence/M7-08.md`
-- **Acceptance contract:** Check/record: Order validation, acknowledgement-before-UI-commit, stale version conflict and audit event tests Deliverable target: Manual paper-order placement UI/API and draggable server-authoritative SL/TP chart lines Evidence must support: Manual paper orders are recorded; drag changes only commit after server acknowledgement; no real orders
+- **Acceptance contract:** Check/record: Order validation, acknowledgement-before-UI-commit, stale version conflict and audit event tests Deliverable target: Manual paper-order placement UI/API and draggable server-authoritative SL/TP chart order lines Evidence must support: Manual paper orders are recorded; drag changes only commit after server acknowledgement; no real orders
 
 #### M7-09 — Streaming feature warm-up and state synchronization
 
@@ -1657,8 +1657,8 @@ Every numbered/lettered requirement and substantive question in `my_vision.txt` 
 | `V-06` | Chart drawing tools (lines, boxes, zones with coordinate persistence) | ENGINE §18.1, DATA §2.1 | `M6-13` | `COVERED` | Basic drawings (lines, zones) persisted in PostgreSQL `chart_drawings` table via `/api/v1/charts/drawings`. |
 | `V-07` | Multiple chart layouts (multi-pane, split screens) | ENGINE §18.1, §18.3, §26 | `M6-15` | `DEFERRED` | Multi-pane layout engine and split-screen UI deferred to UI-3/v1.1 (post-v1, uncounted in baseline totals) per MASTER UI release tiers and ENGINE §18.2; REST API schema frozen in M6-15; single-pane chart with indicator panes polished in M6-17. |
 | `V-08` | Per-strike option candle chart with trade markers | DATA §3, ENGINE §2, §18.1, §18.3 | `M6-03b` | `COVERED` | Displays strike-specific option OHLC with execution markers; `UtcEpochSec` integer seconds are the API/UI wire format derived from canonical UTC timestamps. |
-| `V-09` | Option chain live broker panel | ENGINE §18.1, §18.2, §26 | `M6-15`, `M6-18` | `COVERED` | Minimal read-only option-chain table delivered in M6-18 (UI-1b); full live broker order-routing matrix panel deferred to UI-3/v1.1 per MASTER UI release tiers and ENGINE §18.2; OpenAPI endpoint schemas frozen in M6-15. |
-| `V-10` | OI levels visualization (separate tabs and on-chart overlay) | ENGINE §18.1, §18.2, §21.1, §26 | `M5-12`, `M6-15`, `M6-18` | `COVERED` | Causal OI features computed in M5-12; minimal on-chart OI overlay delivered in M6-18 (UI-1b); advanced standalone OI levels multi-tab visualization deferred to UI-3/v1.1 per ENGINE §18.2; API schemas frozen in M6-15. |
+| `V-09` | Option chain live broker panel | ENGINE §18.1, §18.2, §26 | `M6-15`, `M6-18` | `PARTIAL` | Minimal read-only option-chain table delivered in M6-18 (UI-1b); full live broker order-routing matrix panel deferred to UI-3/v1.1 per MASTER UI release tiers and ENGINE §18.2; OpenAPI endpoint schemas frozen in M6-15. |
+| `V-10` | OI levels visualization (separate tabs and on-chart overlay) | ENGINE §18.1, §18.2, §21.1, §26 | `M5-12`, `M6-15`, `M6-18` | `PARTIAL` | Causal OI features computed in M5-12; minimal on-chart OI overlay delivered in M6-18 (UI-1b); advanced standalone OI levels multi-tab visualization deferred to UI-3/v1.1 per ENGINE §18.2; API schemas frozen in M6-15. |
 | `V-11` | Timeline horizontal axis, price vertical axis (`UtcEpochSec` contract) | DATA §3, ENGINE §2, §18.3 | `M6-03`, `M6-16` | `COVERED` | `UtcEpochSec` integer seconds wire contract for charts, markers, and replay cursor, derived from canonical UTC timestamps; implemented in basic chart M6-03 and read-only candle viewer M6-16. |
 | `V-12` | Same-page backtest results drawer & metrics display linked to chart | ENGINE §18.1, §19, §20 | `M6-04`, `M6-09` | `COVERED` | Results drawer on chart page links trade markers to ledger, fills, and metrics. |
 | `V-13` | On-chart paper trade order placement & draggable SL/TP lines | ENGINE §18.1, §18.3 | `M7-08` | `COVERED` | Server-authoritative draggable SL/TP lines; market orders in v1 paper. |

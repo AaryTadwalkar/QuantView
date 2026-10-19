@@ -302,7 +302,7 @@ Dragging stop/target lines sends a server command; UI commits the change only af
 
 ### 11.1 API request and response contracts
 
-All endpoints are mounted under `/api/v1/` and exchange JSON over HTTP/REST. Streaming transport is specified and delivered in M7-07; REST polling is used until then.
+All endpoints are mounted under `/api/v1/` and exchange JSON over HTTP/REST. Streaming transport is specified and delivered by FrameBus transport M7-01 with consumers M6-05 and M7-08; REST polling is used until then.
 
 **Common wire wrappers:**
 - **Standard envelope and pagination:**
