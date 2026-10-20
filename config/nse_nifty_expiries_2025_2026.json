@@ -1,480 +1,582 @@
 {
-  "instrument": "NIFTY",
-  "start_date": "2025-01-01",
-  "end_date": "2026-10-20",
-  "total_expiries": 93,
+  "source": "upstox_api_expired_instruments_expiries",
+  "endpoint": "/v2/expired-instruments/expiries?instrument_key=NSE_INDEX|Nifty 50",
+  "raw_sha256": "148f65d396c94d909bb77b5590c8846c2d131f4a434b9cfcf0635e16ecae15b3",
+  "retrieved_at_utc": "2026-10-20T14:39:21Z",
+  "instrument_key": "NSE_INDEX|Nifty 50",
+  "start_date": "2025-01-02",
+  "end_date": "2026-10-19",
+  "total_expiries": 95,
   "expiries": [
     {
       "expiry_date": "2025-01-02",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 1
     },
     {
       "expiry_date": "2025-01-09",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 1
     },
     {
       "expiry_date": "2025-01-16",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 1
     },
     {
       "expiry_date": "2025-01-23",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 1
     },
     {
       "expiry_date": "2025-01-30",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 1
     },
     {
       "expiry_date": "2025-02-06",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 2
     },
     {
       "expiry_date": "2025-02-13",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 2
     },
     {
       "expiry_date": "2025-02-20",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 2
     },
     {
       "expiry_date": "2025-02-27",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 2
     },
     {
       "expiry_date": "2025-03-06",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 3
     },
     {
       "expiry_date": "2025-03-13",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 3
     },
     {
       "expiry_date": "2025-03-20",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 3
     },
     {
       "expiry_date": "2025-03-27",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 3
     },
     {
       "expiry_date": "2025-04-03",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 4
     },
     {
       "expiry_date": "2025-04-09",
       "day_of_week": "Wednesday",
-      "holiday_adjusted": true,
-      "original_thursday": "2025-04-10"
+      "year": 2025,
+      "month": 4
     },
     {
       "expiry_date": "2025-04-17",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 4
     },
     {
       "expiry_date": "2025-04-24",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 4
     },
     {
       "expiry_date": "2025-04-30",
       "day_of_week": "Wednesday",
-      "holiday_adjusted": true,
-      "original_thursday": "2025-05-01"
+      "year": 2025,
+      "month": 4
     },
     {
       "expiry_date": "2025-05-08",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 5
     },
     {
       "expiry_date": "2025-05-15",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 5
     },
     {
       "expiry_date": "2025-05-22",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 5
     },
     {
       "expiry_date": "2025-05-29",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 5
     },
     {
       "expiry_date": "2025-06-05",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 6
     },
     {
       "expiry_date": "2025-06-12",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 6
     },
     {
       "expiry_date": "2025-06-19",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 6
     },
     {
       "expiry_date": "2025-06-26",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 6
     },
     {
       "expiry_date": "2025-07-03",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 7
     },
     {
       "expiry_date": "2025-07-10",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 7
     },
     {
       "expiry_date": "2025-07-17",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 7
     },
     {
       "expiry_date": "2025-07-24",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 7
     },
     {
       "expiry_date": "2025-07-31",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 7
     },
     {
       "expiry_date": "2025-08-07",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 8
     },
     {
       "expiry_date": "2025-08-14",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 8
     },
     {
       "expiry_date": "2025-08-21",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 8
     },
     {
       "expiry_date": "2025-08-28",
       "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "year": 2025,
+      "month": 8
     },
     {
-      "expiry_date": "2025-09-04",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-09-02",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 9
     },
     {
-      "expiry_date": "2025-09-11",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-09-09",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 9
     },
     {
-      "expiry_date": "2025-09-18",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-09-16",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 9
     },
     {
-      "expiry_date": "2025-09-25",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-09-23",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 9
     },
     {
-      "expiry_date": "2025-10-01",
-      "day_of_week": "Wednesday",
-      "holiday_adjusted": true,
-      "original_thursday": "2025-10-02"
+      "expiry_date": "2025-09-30",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 9
     },
     {
-      "expiry_date": "2025-10-09",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-10-07",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 10
     },
     {
-      "expiry_date": "2025-10-16",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-10-14",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 10
     },
     {
-      "expiry_date": "2025-10-23",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-10-20",
+      "day_of_week": "Monday",
+      "year": 2025,
+      "month": 10
     },
     {
-      "expiry_date": "2025-10-30",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-10-28",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 10
     },
     {
-      "expiry_date": "2025-11-06",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-11-04",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 11
     },
     {
-      "expiry_date": "2025-11-13",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-11-11",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 11
     },
     {
-      "expiry_date": "2025-11-20",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-11-18",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 11
     },
     {
-      "expiry_date": "2025-11-27",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-11-25",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 11
     },
     {
-      "expiry_date": "2025-12-04",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-12-02",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 12
     },
     {
-      "expiry_date": "2025-12-11",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-12-09",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 12
     },
     {
-      "expiry_date": "2025-12-18",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-12-16",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 12
     },
     {
-      "expiry_date": "2025-12-24",
-      "day_of_week": "Wednesday",
-      "holiday_adjusted": true,
-      "original_thursday": "2025-12-25"
+      "expiry_date": "2025-12-23",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 12
     },
     {
-      "expiry_date": "2026-01-01",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2025-12-30",
+      "day_of_week": "Tuesday",
+      "year": 2025,
+      "month": 12
     },
     {
-      "expiry_date": "2026-01-08",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-01-06",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 1
     },
     {
-      "expiry_date": "2026-01-14",
-      "day_of_week": "Wednesday",
-      "holiday_adjusted": true,
-      "original_thursday": "2026-01-15"
+      "expiry_date": "2026-01-13",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 1
     },
     {
-      "expiry_date": "2026-01-22",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-01-20",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 1
     },
     {
-      "expiry_date": "2026-01-29",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-01-27",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 1
     },
     {
-      "expiry_date": "2026-02-05",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-02-03",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 2
     },
     {
-      "expiry_date": "2026-02-12",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-02-10",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 2
     },
     {
-      "expiry_date": "2026-02-19",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-02-17",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 2
     },
     {
-      "expiry_date": "2026-02-26",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-02-24",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 2
     },
     {
-      "expiry_date": "2026-03-05",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-03-02",
+      "day_of_week": "Monday",
+      "year": 2026,
+      "month": 3
     },
     {
-      "expiry_date": "2026-03-12",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-03-10",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 3
     },
     {
-      "expiry_date": "2026-03-19",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-03-17",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 3
     },
     {
-      "expiry_date": "2026-03-25",
-      "day_of_week": "Wednesday",
-      "holiday_adjusted": true,
-      "original_thursday": "2026-03-26"
+      "expiry_date": "2026-03-24",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 3
     },
     {
-      "expiry_date": "2026-04-02",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-03-30",
+      "day_of_week": "Monday",
+      "year": 2026,
+      "month": 3
     },
     {
-      "expiry_date": "2026-04-09",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-04-07",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 4
     },
     {
-      "expiry_date": "2026-04-16",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-04-13",
+      "day_of_week": "Monday",
+      "year": 2026,
+      "month": 4
     },
     {
-      "expiry_date": "2026-04-23",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-04-21",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 4
     },
     {
-      "expiry_date": "2026-04-30",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-04-28",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 4
     },
     {
-      "expiry_date": "2026-05-07",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-05-05",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 5
     },
     {
-      "expiry_date": "2026-05-14",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-05-12",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 5
     },
     {
-      "expiry_date": "2026-05-21",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-05-19",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 5
     },
     {
-      "expiry_date": "2026-05-27",
-      "day_of_week": "Wednesday",
-      "holiday_adjusted": true,
-      "original_thursday": "2026-05-28"
+      "expiry_date": "2026-05-26",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 5
     },
     {
-      "expiry_date": "2026-06-04",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-06-02",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 6
     },
     {
-      "expiry_date": "2026-06-11",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-06-09",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 6
     },
     {
-      "expiry_date": "2026-06-18",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-06-16",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 6
     },
     {
-      "expiry_date": "2026-06-25",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-06-23",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 6
     },
     {
-      "expiry_date": "2026-07-02",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-06-30",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 6
     },
     {
-      "expiry_date": "2026-07-09",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-07-07",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 7
     },
     {
-      "expiry_date": "2026-07-16",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-07-14",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 7
     },
     {
-      "expiry_date": "2026-07-23",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-07-21",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 7
     },
     {
-      "expiry_date": "2026-07-30",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-07-28",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 7
     },
     {
-      "expiry_date": "2026-08-06",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-08-04",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 8
     },
     {
-      "expiry_date": "2026-08-13",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-08-11",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 8
     },
     {
-      "expiry_date": "2026-08-20",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-08-18",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 8
     },
     {
-      "expiry_date": "2026-08-27",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-08-25",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 8
     },
     {
-      "expiry_date": "2026-09-03",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-09-01",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 9
     },
     {
-      "expiry_date": "2026-09-10",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-09-08",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 9
     },
     {
-      "expiry_date": "2026-09-17",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-09-15",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 9
     },
     {
-      "expiry_date": "2026-09-24",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-09-22",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 9
     },
     {
-      "expiry_date": "2026-10-01",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-09-29",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 9
     },
     {
-      "expiry_date": "2026-10-08",
-      "day_of_week": "Thursday",
-      "holiday_adjusted": false
+      "expiry_date": "2026-10-06",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 10
+    },
+    {
+      "expiry_date": "2026-10-13",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 10
+    },
+    {
+      "expiry_date": "2026-10-19",
+      "day_of_week": "Monday",
+      "year": 2026,
+      "month": 10
     }
   ]
 }

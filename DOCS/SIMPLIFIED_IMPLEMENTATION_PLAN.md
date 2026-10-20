@@ -27,7 +27,7 @@ We have successfully completed **Stage 0** and have entered **Stage 1**:
         ✅ COMPLETED                   ⏳ IN PROGRESS (Current)                (Next Up)
   • Repository layout (19 dirs)        • Expired option candle tooling
   • Automated CI & linters             • 2025-01-02 Pilot Verified (41,496 bars)
-  • M0 data audit & backups            • 93-expiry calendar generated
+  • M0 data audit & backups            • 95 authoritative expiries from Upstox API
   • Upstox token authentication        • Bulk 2025-2026 backfill ready
 ```
 
@@ -37,7 +37,8 @@ We have successfully completed **Stage 0** and have entered **Stage 1**:
   * Dispatched 119 requests for 120 candidate contracts ($\pm 1,500$ points around Spot Open 23,783.00).
   * Staged **41,496 continuous 1-minute option candles** with 0 nulls, 0 duplicate rows, and 0 API errors.
   * Staged CSV is chronologically sorted ascending from `09:15:00` to `15:29:00`.
-* **Immediate Next Action:** Execute the automated bulk historical options backfill from **January 1, 2025 through October 2026** across all 93 weekly expiries, stage them into daily CSVs, and publish them to canonical Parquet lake storage.
+* **Authoritative Expiry Calendar:** Direct query to `GET /v2/expired-instruments/expiries` established the true vendor schedule of **95 expiries** (Jan 2025 – Oct 2026), capturing the historical regulatory shift from Thursday to Tuesday on September 2, 2025.
+* **Immediate Next Action:** Execute the automated bulk historical options backfill from **January 1, 2025 through October 2026** across all 95 expiries, stage them into daily CSVs, and publish them to canonical Parquet lake storage.
 
 ---
 
@@ -88,7 +89,7 @@ flowchart TD
 * **What this stage is in simple words:**
   Downloading and organizing high-resolution 1-minute historical data for both the NIFTY index and all NIFTY option strikes from January 1, 2025 to the present day. Converting messy API responses into clean, high-speed analytical files.
 * **What we build in this stage:**
-  1. **Historical Expiry Calendar:** Master list of all 93 weekly/monthly expiry dates (`config/nse_nifty_expiries_2025_2026.json`).
+  1. **Historical Expiry Calendar:** Master list of all 95 authoritative expiry dates from Upstox API (`config/nse_nifty_expiries_2025_2026.json`).
   2. **Bounded Downloader (`tools/ingest/`):** Automated, rate-limited downloader that saves raw Upstox JSON responses to `Data/raw/` with cryptographic manifests, and stages clean daily CSVs.
   3. **Lake Parquet Normalizer:** A pipeline that converts the staged daily CSVs into partitioned Parquet files (`Data/lake/option_candles/underlying=NIFTY/expiry=YYYY-MM-DD/part-0.parquet`) compressed with Zstandard for instant DuckDB analytical queries.
   4. **Data Quality Checker:** Scans for missing minutes, flat prices, inverted OHLC ($L > H$), and creates a `data_eligibility` table so backtests know which days are 100% clean.
@@ -237,10 +238,14 @@ flowchart TD
 ## 4. Historical Option Data Ingestion: Answers to Your Questions
 
 ### Question 1: Do we have a master file of expiry dates from 2025 till today?
-**Yes.** We have generated the official master calendar:
+**Yes.** We have generated the official master calendar from the Upstox `GET /v2/expired-instruments/expiries` endpoint:
 [`config/nse_nifty_expiries_2025_2026.json`](file:///c:/Algo/quantview/config/nse_nifty_expiries_2025_2026.json).
-* It contains exactly **93 weekly and monthly NIFTY expiry dates** from January 1, 2025 through October 2026.
-* It automatically accounts for Indian stock exchange trading holidays (e.g., shifting expiry from Thursday to Wednesday when Thursday is an exchange holiday like Republic Day, Diwali, or Eid).
+* It contains exactly **95 official NIFTY expiry dates** from January 1, 2025 through October 2026.
+* **Captures the Real-World Regulatory Expiry Shift:**
+  * From **January 2025 to August 2025**: Expiries were on **Thursdays** (with holiday shifts to Wednesday on `2025-04-09` and `2025-04-30`).
+  * On **September 2, 2025 (`2025-09-02`)**: NIFTY expiries officially shifted from **Thursday to Tuesday**!
+  * From **September 2025 onwards**: All expiries are on **Tuesdays** (with holiday shifts to Monday on `2025-10-20`, `2026-03-02`, `2026-03-30`, `2026-04-13`, and `2026-10-19`).
+* Using the vendor API directly guarantees 100% accurate dates without relying on flawed manual rules.
 
 ---
 
@@ -269,9 +274,9 @@ Therefore, in `staging/expired_options/` and in `Data/historical/options/`, each
    In our empirical audit of `2025-01-02`, even within $\pm 1,500$ points, **7 deep OTM contracts had 0 trades (0 candles)** all day long.
    If you widen the band to $\pm 2,000$ points, you add 40 more strikes (20 CE + 20 PE). Virtually 100% of those extra strikes trade **zero contracts**. Calling Upstox for them returns empty arrays (`candles: []`), giving you zero market information.
 2. **Protection Against Upstox API Limits:**
-   * At $\pm 1,500$ points: ~120 requests per expiry day $\times$ 93 expiries = **~11,160 API requests total**.
-   * At $\pm 2,000$ points: ~160 requests per expiry day $\times$ 93 expiries = **~14,880 API requests total** (wasting ~3,720 requests on empty data).
-   * Upstox rate limits allow 2 to 5 requests per second. With our 0.5-second safety pause, 11,160 requests run in **~1.5 hours** without triggering HTTP 429 rate limits or vendor IP blocks.
+   * At $\pm 1,500$ points: ~120 requests per expiry day $\times$ 95 expiries = **~11,400 API requests total**.
+   * At $\pm 2,000$ points: ~160 requests per expiry day $\times$ 95 expiries = **~15,200 API requests total** (wasting ~3,800 requests on empty data).
+   * Upstox rate limits allow 2 to 5 requests per second. With our 0.5-second safety pause, 11,400 requests run in **~1.6 hours** without triggering HTTP 429 rate limits or vendor IP blocks.
 3. **Liquidity Coverage:**
    The $\pm 1,500$-point band covers **$>96\%$ of all market volume and open interest**. No realistic backtest or algorithm would ever trade a deep OTM option that has zero volume and zero market depth.
 
@@ -324,7 +329,7 @@ Once we execute the bulk historical import from January 1, 2025 to October 2026,
 | Category | File Path | What it Contains |
 |---|---|---|
 | **Implementation Plan** | [`DOCS/SIMPLIFIED_IMPLEMENTATION_PLAN.md`](file:///c:/Algo/quantview/DOCS/SIMPLIFIED_IMPLEMENTATION_PLAN.md) | This document: plain-English roadmap and stage guide. |
-| **Expiry Master** | [`config/nse_nifty_expiries_2025_2026.json`](file:///c:/Algo/quantview/config/nse_nifty_expiries_2025_2026.json) | Complete list of 93 weekly/monthly expiry dates (2025–2026). |
+| **Expiry Master** | [`config/nse_nifty_expiries_2025_2026.json`](file:///c:/Algo/quantview/config/nse_nifty_expiries_2025_2026.json) | Complete list of 95 authoritative expiry dates from Upstox API (2025–2026). |
 | **Option Importer** | [`tools/ingest/import_expired_option_candles.py`](file:///c:/Algo/quantview/tools/ingest/import_expired_option_candles.py) | Checkpointed, rate-limited expired option candle downloader. |
 | **Index Importer** | [`tools/ingest/import_underlying_candles_v3.py`](file:///c:/Algo/quantview/tools/ingest/import_underlying_candles_v3.py) | Ingests NIFTY 50 1-minute underlying historical candles. |
 | **Phase 1 Pilot Report** | [`reports/option_history_phase1_pilot_report.md`](file:///c:/Algo/quantview/reports/option_history_phase1_pilot_report.md) | Evidence of 100% verified Phase 1A and Phase 1B pilot. |
