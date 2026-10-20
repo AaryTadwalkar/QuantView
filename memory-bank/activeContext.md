@@ -1,14 +1,23 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
-## Current State of the Union (2026-10-17)
-- **Completed M0-10 & M0-01:** Executed bootstrap verification M0-10 (`ops/evidence/M0-10.txt`) and complete read-only repository/data inventory M0-01 (`ops/inventory.md`).
-- **Core Findings & Discrepancies:**
-  - **Data Volume:** 2,032.60 MB across 78,607 files in `Data/`. No Parquet, DuckDB, or SQLite databases exist.
-  - **Snapshot Count:** Exactly 78,535 files across 121 unique trading days (v1: 1,036; v2: 8,770; v3: 68,720; 5 null-byte corrupted; 4 zero-byte empty).
-  - **1m Underlying Candles:** `nifty.csv` has 432,967 rows (spec §11.6 said 451,952; the remaining 18,985 rows are in 57 live daily files). One corrupted line at line 432593 (`2026-10-08 0`).
-  - **Backup Status:** **CRITICAL** — Zero backup on secondary physical medium. Drive C: has 67.83 GB free.
-  - **Collector Health:** Zero active background collectors/services. Collector scripts contain path arithmetic and stale path bugs.
-- **Readiness Verdicts:** Architecture: 8.5/10 | Docs: 8.5/10 | Technical Correctness: 6.5/10 (Runtime Unproven).
+## Current State of the Union (2026-10-20)
+- **Approved Decisions (OWNER-DEC-01 to 06):** Formally logged in `ops/owner_decisions.md`.
+- **M0 Milestones Cleared:**
+  - `M0-01`: Refreshed inventory accepted (`ops/inventory.md`, 82,355 files, 2,131.18 MB).
+  - `M0-06`: Secondary physical backup verified against `D:\Algo_Data_Final\Data` on `Cablet USB 3.0` (`ops/evidence/M0-06.md`).
+  - `M0-08`: Isolated sandbox restore test verified with bit-for-bit SHA-256 identity (`ops/evidence/M0-08.md`).
+  - `M0-07`: Bounded 7-request retention probe executed without token leak (`ops/evidence/M0-07.md`).
+  - `M0-11`: Post-inventory acceptance contracts for M0-02 through M0-09 refined (`ops/evidence/M0-11.md`).
+- **Phase A Retention Investigation Executed (OWNER-DEC-06):**
+  - Dispatched 12 authorized read-only requests to `/v2/expired-instruments/option/contract` across exchange-verified dates.
+  - `2024-12-26`: HTTP 200 OK, 281 contracts returned.
+  - `2024-06-27` to `2019-06-27` (11 dates): HTTP 200 OK, 0 contracts returned (`data: []`).
+  - Retention Cliff Identified: Between 2024-06-27 and 2024-12-26 (~1.8–2.3 years retention). Older history not available via this endpoint.
+  - Budget exhausted (12/12 dispatched, 0 remaining). Live network acquisition halted.
+- **Milestone M1-01 Cleared (VERIFIED):** Repository layout and boundaries established across `packages/*` (`domain`, `data`, `features`, `strategies`, `engine`, `risk`, `ledger`, `db`), `services/*`, `apps/web`, `config`. 18/18 tests passing (`test_package_boundaries.py`, `test_ingest_workflows.py`).
+- **Endpoint Discrepancy Resolved:** Official expired-candle endpoint verified as `GET /v2/expired-instruments/historical-candle/{expired_instrument_key}/{interval}/{to_date}/{from_date}` (`to_date` precedes `from_date`).
+- **Phase B0 Plan Prepared:** 1-request test on confirmed contract `NSE_FO|41685|26-12-2024` (NIFTY 23750 CE 26 DEC 24). Awaiting owner decision.
+- **Next Offline Milestone:** `M1-02` (Establish tooling and CI). Zero live API calls active.
 
 ## Canonical Architectural Contracts & Modes
 - **Operating Modes:** `RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`.

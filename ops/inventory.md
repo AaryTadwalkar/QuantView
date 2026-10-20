@@ -2,7 +2,8 @@
 
 **Task ID:** M0-01  
 **Milestone:** M0 — Preserve existing data and establish safe facts  
-**Execution Date:** 2026-10-17  
+**Initial Execution Date:** 2026-10-17  
+**Refreshed Execution Date:** 2026-10-20 (Post PC B Snapshot Ingestion)  
 **Execution Status:** COMPLETED (Read-Only)  
 **Evidence Target:** `ops/inventory.md`  
 **Prior Dependency:** M0-10 (`ops/evidence/M0-10.txt` verified)
@@ -11,27 +12,30 @@
 
 ## 1. Executive Summary
 
-A comprehensive, strictly read-only audit of the repository `c:\Algo\quantview`, its existing collector scripts, environment runtime, and data directories was executed. No files were edited, deleted, renamed, or migrated. No live APIs were called, no packages installed, no services altered, and no backfills run.
+A comprehensive, strictly read-only audit of the repository `c:\Algo\quantview`, its existing collector scripts, environment runtime, and data directories was executed. Following the initial 2026-10-17 audit, PC B's snapshot captures were transferred via external SSD and copied into `Data/live/option_chain/nifty/`. This report records the refreshed inventory. No files were edited, deleted, renamed, or migrated. No live APIs were called, no packages installed, no services altered, and no backfills run.
 
 ### Key Inventory Highlights
 1. **Repository Runtime:** Python 3.11.9 is the active execution environment. Docker Desktop daemon is installed (v29.4.1) but offline; WSL access is restricted; Node.js/npm are absent from system PATH.
-2. **Total Stored Data:** 2,032.60 MB (~2.03 GB) across 78,607 files in `Data/`. No SQLite, DuckDB, or application Parquet files exist.
-3. **Backup Status:** **CRITICAL RISK — ZERO BACKUP ON SECOND MEDIUM.** Only fixed local drive `C:\` is mounted (67.83 GB free). No external disk, NAS, or secondary medium is attached or configured.
+2. **Total Stored Data:** **2,131.18 MB (~2.13 GB) across 82,355 files** in `Data/` (an increase of 3,748 files / 98.58 MB from PC B). No SQLite, DuckDB, or application Parquet files exist.
+3. **Backup & Secondary Medium Status:**
+   - Physical USB Drive attached: `Cablet USB 3.0` (DeviceId 1, 256 GB, mounted as `D:\`, Free: 59.43 GB).
+   - Replica dataset found on secondary medium: `D:\Algo_Data_Final\Data` containing exactly **82,355 files and 2,131.18 MB** (copied 2026-10-19 17:14).
+   - Formal checksum manifest (`M0-06`) and isolated restore test (`M0-08`) remain pending to complete verification.
 4. **Historical Candles (Index Nifty):**
    - 7 timeframes (`1m, 3m, 5m, 15m, 1h, 4h, 1d`).
    - `1m` historical `nifty.csv` contains 432,967 rows (not the 451,952 stated in spec §11.6). The remaining 18,985 rows reside in 57 separate daily files under `Data/live/candles/index/nifty/1m/`.
-   - **Data Defect:** Exactly one corrupted line exists in `1m/nifty.csv` at line 432593: `'2026-10-08 0'` (truncated line without OHLCV).
+   - **Data Defect:** Exactly one corrupted line exists in `1m/nifty.csv` at line 432594 (0-index 432593): `'2026-10-08 0    \n'` (truncated line without OHLCV, missing the 09:15:00 candle).
 5. **Live Daily Candles:** 57 daily CSV files (18,985 rows). Contains a gap in February–March 2026 that fills the missing dates in historical `nifty.csv`. Contains 2 conflicting duplicate timestamps in `nifty_2026-01-28.csv` with disparate prices.
 6. **Live Option Chain Snapshots:**
-   - 35 expiry folders (including 3 unpadded single-digit days: `2026-02-3`, `2026-03-2`, `2026-04-7`).
-   - 122 trade date subdirectories across 121 unique calendar dates (2026-01-20 to 2026-10-09).
-   - **Total Snapshots Count:** **78,535 CSV files** (superseding the stale spec lead of 71,617 / 110 days).
-   - **Schema Variants:**
-     - **Schema v1 (1,036 files):** `timestamp,strike,type,ltp,oi,prev_oi,volume,bid,ask` (started 2026-01-20 10:15:54).
-     - **Schema v2 (8,770 files):** `timestamp,strike,type,oi,volume,bid,ask` (started 2026-01-23 09:35:22).
-     - **Schema v3 (68,720 files):** `timestamp,spot_price,strike,type,oi,volume,ltp,bid,ask,bid_qty,ask_qty,chng,chng_oi,iv,delta,gamma,theta,vega` (started 2026-02-12 09:15:27).
-     - **Corrupted Null-Byte Files (5 files):** Files containing pure `\x00` bytes from interrupted writes/crashes.
-     - **Empty Zero-Byte Files (4 files):** Files with length 0 bytes.
+   - **36 expiry folders** (+1 new expiry: `2026-10-19`; 3 unpadded single-digit days: `2026-02-3`, `2026-03-2`, `2026-04-7`).
+   - **127 unique calendar dates** (+6 new dates: 2026-10-12 through 2026-10-19).
+   - **Total Snapshots Count:** **82,283 CSV files** (exactly 3,748 newly copied files from PC B).
+   - **Schema Distribution:**
+     - **Schema v1 (1,036 files):** `timestamp,strike,type,ltp,oi,prev_oi,volume,bid,ask` (9 cols; 2026-01-20 to 2026-01-23).
+     - **Schema v2 (8,770 files):** `timestamp,strike,type,oi,volume,bid,ask` (7 cols; 2026-01-23 to 2026-02-12).
+     - **Schema v3 (72,468 files):** `timestamp,spot_price,strike,type,oi,volume,ltp,bid,ask,bid_qty,ask_qty,chng,chng_oi,iv,delta,gamma,theta,vega` (18 cols; increased from 68,720; all 3,748 new PC B files follow Schema v3).
+     - **Corrupted Null-Byte Files (5 files):** Files containing pure `\x00` bytes from interrupted writes/crashes (0 new).
+     - **Empty Zero-Byte Files (4 files):** Files with length 0 bytes (0 new).
 7. **Collector Health:** All collectors are manual standalone scripts; zero background services, daemons, or scheduled tasks are currently running. Multiple scripts contain stale legacy paths (`C:\Algo\Options`, `C:\Algo\storage`) or path arithmetic bugs (`parents[3]`).
 
 ---
@@ -41,8 +45,9 @@ A comprehensive, strictly read-only audit of the repository `c:\Algo\quantview`,
 ### 2.1 Operating System & Drives
 - **Operating System:** Windows 11 (64-bit).
 - **Drive Layout:**
-  - `C:\`: Fixed NTFS drive, Total: 474.71 GB, Used: ~406.88 GB, Free: 67.83 GB (14.28% free).
-  - Secondary Physical Drives / Mounts: **NONE**.
+  - `C:\`: Fixed NVMe SSD (`WD PC SN740`, 512 GB), Total: 474.71 GB, Free: ~81.46 GB.
+  - `D:\`: External physical USB SSD (`Cablet USB 3.0`, 256 GB, DeviceId 1), Free: 59.43 GB.
+  - Secondary Medium Backup Folder: `D:\Algo_Data_Final\Data` containing 82,355 files (2,131.18 MB) matching repository `Data/`.
 
 ### 2.2 Tooling & Runtime Inventory
 Exact commands and results:
@@ -92,7 +97,7 @@ Scanned via recursive directory walk:
 
 | Item | Type | Size (MB) | File Count | Notes |
 |---|---|---|---|---|
-| `Data/` | Directory | 2,032.60 MB | 78,607 | Historical & live market data |
+| `Data/` | Directory | 2,131.18 MB | 82,355 | Historical & live market data (refreshed with PC B snapshots) |
 | `venv/` | Directory | 232.88 MB | 7,853 | Python 3.11 virtual environment |
 | `.git/` | Directory | 1.54 MB | 152 | Git version control |
 | `DOCS/` | Directory | 0.38 MB | 7 | Authoritative specifications |
@@ -105,7 +110,7 @@ Scanned via recursive directory walk:
 | `.env` | File | 0.0004 MB | 1 | Environment secrets (Upstox keys/token) |
 | `requirements.txt` | File | 0.0003 MB | 1 | Pinned base dependencies (UTF-16LE) |
 | `.gitignore` | File | 0.0001 MB | 1 | Git ignore rules |
-| **Total Repository** | — | **~2,267.5 MB** | **86,647** | (~2.21 GB) |
+| **Total Repository** | — | **~2,366.1 MB** | **90,395** | (~2.31 GB) |
 
 ---
 
@@ -182,12 +187,15 @@ Scanned via recursive directory walk:
   - `nifty_2026-02-21.csv` contains exactly 1 candle (`2026-02-21 09:15:00, 25571.25`). Saturday session.
 
 ### 6.2 Live Option Chain Snapshots (`Data/live/option_chain/nifty/`)
-- **Total Expiry Directories:** 35 directories.
+- **Total Expiry Directories:** 36 directories (+1 new expiry: `2026-10-19`).
   - Directory Naming Anomalies: 3 directories use unpadded single-digit days: `2026-02-3`, `2026-03-2`, `2026-04-7`.
   - Non-Standard Expiry Day: `2026-04-13` (Monday expiry). Verified as legitimate holiday preponement due to Dr. Ambedkar Jayanti on Tuesday 2026-04-14.
-- **Trade Date Subdirectories:** 122 folders representing 121 unique calendar dates (2026-01-20 to 2026-10-09).
+- **Trade Date Subdirectories:** 128 folders representing 127 unique calendar dates (2026-01-20 to 2026-10-19).
   - Directory Collision: Trade date `2026-08-26` exists under both `2026-08-25` (contains empty snapshots folder) and `2026-09-01` (contains 573 active snapshots).
-- **Total Snapshot Files:** **78,535 CSV files**.
+- **Total Snapshot Files:** **82,283 CSV files** (increased from 78,535 via transfer of 3,748 files from PC B).
+  - Newly added trade dates:
+    - Expiry `2026-10-13`: `2026-10-12` (677 files), `2026-10-13` (539 files)
+    - Expiry `2026-10-19`: `2026-10-14` (663 files), `2026-10-15` (556 files), `2026-10-16` (679 files), `2026-10-19` (634 files)
   - Supersedes the stale lead in DATA_SPEC §11.6 of "71,617 captures / 110 collected trading days".
 
 #### Exact Schema Distribution & Transition Dates
@@ -196,10 +204,10 @@ Scanned via recursive directory walk:
 |---|---|---|---|---|
 | **Schema v1** | 1,036 | `2026-01-20/2026-01-20/snapshots/10-15-54.csv` | 2026-01-20 10:15:54.830376 | `timestamp,strike,type,ltp,oi,prev_oi,volume,bid,ask` (9 cols; contains `prev_oi` and `ltp`) |
 | **Schema v2** | 8,770 | `2026-01-27/2026-01-23/snapshots/09-35-22.csv` | 2026-01-23 09:35:22.803275 | `timestamp,strike,type,oi,volume,bid,ask` (7 cols; dropped `prev_oi` and `ltp`) |
-| **Schema v3** | 68,720 | `2026-02-17/2026-02-12/snapshots/09-15-27.csv` | 2026-02-12 09:15:27.798668 | `timestamp,spot_price,strike,type,oi,volume,ltp,bid,ask,bid_qty,ask_qty,chng,chng_oi,iv,delta,gamma,theta,vega` (18 cols; restored `ltp`, added Greeks & depth) |
+| **Schema v3** | 72,468 | `2026-02-17/2026-02-12/snapshots/09-15-27.csv` | 2026-02-12 09:15:27.798668 | `timestamp,spot_price,strike,type,oi,volume,ltp,bid,ask,bid_qty,ask_qty,chng,chng_oi,iv,delta,gamma,theta,vega` (18 cols; restored `ltp`, added Greeks & depth; all 3,748 new PC B files follow Schema v3) |
 | **Corrupted (Null Bytes)** | 5 | `2026-08-04/2026-07-29/snapshots/14-28-03.csv` | N/A | Corrupted with `\x00` null bytes from host crash/interrupted write |
 | **Empty (Zero Bytes)** | 4 | `2026-09-15/2026-09-15/snapshots/12-27-33.csv` | N/A | Zero bytes (0 B) |
-| **Total** | **78,535** | — | — | — |
+| **Total** | **82,283** | — | — | — |
 
 #### Specific Corrupted Files List
 1. `Data/live/option_chain/nifty/2026-08-04/2026-07-29/snapshots/14-28-03.csv` (24,142 bytes of `\x00`)
@@ -225,7 +233,7 @@ Scanned via recursive directory walk:
    - *Root Cause:* The spec count was an unverified sum of historical `nifty.csv` (432,967) and 57 separate daily live CSVs (18,985).
 2. **Snapshot Captures Count:**
    - *Specification (DATA_SPEC §11.6):* "71,617 captures / 110 collected trading days (stale pending recount)".
-   - *Actual on Disk:* Exactly **78,535 captures** across **121 unique trading days**.
+   - *Actual on Disk:* Exactly **82,283 captures** across **127 unique trading days** in 36 expiry folders (refreshed 2026-10-20 following addition of 3,748 captures from PC B).
 3. **Repository Path References:**
    - *Specification & Legacy Scripts:* Frequently refer to `C:\Algo\Options` or `C:\Algo\storage`.
    - *Actual on Disk:* The active workspace is `c:\Algo\quantview`. Neither `C:\Algo\Options` nor `C:\Algo\storage` exists.
@@ -255,8 +263,8 @@ Scanned via recursive directory walk:
 
 1. **`OWNER-DEC-01` (Acceptance of Inventory):**
    - Formally review and accept this read-only inventory report (`ops/inventory.md`) to satisfy task M0-01.
-2. **`OWNER-DEC-02` (Backup Destination Medium):**
-   - Under Non-negotiable Constraint `P1` and Task M0-06, raw data must be backed up to a second physical local medium (external hard drive, portable SSD, or NAS) before modifying collector code or schemas. The owner must specify the destination drive path.
+2. **`OWNER-DEC-02` (Backup Verification & Medium Formalization):**
+   - Under Non-negotiable Constraint `P1` and Task M0-06, external physical medium `D:\` (`Cablet USB 3.0` 256 GB) was identified and contains a 82,355-file raw replica at `D:\Algo_Data_Final\Data`. The owner is requested to formally approve `D:\` as the authorized secondary physical backup destination, unblocking execution of formal checksum verification (`M0-06`) and restore testing (`M0-08`).
 3. **`OWNER-DEC-03` (Corrupted File Handling Policy):**
    - Approve the quarantine/manifesting policy for the 5 null-byte and 4 zero-byte corrupted snapshot files during the M3 normalization pass.
 4. **`OWNER-DEC-04` (Approval of M0-11 Contract Refinement):**

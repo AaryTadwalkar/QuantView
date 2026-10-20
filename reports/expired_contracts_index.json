@@ -1,0 +1,15 @@
+{
+  "probe_executed_at_utc": "2026-10-20T09:52:29.203867+00:00",
+  "total_requests_budgeted": 5,
+  "total_requests_dispatched": 1,
+  "results": [
+    {
+      "expiry_date": "2024-12-26",
+      "http_status": 401,
+      "contract_count": 0,
+      "raw_sha256": "051e269d48d197916e4933013c8417a5142febaea01ffd522216772d0f5df74c",
+      "raw_path": "C:/Users/Aary/AppData/Local/Temp/tmphux_61i_/raw/capture_date=2026-10-20/response-051e269d48d19791.json.gz",
+      "error_message": "{\"status\":\"error\",\"message\":\"Invalid token\"}"
+    }
+  ]
+}

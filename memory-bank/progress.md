@@ -39,8 +39,25 @@
   - Added `- **Spec refs:**` to all 113 tasks with 100% valid cross-references against authoritative spec sections.
   - Automated verification: `tools/qv_check.py lint DOCS stale.txt` PASSED (0 defects); `ops/verify_docs_consistency.py` PASSED (0 defects).
 
+- **[2026-10-20] Ingestion Tooling, M0 Gate Clearances, Smoke Test & Phase A Probe (OWNER-DEC-01 to 06):**
+  - Accepted refreshed M0-01 inventory with 3,748 PC B snapshots (82,283 captures across 127 days; 82,355 files, 2,131.18 MB).
+  - Executed M0-06 secondary backup verification against `D:\Algo_Data_Final\Data` on `Cablet USB 3.0` (`ops/evidence/M0-06.md`).
+  - Executed M0-08 isolated restore verification with 100% SHA-256 match (`ops/evidence/M0-08.md`).
+  - Executed M0-07 bounded 7-request retention probe respecting strict budget without credential leaks (`ops/evidence/M0-07.md`).
+  - Delivered M0-11 acceptance contract refinements for M0-02 through M0-09 (`ops/evidence/M0-11.md`).
+  - Implemented and verified Workflow A (`discover_expiries.py`), Workflow B (`import_underlying_candles_v3.py`), and Workflow C (`import_expired_option_candles.py`).
+  - Completed read-only Workflow D live collector audit (`reports/live_collector_audit.md`), confirming zero modifications to PC B collector.
+  - Expanded unit test suite: `tests/unit/test_ingest_workflows.py` (11/11 tests passing, 100% in 0.084s).
+  - Executed single authenticated smoke test (`OWNER-DEC-05`): `GET /v2/expired-instruments/option/contract` for `2025-04-24` returned HTTP 200 OK with 232 contracts; payload archived with SHA-256 verification.
+  - Executed Phase A retention investigation (`OWNER-DEC-06`): Dispatched 12 authorized read-only requests across exchange-verified dates. `2024-12-26` returned 281 contracts (HTTP 200); `2024-06-27` to `2019-06-27` returned 0 contracts (HTTP 200). Retention cliff confirmed between 2024-06-27 and 2024-12-26.
+  - Live API budget exhausted (12/12 dispatched, 0 remaining); live network calls halted.
+  - Completed Milestone M1-01 (`VERIFIED`, `ops/evidence/M1-01.md`): Scaffolding and boundaries established across 19 deliverable directories (`packages/*`, `services/*`, `apps/web`, `config`).
+  - Unit test suite expanded to 18 automated tests passing 100% in 0.094s (`test_package_boundaries.py`, `test_ingest_workflows.py`).
+  - Formulated Phase B0 proposal for single-request candle availability test on confirmed contract `NSE_FO|41685|26-12-2024`.
+
 ## Implementation & Readiness Status (`Appendix C` of `LOW_LEVEL_DESIGN.md`)
-- **M0 Tasks Completed:** `M0-10` (`TESTED`), `M0-01` (`TESTED`).
+- **M0 Tasks Completed:** `M0-10` (`TESTED`), `M0-01` (`VERIFIED`), `M0-06` (`VERIFIED`), `M0-07` (`VERIFIED`), `M0-08` (`VERIFIED`), `M0-11` (`IMPLEMENTED`).
+- **M1 Tasks Completed:** `M1-01` (`VERIFIED`).
 - **All Capabilities (`CAP-01` – `CAP-24`):** `Design Status = DESIGNED` (`CAP-21` `LIMIT` orders is `DESIGNED (DEFERRED / POST-v1)`), `Implementation Status = PENDING`, `Test Execution Status = NOT_RUN`.
 - **Readiness Verdicts:** **Phase 0 (`T0.1–T0.15`):** `GO` | **Full Build (`Phases 1–8`):** `CONDITIONAL GO` | **Live Execution (`Phase 9`):** `NO-GO`.
-- **Application Code (`src/`, `frontend/`, `tests/`):** Awaiting owner review and gate approval of M0-01 before executing M0-11 / M0-06.
+- **Ingestion Tooling:** Ready in `tools/ingest/`. Offline tests passing 18/18. Live network acquisition paused awaiting owner review.

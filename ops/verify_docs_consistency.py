@@ -355,15 +355,20 @@ def run_checks():
     print("  tick_paise and tick_size naming verified successfully.")
 
     print("\n=== CHECK L: Superset Check against Pre-Patch Snapshot ===")
-    backup_dir = Path("scratch/backup_pre_patch4")
-    if not backup_dir.exists():
-        backup_dir = Path("scratch/backup_pre_patch3")
-    if not backup_dir.exists():
-        backup_dir = Path(r"C:\Users\Aary\.gemini\antigravity\brain\8d30a874-d2b3-418b-b85d-ca9185ba802e\scratch\backup_pre_patch4")
-    if not backup_dir.exists():
-        backup_dir = Path(r"C:\Users\Aary\.gemini\antigravity\brain\8d30a874-d2b3-418b-b85d-ca9185ba802e\scratch\backup_pre_patch3")
+    backup_dir = None
+    for cand in [
+        Path("scratch/backup_pre_patch4"),
+        Path("scratch/backup_pre_patch3"),
+        Path("DOCS_pre_consistency_backup"),
+    ]:
+        try:
+            if cand.exists():
+                backup_dir = cand
+                break
+        except Exception:
+            pass
     
-    if not backup_dir.exists():
+    if not backup_dir or not backup_dir.exists():
         print("  Warning: pre-patch backup dir not found for superset check, skipping comparison.")
     else:
         for fname in ["QUANTVIEW_MASTER_SPEC.md", "QUANTVIEW_DATA_SPEC.md", "QUANTVIEW_ENGINE_UI_RESEARCH_SPEC.md", "AGENTS.md"]:
