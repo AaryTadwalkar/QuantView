@@ -5,13 +5,14 @@
 - **M0 & M1 Milestones Cleared (VERIFIED):**
   - `M0-01` (inventory), `M0-06` (backup verification), `M0-08` (sandbox restore), `M0-07` (retention probe), `M0-11` (contracts).
   - `M1-01` (repository layout across 19 directories), `M1-02` (tooling, CI workflow, failure tests, `ops/evidence/M1-02.md`).
-- **Phase 1 Pilot Execution & Offline Audit Outcome (`2025-01-02`):**
-  - **Offline Audit:** 120 manifests validated (0 errors); 120 raw gzip checksums verified bit-for-bit (0 mismatches); 120 checkpoint contracts verified; staged CSV verified (41,496 rows across 113 unique contracts, 0 duplicates, 0 nulls); 35/35 unit tests passing.
-  - **Sorting Fixed:** Timestamp ordering corrected in staged CSV and importer to strictly ascending (`09:15:00` to `15:29:00`) per `QUANTVIEW_DATA_SPEC.md` §2.1.
-  - **Band Sizing & Upstox Quota Confirmed:** Retained $\pm 1,500$-point band (~120 contracts per expiry day; covers >96% volume/OI) to prevent quota burn on deep OTM untraded contracts.
-  - **Master Expiry Calendar Generated:** Created [`config/nse_nifty_expiries_2025_2026.json`](file:///c:/Algo/quantview/config/nse_nifty_expiries_2025_2026.json) with 93 official weekly/monthly NIFTY expiries (Jan 2025 – Oct 2026).
-  - **Simplified Roadmap Published:** Created [`DOCS/SIMPLIFIED_IMPLEMENTATION_PLAN.md`](file:///c:/Algo/quantview/DOCS/SIMPLIFIED_IMPLEMENTATION_PLAN.md) detailing all stages and data flows in plain English for the project owner.
-- **Next Steps:** Execute automated bulk historical options ingestion (Jan 1, 2025 to Oct 2026) across the 93 expiries using daily staging CSVs, followed by Parquet lake publishing (`Data/lake/`).
+- **2025 H1 Full Daily Historical Option Ingestion (Horizon: 2025-01-01 to 2025-06-19, 116 Trading Days):**
+  - **116/116 Daily Trading Sessions Completed & Verified:** 100% of all trading sessions in 2025 H1 (not just expiries, but all Mondays, Tuesdays, Wednesdays, Thursdays, Fridays).
+  - **Staged Dataset:** **5,118,315 continuous 1-minute option bars** across **861.76 MB** of separate daily CSV files (`staging/expired_options/nifty_options_1m_{expiry}_{trade_date}.csv`).
+  - **Data Integrity:** **0 duplicates**, **0 nulls**, strictly sorted **chronologically ascending (`09:15:00` to `15:29:00`)**.
+  - **Provenance:** **6,106 cryptographic companion manifests** and raw gzip payloads in `Data/raw/upstox_rest/expired_api/` verified bit-for-bit (0 SHA-256 mismatches across 52.16 MB).
+  - **Tooling Architecture Consolidated:** Removed redundant ad-hoc scripts; unified all multi-day range backfill, pre-flight validation, and post-import auditing directly into canonical `tools/ingest/import_expired_option_candles.py`.
+  - **Audit Report Published:** Comprehensive 116-session scorecard delivered in [`reports/historical_options_2025_h1_audit_report.md`](file:///c:/Algo/quantview/reports/historical_options_2025_h1_audit_report.md).
+- **Next Steps:** Proceed to publish verified staged daily option datasets to canonical Parquet lake storage (`Data/lake/option_candles/underlying=NIFTY/expiry=YYYY-MM-DD/part-0.parquet`).
 
 ## Canonical Architectural Contracts & Modes
 - **Operating Modes:** `RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`.

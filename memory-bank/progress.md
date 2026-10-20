@@ -48,10 +48,10 @@
 - **M1 Tasks Completed:** `M1-01` (`VERIFIED`), `M1-02` (`VERIFIED`).
 - **All Capabilities (`CAP-01` – `CAP-24`):** `Design Status = DESIGNED`, `Implementation Status = PENDING`, `Test Execution Status = NOT_RUN`.
 - **Readiness Verdicts:** **Phase 0 (`T0.1–T0.15`):** `GO` | **Full Build (`Phases 1–8`):** `CONDITIONAL GO` | **Live Execution (`Phase 9`):** `NO-GO`.
-- **Option Ingestion Pipeline & Phase 1 Execution (2025-01-02 Expiry & Session):**
-  - Executed Phase 1A smoke test for 2025 trading date (`2025-01-02`). Target ATM contract `NSE_FO|52523|02-01-2025` (`23800 CE`) returned HTTP 200 with **375 candles (100% full-session coverage)**. Evaluated and passed all 10 criteria.
-  - Executed conditional Phase 1B candidate-band pilot ($\pm 1,500$ points, strikes 22,300 to 25,250, 120 contracts).
-  - Dispatched 119 requests (Phase 1A contract skipped via checkpoint), well within 132-request cap. Zero errors or 429s.
-  - Atomically staged **41,496 total 1-minute candle bars** to `staging/expired_options/nifty_options_1m_2025-01-02_2025-01-02.csv`.
-  - Checkpoint updated (`staging/checkpoints/expired_opt_2025-01-02_2025-01-02.json`), all 120 raw gzipped responses and cryptographic manifests preserved in `Data/raw/upstox_rest/expired_api/`.
-  - Comprehensive report delivered in `reports/option_history_phase1_pilot_report.md`. Verified backfill window established as January 2025 – October 2026. Ready for Phase 2 backfill scheduling.
+- **Option Ingestion Pipeline & 2025 H1 Complete Daily Historical Backfill (2025-01-01 to 2025-06-19):**
+  - Consolidated all bulk range backfill, pre-flight verification, and auditing capabilities directly into canonical `tools/ingest/import_expired_option_candles.py`.
+  - Executed complete day-by-day ingestion covering **all 116 trading sessions** in the first half of 2025 across all 25 weekly/monthly expiries (including all Mondays, Tuesdays, Wednesdays, Thursdays, and Fridays).
+  - Staged **5,118,315 continuous 1-minute option candle bars** across **861.76 MB** in 116 separate daily CSV files (`staging/expired_options/nifty_options_1m_{expiry}_{trade_date}.csv`).
+  - 100% data integrity verified: **0 duplicates**, **0 null values**, strictly sorted **chronologically ascending (`09:15:00` to `15:29:00`)**.
+  - Cryptographic provenance verified: **6,106 companion JSON manifests** and raw gzip payloads in `Data/raw/upstox_rest/expired_api/` verified bit-for-bit (0 SHA-256 mismatches across 52.16 MB).
+  - Exhaustive 116-day audit report published in `reports/historical_options_2025_h1_audit_report.md`. All 116 trading days verified valid. Ready for Lake Parquet publishing.
