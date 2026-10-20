@@ -169,6 +169,13 @@ Include all underlying candle fields plus:
 
 Revision identity is `(contract_id, interval, ts_start, revision)` and must be globally unique. Active identity is `(contract_id, interval, ts_start)` and must be unique among rows selected by one published manifest. The manifest-resolved option-candle view exposes `is_active`; this flag is computed from the selected manifest and is not mutated in historical revision files. Historical revisions remain immutable and may coexist outside the active selection. Do not assume `volume` means contracts or lots or that `oi` has a specific update convention until audit is complete.
 
+- **Authoritative Expired Candle Ingestion Route (Upstox API v2):**
+  `GET https://api.upstox.com/v2/expired-instruments/historical-candle/{expired_instrument_key}/{interval}/{to_date}/{from_date}`
+  - Date parameter order: `{to_date}` precedes `{from_date}` (reverse chronological).
+  - Path parameter encoding: `{expired_instrument_key}` is URL-encoded (e.g. `NSE_FO%7C41685%7C26-12-2024`).
+  - Response tuple structure: `[timestamp, open, high, low, close, volume, open_interest]`.
+  - Canonical 1m interval token: `1minute`. Higher intraday intervals (`3m`, `5m`, `15m`) are derived downstream.
+
 ### 4.3 Snapshot capture header: `option_snapshot_captures`
 
 One row per actual captured response/file, not one row per strike.
@@ -237,6 +244,45 @@ Analytical query layers (FastAPI candle endpoints, M6-16 visual candle viewer, b
   - **Source table:** Canonical `option_candles` (§4.2) joined with `contract_master` (§6), filtered to manifest-resolved active records (`is_active = true`).
   - **Exposed columns:** `contract_id`, `symbol` (underlying), `expiry`, `strike`, `option_type`, `interval`, `bar_start` (`ts_start`), `bar_end` (`ts_end`), `available_at`, `open`, `high`, `low`, `close`, `volume`, `oi`, `quality_flags`, `source_manifest_hash`, `is_flat_bar`.
   - **Point-in-time rule:** Queries must enforce `available_at <= query_as_of_time`. Contract selection and candle lookup cannot observe bars whose `available_at` exceeds the decision cursor. Unfinalized or in-progress bars cannot be queried or returned in historical simulation.
+
+### 4.10 `india_vix_candles`
+
+Canonical dataset for the India Volatility Index (India VIX), serving as a macro volatility benchmark and feature input across research, backtesting, and paper runtime:
+
+- **Vendor Source Route (Upstox API v3 Historical Candle):**
+  `GET https://api.upstox.com/v3/historical-candle/{instrument_key}/{unit}/{interval}/{to_date}/{from_date}`
+  - Instrument Key: `NSE_INDEX|India VIX` (URL-encoded as `NSE_INDEX%7CIndia+VIX`).
+  - Units and Intervals: `minute/1` (1-minute candles) and `day/1` (daily candles).
+  - Date parameter order: `{to_date}` precedes `{from_date}` (reverse chronological).
+- **Canonical Schema:**
+
+| Column | Type | Meaning |
+|---|---|---|
+| `instrument_key` | string | `NSE_INDEX|India VIX` |
+| `interval` | string | `1m` (source) or `1d` (source daily) |
+| `ts_start` | timestamp UTC | Start timestamp (inclusive) |
+| `ts_end` | timestamp UTC | End timestamp (exclusive) |
+| `open` | float | Index opening value |
+| `high` | float | Index session/bar high |
+| `low` | float | Index session/bar low |
+| `close` | float | Index closing value |
+| `volume` | int64 | 0 or nominal index volume returned by vendor; explicitly non-traded index metric |
+| `oi` | int64 | 0; India VIX is a volatility index, not a derivative contract |
+| `source` | string | `upstox_v3_historical_candle` |
+| `quality_flags` | string array | `VALID`, `MISSING_BAR`, `FLAT_BAR`, etc. |
+| `available_at` | timestamp UTC | Causal availability instant |
+| `ingested_at` | timestamp UTC | Ingestion timestamp |
+
+- **Causal Availability Invariant:**
+  - For 1-minute bars: `available_at = ts_end` (clipped to session close).
+  - For daily bars: `available_at = session_close_utc` (15:30 IST); a daily VIX bar is **never** available intraday.
+  - Universal Invariant: `vix.available_at <= decision_time`.
+- **Distinction from Traded Derivatives (NVIX):**
+  - `NSE_INDEX|India VIX` is an index computed by the exchange representing 30-day annualized volatility derived from NIFTY option bid/ask quotes.
+  - It is **not** a tradable derivative. No order, margin, position, or settlement event can be created on this index.
+  - If separately traded VIX futures/options contracts are introduced, they possess distinct `NSE_FO|...` instrument keys, expiries, lot sizes, and settlement rules. No NVIX trading engine or contract availability is assumed.
+- **Downstream Derivations:**
+  - Volatility spreads, regime classifications, and VIX moving averages are computed exclusively downstream in `packages/features/` and are not stored in the raw lake dataset.
 
 ## 5. Calendar and session model
 
@@ -353,7 +399,7 @@ Eligibility is point-in-time and versioned. An ineligible contract/session block
 
 ### 11.2 Required additional datasets
 
-- `india_vix`: source, source version, OHLC, timestamp/availability and quality flags; availability remains `VERIFY`.
+- `india_vix`: canonical India VIX OHLC candles (defined in §4.10; source: Upstox V3 historical-candle `NSE_INDEX|India VIX`); interval=1m/1d; volume nominal/non-traded, OI=0; availability remains `VERIFY`.
 - `nifty_futures_candles`: contract ID, expiry, OHLC, volume/OI source fields; expired-instrument API availability is `VERIFY`.
 - `rates_dividends`: versioned assumption series for model Greeks; each point has effective date, source/assumption label, unit, and manifest hash.
 - `fee_schedule`: effective-dated and versioned per-charge rates/formulas, source URL/document, effective start/end, rounding rule, verification status; run manifest pins its exact version.

@@ -1,0 +1,852 @@
+{
+  "expiry_date": "2025-01-02",
+  "session_date": "2025-01-02",
+  "spot_open": 23783.0,
+  "band_pts": 1500.0,
+  "min_strike": 22283.0,
+  "max_strike": 25283.0,
+  "total_master_contracts": 198,
+  "candidate_contract_count": 120,
+  "candidate_contracts": [
+    {
+      "instrument_key": "NSE_FO|52401|02-01-2025",
+      "trading_symbol": "NIFTY 22300 CE 02 JAN 25",
+      "strike_price": 22300.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52402|02-01-2025",
+      "trading_symbol": "NIFTY 22300 PE 02 JAN 25",
+      "strike_price": 22300.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52403|02-01-2025",
+      "trading_symbol": "NIFTY 22350 CE 02 JAN 25",
+      "strike_price": 22350.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52404|02-01-2025",
+      "trading_symbol": "NIFTY 22350 PE 02 JAN 25",
+      "strike_price": 22350.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52407|02-01-2025",
+      "trading_symbol": "NIFTY 22400 CE 02 JAN 25",
+      "strike_price": 22400.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52414|02-01-2025",
+      "trading_symbol": "NIFTY 22400 PE 02 JAN 25",
+      "strike_price": 22400.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52415|02-01-2025",
+      "trading_symbol": "NIFTY 22450 CE 02 JAN 25",
+      "strike_price": 22450.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52421|02-01-2025",
+      "trading_symbol": "NIFTY 22450 PE 02 JAN 25",
+      "strike_price": 22450.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52423|02-01-2025",
+      "trading_symbol": "NIFTY 22500 CE 02 JAN 25",
+      "strike_price": 22500.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52424|02-01-2025",
+      "trading_symbol": "NIFTY 22500 PE 02 JAN 25",
+      "strike_price": 22500.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52425|02-01-2025",
+      "trading_symbol": "NIFTY 22550 CE 02 JAN 25",
+      "strike_price": 22550.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52426|02-01-2025",
+      "trading_symbol": "NIFTY 22550 PE 02 JAN 25",
+      "strike_price": 22550.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52427|02-01-2025",
+      "trading_symbol": "NIFTY 22600 CE 02 JAN 25",
+      "strike_price": 22600.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52428|02-01-2025",
+      "trading_symbol": "NIFTY 22600 PE 02 JAN 25",
+      "strike_price": 22600.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52429|02-01-2025",
+      "trading_symbol": "NIFTY 22650 CE 02 JAN 25",
+      "strike_price": 22650.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52430|02-01-2025",
+      "trading_symbol": "NIFTY 22650 PE 02 JAN 25",
+      "strike_price": 22650.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52431|02-01-2025",
+      "trading_symbol": "NIFTY 22700 CE 02 JAN 25",
+      "strike_price": 22700.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52440|02-01-2025",
+      "trading_symbol": "NIFTY 22700 PE 02 JAN 25",
+      "strike_price": 22700.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52441|02-01-2025",
+      "trading_symbol": "NIFTY 22750 CE 02 JAN 25",
+      "strike_price": 22750.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52442|02-01-2025",
+      "trading_symbol": "NIFTY 22750 PE 02 JAN 25",
+      "strike_price": 22750.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52443|02-01-2025",
+      "trading_symbol": "NIFTY 22800 CE 02 JAN 25",
+      "strike_price": 22800.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52444|02-01-2025",
+      "trading_symbol": "NIFTY 22800 PE 02 JAN 25",
+      "strike_price": 22800.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52445|02-01-2025",
+      "trading_symbol": "NIFTY 22850 CE 02 JAN 25",
+      "strike_price": 22850.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52446|02-01-2025",
+      "trading_symbol": "NIFTY 22850 PE 02 JAN 25",
+      "strike_price": 22850.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52447|02-01-2025",
+      "trading_symbol": "NIFTY 22900 CE 02 JAN 25",
+      "strike_price": 22900.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52448|02-01-2025",
+      "trading_symbol": "NIFTY 22900 PE 02 JAN 25",
+      "strike_price": 22900.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52449|02-01-2025",
+      "trading_symbol": "NIFTY 22950 CE 02 JAN 25",
+      "strike_price": 22950.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52450|02-01-2025",
+      "trading_symbol": "NIFTY 22950 PE 02 JAN 25",
+      "strike_price": 22950.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52451|02-01-2025",
+      "trading_symbol": "NIFTY 23000 CE 02 JAN 25",
+      "strike_price": 23000.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52452|02-01-2025",
+      "trading_symbol": "NIFTY 23000 PE 02 JAN 25",
+      "strike_price": 23000.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52453|02-01-2025",
+      "trading_symbol": "NIFTY 23050 CE 02 JAN 25",
+      "strike_price": 23050.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52454|02-01-2025",
+      "trading_symbol": "NIFTY 23050 PE 02 JAN 25",
+      "strike_price": 23050.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52455|02-01-2025",
+      "trading_symbol": "NIFTY 23100 CE 02 JAN 25",
+      "strike_price": 23100.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52456|02-01-2025",
+      "trading_symbol": "NIFTY 23100 PE 02 JAN 25",
+      "strike_price": 23100.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52457|02-01-2025",
+      "trading_symbol": "NIFTY 23150 CE 02 JAN 25",
+      "strike_price": 23150.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52458|02-01-2025",
+      "trading_symbol": "NIFTY 23150 PE 02 JAN 25",
+      "strike_price": 23150.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52459|02-01-2025",
+      "trading_symbol": "NIFTY 23200 CE 02 JAN 25",
+      "strike_price": 23200.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52461|02-01-2025",
+      "trading_symbol": "NIFTY 23200 PE 02 JAN 25",
+      "strike_price": 23200.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52462|02-01-2025",
+      "trading_symbol": "NIFTY 23250 CE 02 JAN 25",
+      "strike_price": 23250.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52463|02-01-2025",
+      "trading_symbol": "NIFTY 23250 PE 02 JAN 25",
+      "strike_price": 23250.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52464|02-01-2025",
+      "trading_symbol": "NIFTY 23300 CE 02 JAN 25",
+      "strike_price": 23300.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52465|02-01-2025",
+      "trading_symbol": "NIFTY 23300 PE 02 JAN 25",
+      "strike_price": 23300.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52471|02-01-2025",
+      "trading_symbol": "NIFTY 23350 CE 02 JAN 25",
+      "strike_price": 23350.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52472|02-01-2025",
+      "trading_symbol": "NIFTY 23350 PE 02 JAN 25",
+      "strike_price": 23350.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52473|02-01-2025",
+      "trading_symbol": "NIFTY 23400 CE 02 JAN 25",
+      "strike_price": 23400.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52478|02-01-2025",
+      "trading_symbol": "NIFTY 23400 PE 02 JAN 25",
+      "strike_price": 23400.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52481|02-01-2025",
+      "trading_symbol": "NIFTY 23450 CE 02 JAN 25",
+      "strike_price": 23450.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52495|02-01-2025",
+      "trading_symbol": "NIFTY 23450 PE 02 JAN 25",
+      "strike_price": 23450.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52497|02-01-2025",
+      "trading_symbol": "NIFTY 23500 CE 02 JAN 25",
+      "strike_price": 23500.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52498|02-01-2025",
+      "trading_symbol": "NIFTY 23500 PE 02 JAN 25",
+      "strike_price": 23500.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52499|02-01-2025",
+      "trading_symbol": "NIFTY 23550 CE 02 JAN 25",
+      "strike_price": 23550.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52501|02-01-2025",
+      "trading_symbol": "NIFTY 23550 PE 02 JAN 25",
+      "strike_price": 23550.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52504|02-01-2025",
+      "trading_symbol": "NIFTY 23600 CE 02 JAN 25",
+      "strike_price": 23600.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52506|02-01-2025",
+      "trading_symbol": "NIFTY 23600 PE 02 JAN 25",
+      "strike_price": 23600.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52509|02-01-2025",
+      "trading_symbol": "NIFTY 23650 CE 02 JAN 25",
+      "strike_price": 23650.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52510|02-01-2025",
+      "trading_symbol": "NIFTY 23650 PE 02 JAN 25",
+      "strike_price": 23650.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52511|02-01-2025",
+      "trading_symbol": "NIFTY 23700 CE 02 JAN 25",
+      "strike_price": 23700.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52519|02-01-2025",
+      "trading_symbol": "NIFTY 23700 PE 02 JAN 25",
+      "strike_price": 23700.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52520|02-01-2025",
+      "trading_symbol": "NIFTY 23750 CE 02 JAN 25",
+      "strike_price": 23750.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52522|02-01-2025",
+      "trading_symbol": "NIFTY 23750 PE 02 JAN 25",
+      "strike_price": 23750.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52523|02-01-2025",
+      "trading_symbol": "NIFTY 23800 CE 02 JAN 25",
+      "strike_price": 23800.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52524|02-01-2025",
+      "trading_symbol": "NIFTY 23800 PE 02 JAN 25",
+      "strike_price": 23800.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52525|02-01-2025",
+      "trading_symbol": "NIFTY 23850 CE 02 JAN 25",
+      "strike_price": 23850.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52526|02-01-2025",
+      "trading_symbol": "NIFTY 23850 PE 02 JAN 25",
+      "strike_price": 23850.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52527|02-01-2025",
+      "trading_symbol": "NIFTY 23900 CE 02 JAN 25",
+      "strike_price": 23900.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52529|02-01-2025",
+      "trading_symbol": "NIFTY 23900 PE 02 JAN 25",
+      "strike_price": 23900.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52530|02-01-2025",
+      "trading_symbol": "NIFTY 23950 CE 02 JAN 25",
+      "strike_price": 23950.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52537|02-01-2025",
+      "trading_symbol": "NIFTY 23950 PE 02 JAN 25",
+      "strike_price": 23950.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52538|02-01-2025",
+      "trading_symbol": "NIFTY 24000 CE 02 JAN 25",
+      "strike_price": 24000.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52539|02-01-2025",
+      "trading_symbol": "NIFTY 24000 PE 02 JAN 25",
+      "strike_price": 24000.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52540|02-01-2025",
+      "trading_symbol": "NIFTY 24050 CE 02 JAN 25",
+      "strike_price": 24050.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52541|02-01-2025",
+      "trading_symbol": "NIFTY 24050 PE 02 JAN 25",
+      "strike_price": 24050.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52542|02-01-2025",
+      "trading_symbol": "NIFTY 24100 CE 02 JAN 25",
+      "strike_price": 24100.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52543|02-01-2025",
+      "trading_symbol": "NIFTY 24100 PE 02 JAN 25",
+      "strike_price": 24100.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52544|02-01-2025",
+      "trading_symbol": "NIFTY 24150 CE 02 JAN 25",
+      "strike_price": 24150.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52545|02-01-2025",
+      "trading_symbol": "NIFTY 24150 PE 02 JAN 25",
+      "strike_price": 24150.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52546|02-01-2025",
+      "trading_symbol": "NIFTY 24200 CE 02 JAN 25",
+      "strike_price": 24200.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52547|02-01-2025",
+      "trading_symbol": "NIFTY 24200 PE 02 JAN 25",
+      "strike_price": 24200.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52549|02-01-2025",
+      "trading_symbol": "NIFTY 24250 CE 02 JAN 25",
+      "strike_price": 24250.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52550|02-01-2025",
+      "trading_symbol": "NIFTY 24250 PE 02 JAN 25",
+      "strike_price": 24250.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52552|02-01-2025",
+      "trading_symbol": "NIFTY 24300 CE 02 JAN 25",
+      "strike_price": 24300.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52563|02-01-2025",
+      "trading_symbol": "NIFTY 24300 PE 02 JAN 25",
+      "strike_price": 24300.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52564|02-01-2025",
+      "trading_symbol": "NIFTY 24350 CE 02 JAN 25",
+      "strike_price": 24350.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52565|02-01-2025",
+      "trading_symbol": "NIFTY 24350 PE 02 JAN 25",
+      "strike_price": 24350.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52566|02-01-2025",
+      "trading_symbol": "NIFTY 24400 CE 02 JAN 25",
+      "strike_price": 24400.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52567|02-01-2025",
+      "trading_symbol": "NIFTY 24400 PE 02 JAN 25",
+      "strike_price": 24400.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52569|02-01-2025",
+      "trading_symbol": "NIFTY 24450 CE 02 JAN 25",
+      "strike_price": 24450.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52574|02-01-2025",
+      "trading_symbol": "NIFTY 24450 PE 02 JAN 25",
+      "strike_price": 24450.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52575|02-01-2025",
+      "trading_symbol": "NIFTY 24500 CE 02 JAN 25",
+      "strike_price": 24500.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52577|02-01-2025",
+      "trading_symbol": "NIFTY 24500 PE 02 JAN 25",
+      "strike_price": 24500.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52578|02-01-2025",
+      "trading_symbol": "NIFTY 24550 CE 02 JAN 25",
+      "strike_price": 24550.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52579|02-01-2025",
+      "trading_symbol": "NIFTY 24550 PE 02 JAN 25",
+      "strike_price": 24550.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52580|02-01-2025",
+      "trading_symbol": "NIFTY 24600 CE 02 JAN 25",
+      "strike_price": 24600.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52581|02-01-2025",
+      "trading_symbol": "NIFTY 24600 PE 02 JAN 25",
+      "strike_price": 24600.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52582|02-01-2025",
+      "trading_symbol": "NIFTY 24650 CE 02 JAN 25",
+      "strike_price": 24650.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52585|02-01-2025",
+      "trading_symbol": "NIFTY 24650 PE 02 JAN 25",
+      "strike_price": 24650.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52586|02-01-2025",
+      "trading_symbol": "NIFTY 24700 CE 02 JAN 25",
+      "strike_price": 24700.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52591|02-01-2025",
+      "trading_symbol": "NIFTY 24700 PE 02 JAN 25",
+      "strike_price": 24700.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52592|02-01-2025",
+      "trading_symbol": "NIFTY 24750 CE 02 JAN 25",
+      "strike_price": 24750.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52594|02-01-2025",
+      "trading_symbol": "NIFTY 24750 PE 02 JAN 25",
+      "strike_price": 24750.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52595|02-01-2025",
+      "trading_symbol": "NIFTY 24800 CE 02 JAN 25",
+      "strike_price": 24800.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52596|02-01-2025",
+      "trading_symbol": "NIFTY 24800 PE 02 JAN 25",
+      "strike_price": 24800.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52597|02-01-2025",
+      "trading_symbol": "NIFTY 24850 CE 02 JAN 25",
+      "strike_price": 24850.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52598|02-01-2025",
+      "trading_symbol": "NIFTY 24850 PE 02 JAN 25",
+      "strike_price": 24850.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52599|02-01-2025",
+      "trading_symbol": "NIFTY 24900 CE 02 JAN 25",
+      "strike_price": 24900.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52600|02-01-2025",
+      "trading_symbol": "NIFTY 24900 PE 02 JAN 25",
+      "strike_price": 24900.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52601|02-01-2025",
+      "trading_symbol": "NIFTY 24950 CE 02 JAN 25",
+      "strike_price": 24950.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52602|02-01-2025",
+      "trading_symbol": "NIFTY 24950 PE 02 JAN 25",
+      "strike_price": 24950.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52603|02-01-2025",
+      "trading_symbol": "NIFTY 25000 CE 02 JAN 25",
+      "strike_price": 25000.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52604|02-01-2025",
+      "trading_symbol": "NIFTY 25000 PE 02 JAN 25",
+      "strike_price": 25000.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52605|02-01-2025",
+      "trading_symbol": "NIFTY 25050 CE 02 JAN 25",
+      "strike_price": 25050.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52606|02-01-2025",
+      "trading_symbol": "NIFTY 25050 PE 02 JAN 25",
+      "strike_price": 25050.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52607|02-01-2025",
+      "trading_symbol": "NIFTY 25100 CE 02 JAN 25",
+      "strike_price": 25100.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52608|02-01-2025",
+      "trading_symbol": "NIFTY 25100 PE 02 JAN 25",
+      "strike_price": 25100.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52609|02-01-2025",
+      "trading_symbol": "NIFTY 25150 CE 02 JAN 25",
+      "strike_price": 25150.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52612|02-01-2025",
+      "trading_symbol": "NIFTY 25150 PE 02 JAN 25",
+      "strike_price": 25150.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52613|02-01-2025",
+      "trading_symbol": "NIFTY 25200 CE 02 JAN 25",
+      "strike_price": 25200.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52614|02-01-2025",
+      "trading_symbol": "NIFTY 25200 PE 02 JAN 25",
+      "strike_price": 25200.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52615|02-01-2025",
+      "trading_symbol": "NIFTY 25250 CE 02 JAN 25",
+      "strike_price": 25250.0,
+      "instrument_type": "CE",
+      "lot_size": 75
+    },
+    {
+      "instrument_key": "NSE_FO|52617|02-01-2025",
+      "trading_symbol": "NIFTY 25250 PE 02 JAN 25",
+      "strike_price": 25250.0,
+      "instrument_type": "PE",
+      "lot_size": 75
+    }
+  ]
+}

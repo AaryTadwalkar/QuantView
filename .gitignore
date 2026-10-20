@@ -5,10 +5,11 @@ venv/
 # Environment variables
 .env
 
-#data
-Data/
-
+# Root market data directory
+/Data/
 
 # Python caching
 **/__pycache__/
 *.py[cod]
+
+.agents/

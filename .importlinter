@@ -1,0 +1,40 @@
+[importlinter]
+root_package = packages
+
+[importlinter:contract:domain-is-leaf]
+name = Domain layer is a pure leaf
+type = forbidden
+source_modules =
+    packages.domain
+forbidden_modules =
+    packages.data
+    packages.features
+    packages.strategies
+    packages.engine
+    packages.risk
+    packages.ledger
+    packages.db
+    services
+    apps
+
+[importlinter:contract:no-broker-sdks-in-packages]
+name = No broker SDKs imported into core packages
+type = forbidden
+source_modules =
+    packages
+forbidden_modules =
+    upstox_client
+    smartapi
+    kiteconnect
+
+[importlinter:contract:package-layers]
+name = Layered architecture of core packages
+type = layers
+layers =
+    packages.engine
+    packages.strategies
+    packages.risk
+    packages.ledger
+    packages.features
+    packages.data
+    packages.domain
