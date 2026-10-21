@@ -48,10 +48,13 @@
 - **M1 Tasks Completed:** `M1-01` (`VERIFIED`), `M1-02` (`VERIFIED`).
 - **All Capabilities (`CAP-01` – `CAP-24`):** `Design Status = DESIGNED`, `Implementation Status = PENDING`, `Test Execution Status = NOT_RUN`.
 - **Readiness Verdicts:** **Phase 0 (`T0.1–T0.15`):** `GO` | **Full Build (`Phases 1–8`):** `CONDITIONAL GO` | **Live Execution (`Phase 9`):** `NO-GO`.
-- **Option Ingestion Pipeline & 2025 H1 Complete Daily Historical Backfill (2025-01-01 to 2025-06-19):**
+- **Option Ingestion Pipeline & Complete Daily Historical Backfill (2025-01-01 to 2026-10-19, 446 Trading Days - 100% Complete):**
   - Consolidated all bulk range backfill, pre-flight verification, and auditing capabilities directly into canonical `tools/ingest/import_expired_option_candles.py`.
-  - Executed complete day-by-day ingestion covering **all 116 trading sessions** in the first half of 2025 across all 25 weekly/monthly expiries (including all Mondays, Tuesdays, Wednesdays, Thursdays, and Fridays).
-  - Staged **5,118,315 continuous 1-minute option candle bars** across **861.76 MB** in 116 separate daily CSV files (`staging/expired_options/nifty_options_1m_{expiry}_{trade_date}.csv`).
+  - **Batch 1 (`2025-01-01` to `2025-06-19`):** 116 sessions, 5,118,315 bars, 861.76 MB staged CSVs, 6,106 manifests (`reports/historical_options_2025_h1_audit_report.md`).
+  - **Batch 2 (`2025-06-20` to `2026-02-03`):** 156 sessions, 7,003,462 bars, 1,178.30 MB staged CSVs, 10,510 manifests (`reports/historical_options_20250620_20260203_audit_report.md`).
+  - **Batch 3 (`2026-02-04` to `2026-10-19`):** 174 sessions, 8,210,644 bars, 1,385.49 MB staged CSVs, 15,616 manifests (`reports/historical_options_20260204_20261021_audit_report.md`).
+  - **Grand Total Ingestion:** **446/446 trading sessions** verified `PASS` (100.0%).
+  - Staged **20,332,421 continuous 1-minute option candle bars** across **3,425.55 MB (3.43 GB)** in 446 separate daily CSV files (`staging/expired_options/nifty_options_1m_{expiry}_{trade_date}.csv`).
   - 100% data integrity verified: **0 duplicates**, **0 null values**, strictly sorted **chronologically ascending (`09:15:00` to `15:29:00`)**.
-  - Cryptographic provenance verified: **6,106 companion JSON manifests** and raw gzip payloads in `Data/raw/upstox_rest/expired_api/` verified bit-for-bit (0 SHA-256 mismatches across 52.16 MB).
-  - Exhaustive 116-day audit report published in `reports/historical_options_2025_h1_audit_report.md`. All 116 trading days verified valid. Ready for Lake Parquet publishing.
+  - Cryptographic provenance verified: **32,232 companion JSON manifests** and raw gzip payloads in `Data/raw/upstox_rest/expired_api/` verified bit-for-bit (0 SHA-256 mismatches across 383.41 MB compressed).
+  - All 446 daily trading sessions verified valid and ready for canonical Lake Parquet publishing.

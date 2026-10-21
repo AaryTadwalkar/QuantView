@@ -298,7 +298,7 @@ class UnderlyingCandleImporter:
             import pandas as pd
             df = pd.DataFrame(unique_rows)
             df.to_csv(staged_file, index=False)
-            print(f"✅ Staged {len(unique_rows)} unique candles to: {staged_file}")
+            print(f"[SUCCESS] Staged {len(unique_rows)} unique candles to: {staged_file}")
 
         return {
             "status": "COMPLETED",

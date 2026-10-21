@@ -210,14 +210,14 @@ class ExpiredOptionImporter:
         url = f"{self.base_url}/expired-instruments/option/contract"
         params = {"instrument_key": self.underlying_key, "expiry_date": expiry_date}
 
-        max_retries = 3
-        backoff_sec = 3.0
+        max_retries = 12
+        backoff_schedule = [5.0, 15.0, 30.0] + [60.0] * 10
         resp = None
         for attempt in range(max_retries + 1):
             resp = self.session.get(url, params=params, timeout=30, allow_redirects=False)
             if resp.status_code == 429 and attempt < max_retries:
-                sleep_dur = backoff_sec * (2 ** attempt)
-                print(f"  [Discovery 429] Waiting {sleep_dur}s before retry ({attempt+1}/{max_retries})...")
+                sleep_dur = backoff_schedule[attempt]
+                print(f"  [Discovery 429] Hourly rolling window reached. Waiting {sleep_dur}s before retry ({attempt+1}/{max_retries})...")
                 time.sleep(sleep_dur)
                 continue
             break
@@ -314,13 +314,18 @@ class ExpiredOptionImporter:
         if not contract_dir.exists():
             return None
         matches = list(contract_dir.glob(f"**/manifest-{expiry_date}-*.json"))
-        if matches:
+        for match in matches:
             try:
-                with open(matches[0], "r", encoding="utf-8") as mf:
+                with open(match, "r", encoding="utf-8") as mf:
                     m = json.load(mf)
+                if m.get("http_status") != 200:
+                    continue
                 gz_path = Path(m.get("compressed_path", ""))
                 if gz_path.exists() and gz_path.stat().st_size > 0:
-                    return gz_path
+                    # Quick verify that it actually has contracts
+                    contracts = self.load_contracts_from_file(gz_path)
+                    if len(contracts) > 0:
+                        return gz_path
             except Exception:
                 pass
         return None
@@ -397,8 +402,8 @@ class ExpiredOptionImporter:
         raw_bytes = b""
         status_code = 0
         content_type = "unknown"
-        max_retries = 6
-        backoff_schedule = [3.0, 6.0, 15.0, 30.0, 60.0, 90.0]
+        max_retries = 15
+        backoff_schedule = [5.0, 15.0, 30.0] + [60.0] * 12
 
         for attempt in range(max_retries + 1):
             try:
@@ -739,12 +744,26 @@ class ExpiredOptionImporter:
         df_1d["trade_date"] = df_1d[date_col].astype(str).str[:10]
         spot_map = dict(zip(df_1d["trade_date"], df_1d["open"]))
 
+        # Overlay staged underlying 1d candles if present
+        staged_underlying_dir = Path("staging/underlying_candles")
+        if staged_underlying_dir.exists():
+            for staged_f in staged_underlying_dir.glob("*1d*.csv"):
+                try:
+                    s_df = pd.read_csv(staged_f)
+                    s_col = s_df.columns[0]
+                    s_df["trade_date"] = s_df[s_col].astype(str).str[:10]
+                    for _, s_row in s_df.iterrows():
+                        td = str(s_row["trade_date"])
+                        spot_map[td] = float(s_row["open"])
+                except Exception:
+                    pass
+
         trading_days = [d for d in sorted(list(spot_map.keys())) if from_date <= d <= to_date]
 
         exp_file = Path("config/nse_nifty_expiries_2025_2026.json")
         with open(exp_file, "r", encoding="utf-8") as f:
             exp_data = json.load(f)
-        all_expiries = sorted([e["expiry_date"] for e in exp_data.get("expiries", []) if e["expiry_date"] <= to_date])
+        all_expiries = sorted([e["expiry_date"] for e in exp_data.get("expiries", [])])
 
         cycle_groups: Dict[str, List[str]] = {}
         for d in trading_days:
@@ -754,7 +773,7 @@ class ExpiredOptionImporter:
             cycle_groups.setdefault(active_exp, []).append(d)
 
         print(f"\n=======================================================")
-        print(f"QUANTVIEW — COMPREHENSIVE DAILY OPTION BACKFILL PIPELINE")
+        print(f"QUANTVIEW -- COMPREHENSIVE DAILY OPTION BACKFILL PIPELINE")
         print(f"Horizon: {from_date} to {to_date} ({len(trading_days)} Trading Days across {len(cycle_groups)} Expiry Cycles)")
         print(f"Strike Band: +/- {band_pts} pts around Session Spot Open")
         print(f"Dry Run Mode: {dry_run}")
@@ -944,10 +963,26 @@ class ExpiredOptionImporter:
         df_1d["trade_date"] = df_1d[date_col].astype(str).str[:10]
         trading_days = [d for d in sorted(df_1d["trade_date"].tolist()) if from_date <= d <= to_date]
 
+        # Overlay staged underlying 1d candles if present
+        staged_underlying_dir = Path("staging/underlying_candles")
+        if staged_underlying_dir.exists():
+            for staged_f in staged_underlying_dir.glob("*1d*.csv"):
+                try:
+                    s_df = pd.read_csv(staged_f)
+                    s_col = s_df.columns[0]
+                    s_df["trade_date"] = s_df[s_col].astype(str).str[:10]
+                    for td in s_df["trade_date"].unique():
+                        td_str = str(td)
+                        if from_date <= td_str <= to_date and td_str not in trading_days:
+                            trading_days.append(td_str)
+                except Exception:
+                    pass
+        trading_days.sort()
+
         exp_file = Path("config/nse_nifty_expiries_2025_2026.json")
         with open(exp_file, "r", encoding="utf-8") as f:
             exp_data = json.load(f)
-        all_expiries = sorted([e["expiry_date"] for e in exp_data.get("expiries", []) if e["expiry_date"] <= to_date])
+        all_expiries = sorted([e["expiry_date"] for e in exp_data.get("expiries", [])])
 
         raw_candle_root = self.raw_root / "endpoint=historical_candle"
         all_manifests = list(raw_candle_root.glob("**/*.json")) if raw_candle_root.exists() else []
@@ -979,6 +1014,8 @@ class ExpiredOptionImporter:
 
         for d in trading_days:
             active_exp = next((e for e in all_expiries if e >= d), None)
+            if active_exp is None:
+                continue
             is_valid, reason, df = self.validate_staged_day(active_exp, d)
 
             staged_f = self.staging_root / f"nifty_options_1m_{active_exp}_{d}.csv"
@@ -1006,7 +1043,9 @@ class ExpiredOptionImporter:
             })
 
         if report_path is None:
-            report_path = Path("reports/historical_options_2025_h1_audit_report.md")
+            clean_from = from_date.replace("-", "")
+            clean_to = to_date.replace("-", "")
+            report_path = Path(f"reports/historical_options_{clean_from}_{clean_to}_audit_report.md")
 
         rows_md = []
         for s in day_audits:
@@ -1018,22 +1057,23 @@ class ExpiredOptionImporter:
         table_body = "\n".join(rows_md)
 
         valid_count = sum(1 for s in day_audits if s["is_valid"])
+        exp_count = len(set(s["expiry_date"] for s in day_audits))
 
-        report_md = f"""# QuantView — 2025 H1 Daily Historical Option Ingestion Audit Report
+        report_md = f"""# QuantView - Daily Historical Option Ingestion Audit Report ({from_date} to {to_date})
 
 **Audit Execution Date:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}  
-**Target Horizon:** `{from_date}` to `{to_date}` ({len(trading_days)} Trading Days across {len(all_expiries)} Expiries)  
+**Target Horizon:** `{from_date}` to `{to_date}` ({len(day_audits)} Trading Days across {exp_count} Expiries)  
 **Authority Reference:** Owner Authorization under `DOCS/AGENTS.md` and `DOCS/QUANTVIEW_DATA_SPEC.md`  
-**Overall Status:** **{valid_count}/{len(trading_days)} TRADING DAYS VERIFIED VALID**  
+**Overall Status:** **{valid_count}/{len(day_audits)} TRADING DAYS VERIFIED VALID**  
 
 ---
 
 ## 1. Executive Summary & Aggregate Metrics
 
-Across all **{len(trading_days)} trading days** in the first half of 2025:
-* **Total Days Staged & Verified:** **{valid_count}/{len(trading_days)} days** ({valid_count/len(trading_days)*100:.1f}%)
+Across all **{len(day_audits)} trading days** across the target horizon:
+* **Total Days Staged & Verified:** **{valid_count}/{len(day_audits)} days** ({valid_count/len(day_audits)*100:.1f}%)
 * **Total 1-Minute Option Candle Bars Staged:** **{total_candles:,} bars**
-* **Total Staged CSV Storage:** **{total_staged_bytes / (1024*1024):.2f} MB** across {len(trading_days)} individual daily CSV files
+* **Total Staged CSV Storage:** **{total_staged_bytes / (1024*1024):.2f} MB** across {len(day_audits)} individual daily CSV files
 * **Total Raw Compressed Payloads:** **{total_raw_bytes / (1024*1024):.2f} MB** in `Data/raw/upstox_rest/expired_api/`
 * **Total Cryptographic Manifests Verified:** **{total_manifests:,} companion JSON manifests**
 * **Checksum Integrity:** **{total_manifests - total_sha_mismatches}/{total_manifests} bit-for-bit SHA-256 matches** ({total_sha_mismatches} mismatches)
@@ -1109,7 +1149,7 @@ def main():
     load_dotenv(".env")
     token = os.getenv("UPSTOX_ACCESS_TOKEN")
 
-    budget = 10000 if args.backfill_from else 100
+    budget = 25000 if args.backfill_from else 100
     importer = ExpiredOptionImporter(token=token, max_budget=budget)
 
     if args.audit_only:
