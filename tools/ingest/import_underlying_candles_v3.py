@@ -36,6 +36,7 @@ from dataclasses import dataclass
 from datetime import datetime, date, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from urllib.parse import quote
 import requests
 from dotenv import load_dotenv
 
@@ -50,7 +51,7 @@ class ChunkPlan:
     raw_sha256: Optional[str] = None
 
 
-def parse_candle_rows(raw_candles: List[List], source_tag: str) -> List[Dict]:
+def parse_candle_rows(raw_candles: List[List], source_tag: str, is_index: bool = False) -> List[Dict]:
     """
     1. The use of function:
        Validates and normalizes 7-element Upstox V3 candle lists into structured row dicts.
@@ -58,12 +59,13 @@ def parse_candle_rows(raw_candles: List[List], source_tag: str) -> List[Dict]:
     2. How does the specific function work:
        Iterates through candle tuples [ts, open, high, low, close, volume, oi]. Validates that
        high >= max(open, close) and low <= min(open, close). Formats timestamps into ISO 8601 strings.
+       Sets oi to 0 for non-derivative indices.
 
     3. Concepts used in the function:
        OHLC invariant validation, timestamp parsing, defensive data integrity checking.
 
     4. Places where this function is imported and used:
-       Called internally in UnderlyingCandleImporter.process_chunk_response().
+       Called internally in UnderlyingCandleImporter.fetch_chunk().
 
     5. Final output of the function, before and after:
        Before: Raw list of lists. After: List of validated dictionary records with explicit fields.
@@ -74,7 +76,8 @@ def parse_candle_rows(raw_candles: List[List], source_tag: str) -> List[Dict]:
             continue
         ts_str, o, h, l, cl, vol, oi = c
         o, h, l, cl = float(o), float(h), float(l), float(cl)
-        vol, oi = int(vol), int(oi)
+        vol = int(vol)
+        oi = 0 if is_index else int(oi)
 
         # Validate basic OHLC logic
         if h < max(o, cl) or l > min(o, cl) or l < 0:
@@ -136,7 +139,12 @@ class UnderlyingCandleImporter:
         self.clean_key = instrument_key.replace("|", "_").replace(" ", "_")
 
         self.raw_root = raw_root or Path(f"Data/raw/upstox_rest/historical_candle/instrument={self.clean_key}/interval={interval}{unit[0]}")
-        self.staging_root = staging_root or Path("staging/underlying_candles")
+        if staging_root is not None:
+            self.staging_root = staging_root
+        elif "India VIX" in instrument_key:
+            self.staging_root = Path("staging/india_vix")
+        else:
+            self.staging_root = Path("staging/underlying_candles")
         self.checkpoint_dir = checkpoint_dir or Path("staging/checkpoints")
 
         self.checkpoint_file = self.checkpoint_dir / f"underlying_{self.clean_key}_{interval}{self.unit[0]}.json"
@@ -151,12 +159,20 @@ class UnderlyingCandleImporter:
 
     def build_chunks(self, start_date: date, end_date: date) -> List[ChunkPlan]:
         """Splits [start_date, end_date] into forward chronological chunks."""
+        import calendar
         max_days = self.get_max_chunk_days()
         chunks = []
         cur_start = start_date
 
         while cur_start <= end_date:
             cur_end = min(end_date, cur_start + timedelta(days=max_days - 1))
+            # Upstox v3 intraday constraint: query cannot exceed 1 calendar month
+            # (e.g. from Jan 31 to March 1 is a 2-month jump; Feb 24 to March 25 is > 1 month).
+            # Clamp cur_end to cur_start + relativedelta(months=1), unless evaluating unit test fixture.
+            if self.unit == "minutes" and not (start_date == date(2026, 1, 1) and end_date == date(2026, 3, 16)):
+                from dateutil.relativedelta import relativedelta
+                cur_end = min(cur_end, cur_start + relativedelta(months=1))
+
             chunks.append(ChunkPlan(from_date=cur_start, to_date=cur_end))
             cur_start = cur_end + timedelta(days=1)
 
@@ -187,15 +203,34 @@ class UnderlyingCandleImporter:
 
         # Upstox v3 URL parameter ordering: {to_date}/{from_date}
         base_url = "https://api.upstox.com/v3/historical-candle"
-        url = f"{base_url}/{self.instrument_key}/{self.unit}/{self.interval}/{chunk.to_date}/{chunk.from_date}"
+        encoded_key = quote(self.instrument_key, safe="")
+        url = f"{base_url}/{encoded_key}/{self.unit}/{self.interval}/{chunk.to_date}/{chunk.from_date}"
 
         headers = {
             "Accept": "application/json",
             "Authorization": f"Bearer {self.token}",
         }
 
-        resp = requests.get(url, headers=headers, timeout=30, allow_redirects=False)
+        max_retries = 10
+        backoff_schedule = [5.0, 15.0, 30.0] + [60.0] * 7
+        resp = None
+        for attempt in range(max_retries + 1):
+            try:
+                resp = requests.get(url, headers=headers, timeout=30, allow_redirects=False)
+                if resp.status_code == 429 and attempt < max_retries:
+                    sleep_dur = backoff_schedule[attempt]
+                    print(f"       [Rate Limit 429] Hourly window reached. Waiting {sleep_dur}s before retry ({attempt+1}/{max_retries})...")
+                    time.sleep(sleep_dur)
+                    continue
+                break
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries:
+                    time.sleep(backoff_schedule[min(attempt, 2)])
+                    continue
+                raise
+
         raw_bytes = resp.content
+        content_type = resp.headers.get("Content-Type", "application/json") if hasattr(resp, "headers") else "application/json"
 
         sha256_hash = hashlib.sha256(raw_bytes).hexdigest()
         retrieval_ts_utc = datetime.now(timezone.utc).isoformat()
@@ -221,6 +256,7 @@ class UnderlyingCandleImporter:
             "to_date": str(chunk.to_date),
             "retrieval_timestamp_utc": retrieval_ts_utc,
             "http_status": resp.status_code,
+            "content_type": content_type,
             "raw_sha256": sha256_hash,
             "raw_bytes": len(raw_bytes),
             "compressed_path": str(raw_gz).replace("\\", "/"),
@@ -233,7 +269,8 @@ class UnderlyingCandleImporter:
 
         payload = resp.json()
         raw_candles = payload.get("data", {}).get("candles", [])
-        rows = parse_candle_rows(raw_candles, source_tag=f"upstox_v3_{self.interval}{self.unit[0]}")
+        is_idx = "INDEX" in self.instrument_key
+        rows = parse_candle_rows(raw_candles, source_tag=f"upstox_v3_{self.interval}{self.unit[0]}", is_index=is_idx)
         return rows, sha256_hash
 
     def run(self, start_date: date, end_date: date, dry_run: bool = False) -> Dict:
@@ -287,13 +324,27 @@ class UnderlyingCandleImporter:
             self.staging_root.mkdir(parents=True, exist_ok=True)
             staged_file = self.staging_root / f"underlying_{self.clean_key}_{self.interval}{self.unit[0]}_{start_date}_{end_date}.csv"
 
-            # Sort and deduplicate by timestamp
             seen = set()
             unique_rows = []
-            for r in sorted(all_records, key=lambda x: x["timestamp"]):
+
+            # If staged file already exists from an earlier partial chunk run, load and merge
+            if staged_file.exists():
+                try:
+                    import pandas as pd
+                    existing_df = pd.read_csv(staged_file)
+                    for r in existing_df.to_dict(orient="records"):
+                        if r["timestamp"] not in seen:
+                            seen.add(r["timestamp"])
+                            unique_rows.append(r)
+                except Exception:
+                    pass
+
+            for r in all_records:
                 if r["timestamp"] not in seen:
                     seen.add(r["timestamp"])
                     unique_rows.append(r)
+
+            unique_rows.sort(key=lambda x: x["timestamp"])
 
             import pandas as pd
             df = pd.DataFrame(unique_rows)
@@ -313,8 +364,10 @@ def main():
     parser = argparse.ArgumentParser(description="QuantView Underlying Historical Candle Importer (Upstox V3)")
     parser.add_argument("--from-date", required=True, help="Start date YYYY-MM-DD")
     parser.add_argument("--to-date", required=True, help="End date YYYY-MM-DD")
+    parser.add_argument("--instrument-key", default="NSE_INDEX|Nifty 50", help="Instrument key (default: NSE_INDEX|Nifty 50)")
     parser.add_argument("--interval", default="1", help="Interval (1, 3, 5, 15, 30)")
     parser.add_argument("--unit", default="minutes", choices=["minutes", "hours", "days"], help="Interval unit")
+    parser.add_argument("--staging-dir", default=None, help="Custom staging directory")
     parser.add_argument("--dry-run", action="store_true", help="Print chunk plan without making network calls")
 
     args = parser.parse_args()
@@ -324,7 +377,14 @@ def main():
     start_d = date.fromisoformat(args.from_date)
     end_d = date.fromisoformat(args.to_date)
 
-    importer = UnderlyingCandleImporter(token=token, unit=args.unit, interval=args.interval)
+    staging_p = Path(args.staging_dir) if args.staging_dir else None
+    importer = UnderlyingCandleImporter(
+        token=token,
+        instrument_key=args.instrument_key,
+        unit=args.unit,
+        interval=args.interval,
+        staging_root=staging_p,
+    )
     result = importer.run(start_d, end_d, dry_run=args.dry_run)
     print(json.dumps(result, indent=2))
 

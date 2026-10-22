@@ -1,22 +1,21 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
-## Current State of the Union (2026-10-21)
+## Current State of the Union (2026-10-22)
 - **Approved Decisions (OWNER-DEC-01 to 06):** Formally logged in `ops/owner_decisions.md`.
 - **M0 & M1 Milestones Cleared (VERIFIED):**
   - `M0-01` (inventory), `M0-06` (backup verification), `M0-08` (sandbox restore), `M0-07` (retention probe), `M0-11` (contracts).
   - `M1-01` (repository layout across 19 directories), `M1-02` (tooling, CI workflow, failure tests, `ops/evidence/M1-02.md`).
-- **Complete Historical Option Backfill (Horizon: 2025-01-01 to 2026-10-19, 446 Trading Days - 100% Complete):**
-  - **446/446 Daily Trading Sessions Completed & Verified:** 100% of all sessions across 21.5 months (all active trading days, not just expiries).
-  - **Batch 1 (`2025-01-01` to `2025-06-19`):** 116 sessions, 5,118,315 bars, 861.76 MB (`reports/historical_options_2025_h1_audit_report.md`).
-  - **Batch 2 (`2025-06-20` to `2026-02-03`):** 156 sessions, 7,003,462 bars, 1,178.30 MB (`reports/historical_options_20250620_20260203_audit_report.md`).
-  - **Batch 3 (`2026-02-04` to `2026-10-19`):** 174 sessions, 8,210,644 bars, 1,385.49 MB (`reports/historical_options_20260204_20261021_audit_report.md`).
-  - **Grand Total Staged Dataset:** **20,332,421 continuous 1-minute option bars** across **3,425.55 MB (3.43 GB)** in 446 separate daily CSVs (`staging/expired_options/nifty_options_1m_{expiry}_{trade_date}.csv`).
-  - **Data Integrity Scorecard:** **0 duplicates**, **0 nulls**, strictly sorted **chronologically ascending (`09:15:00` to `15:29:00`)**.
-  - **Cryptographic Provenance:** **32,232 companion JSON manifests** and raw gzip payloads in `Data/raw/upstox_rest/expired_api/` verified bit-for-bit (0 SHA-256 mismatches across 383.41 MB compressed).
-  - **Regulatory Expiry Shift:** Accurately handled Thursday -> Tuesday shift and holiday cycles through official Upstox metadata.
+- **Complete Historical Ingestion & Staging (Horizon: 2025-01-01 to 2026-10-19):**
+  - **NIFTY Option Candles (446 sessions):** 20,332,421 bars (3.43 GB staged CSVs). 0 nulls, 0 duplicates, 100% sorted ascending. 32,232 manifests in `Data/raw/` with 0 SHA mismatches.
+  - **India VIX Candles (`NSE_INDEX|India VIX`):** 100% backfilled across `2025-01-01` to `2026-10-19`.
+    * **1-Minute Series:** 166,939 continuous bars across all 446 sessions (`staging/india_vix/`). 0 nulls, 0 dups, 0 OHLC violations, `oi=0`.
+    * **Daily Series:** 446 daily bars matching 1:1 with option sessions (`staging/india_vix/`).
+    * **Raw Wire Provenance:** 25 raw gzipped payloads and SHA-256 manifests archived in `Data/raw/upstox_rest/historical_candle/instrument=NSE_INDEX_India_VIX/`.
+  - **Underlying Candles (`NSE_INDEX|Nifty 50`):** 435,592 1m bars + 1,417 1d bars staged & audited.
 - **Next Steps:**
-  1. Publish verified staged daily option datasets to canonical Parquet lake storage (`Data/lake/option_candles/underlying=NIFTY/expiry=YYYY-MM-DD/part-0.parquet`).
-  2. Proceed to deterministic vertical slice backtesting or market data store integration.
+  1. Phase 1: Tooling Scaffolding (`tools/lake/schema.py`, promotion scripts for options, underlying, VIX, snapshots).
+  2. Phase 2: Compaction & Staging Lake Preparation (`staging/lake_preparation/`).
+  3. Phase 3: Canonical Parquet Lake Promotion & DuckDB View Registration (`v_candles_underlying`, `v_candles_options`).
 
 ## Canonical Architectural Contracts & Modes
 - **Operating Modes:** `RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`.

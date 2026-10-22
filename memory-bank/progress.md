@@ -58,3 +58,8 @@
   - 100% data integrity verified: **0 duplicates**, **0 null values**, strictly sorted **chronologically ascending (`09:15:00` to `15:29:00`)**.
   - Cryptographic provenance verified: **32,232 companion JSON manifests** and raw gzip payloads in `Data/raw/upstox_rest/expired_api/` verified bit-for-bit (0 SHA-256 mismatches across 383.41 MB compressed).
   - All 446 daily trading sessions verified valid and ready for canonical Lake Parquet publishing.
+- **India VIX Historical Ingestion (2025-01-01 to 2026-10-19, 446 Trading Days - 100% Complete):**
+  - Acquired `NSE_INDEX|India VIX` across both 1-minute and 1-day intervals from Upstox API v3 (`tools/ingest/import_underlying_candles_v3.py`).
+  - **1-Minute Series:** **166,939 continuous bars** (`staging/india_vix/underlying_NSE_INDEX_India_VIX_1m_2025-01-01_2026-10-19.csv`). 0 nulls, 0 duplicates, 0 OHLC violations, `oi=0`.
+  - **1-Day Series:** **446 daily bars** matching 1:1 with all NIFTY option trading sessions (`staging/india_vix/underlying_NSE_INDEX_India_VIX_1d_2025-01-01_2026-10-19.csv`). 0 nulls, 0 duplicates.
+  - **Cryptographic Provenance:** 25 raw gzipped payloads and SHA-256 companion manifests archived in `Data/raw/upstox_rest/historical_candle/instrument=NSE_INDEX_India_VIX/`. Verified bit-for-bit. Ready for Lake Parquet promotion.

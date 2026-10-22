@@ -1,0 +1,77 @@
+[33mcommit f4cd3d7bcf9ecee20d0f4c5c106216f1b8d097ee[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Wed Oct 21 21:27:40 2026 +0530
+
+    all option candle done
+
+[33mcommit 357b43dba88ae0d8ac0014cc5aaa25784830e0c3[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Tue Oct 20 22:53:00 2026 +0530
+
+    historical backfill from 1/1/25 to 19/6/25
+
+[33mcommit 3277c5f055cbb5ba2296d0e9098ecc6f78f53693[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Tue Oct 20 20:13:36 2026 +0530
+
+    fixed expires config file
+
+[33mcommit 8c4d33f0a7d788d7207acfc04f4b7f5682421291[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Tue Oct 20 20:03:21 2026 +0530
+
+    historical data 2nd jan 2025 validated
+
+[33mcommit a7c23ce5a5988ea77fdb60185f5e341637d9d3b9[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Tue Oct 20 15:57:11 2026 +0530
+
+    validate phase A evidence, before adding india vix into the plan
+
+[33mcommit a03c5c6f556d593499361ceee55c469dc6ec79cc[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Tue Oct 20 11:23:39 2026 +0530
+
+     final and ready to build
+
+[33mcommit 141393d1f632630392069a7f8bb96b722e5f1399[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Mon Oct 19 17:20:55 2026 +0530
+
+    99% freezed docs
+
+[33mcommit 67d1b27c9fbe004c3b94bb8742ce00b5684c2d9c[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Sat Oct 17 16:48:24 2026 +0530
+
+    very close
+
+[33mcommit 8d0c1bcddf9c6cf15aee82354a785ebbba52332f[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Fri Oct 16 00:28:05 2026 +0530
+
+    doc approved by argon and freezed
+
+[33mcommit 1a3f7fc0105830aa67c74dbe68b7dacbbd64e910[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Thu Oct 15 21:37:30 2026 +0530
+
+    used agent to refine docs and gave argon for review
+
+[33mcommit da0035e5bcd0a739ec6be0fb4c131741c772e207[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Wed Oct 14 11:08:53 2026 +0530
+
+    made first downloader to download option candle and making my vision
+
+[33mcommit b0452745415300b0a9620826d6ed4b9ddbfeb5e0[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Sat Oct 10 20:26:32 2026 +0530
+
+    made hld and lld, memory back created and starting to make html artifact
+
+[33mcommit 7504365b3f825db02dd8c0da54f85b3c72be3fa9[m
+Author: AaryTadwalkar <aarytadwalkar@gmail.com>
+Date:   Fri Oct 9 20:57:32 2026 +0530
+
+    setup repo and fetched historical data and generated data_status.md
