@@ -1,21 +1,20 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
-## Current State of the Union (2026-10-22)
-- **Approved Decisions (OWNER-DEC-01 to 06):** Formally logged in `ops/owner_decisions.md`.
-- **M0 & M1 Milestones Cleared (VERIFIED):**
-  - `M0-01` (inventory), `M0-06` (backup verification), `M0-08` (sandbox restore), `M0-07` (retention probe), `M0-11` (contracts).
-  - `M1-01` (repository layout across 19 directories), `M1-02` (tooling, CI workflow, failure tests, `ops/evidence/M1-02.md`).
-- **Complete Historical Ingestion & Staging (Horizon: 2025-01-01 to 2026-10-19):**
-  - **NIFTY Option Candles (446 sessions):** 20,332,421 bars (3.43 GB staged CSVs). 0 nulls, 0 duplicates, 100% sorted ascending. 32,232 manifests in `Data/raw/` with 0 SHA mismatches.
-  - **India VIX Candles (`NSE_INDEX|India VIX`):** 100% backfilled across `2025-01-01` to `2026-10-19`.
-    * **1-Minute Series:** 166,939 continuous bars across all 446 sessions (`staging/india_vix/`). 0 nulls, 0 dups, 0 OHLC violations, `oi=0`.
-    * **Daily Series:** 446 daily bars matching 1:1 with option sessions (`staging/india_vix/`).
-    * **Raw Wire Provenance:** 25 raw gzipped payloads and SHA-256 manifests archived in `Data/raw/upstox_rest/historical_candle/instrument=NSE_INDEX_India_VIX/`.
-  - **Underlying Candles (`NSE_INDEX|Nifty 50`):** 435,592 1m bars + 1,417 1d bars staged & audited.
-- **Next Steps:**
-  1. Phase 1: Tooling Scaffolding (`tools/lake/schema.py`, promotion scripts for options, underlying, VIX, snapshots).
-  2. Phase 2: Compaction & Staging Lake Preparation (`staging/lake_preparation/`).
-  3. Phase 3: Canonical Parquet Lake Promotion & DuckDB View Registration (`v_candles_underlying`, `v_candles_options`).
+## Current State of the Union (2026-10-24)
+- **Phase 5 & Stage 1 Gate G1 Closure (100% COMPLETE - ALL PASS):**
+  - **Stage 1 (Historical Data Foundation) Officially Closed:** All 12 milestones (`M3-01` to `M3-12`) passed with zero defects. Formal Gate G1 audit report: [`reports/gate_g1_audit_report.md`](file:///c:/Algo/quantview/reports/gate_g1_audit_report.md); evidence: [`reports/gate_g1_validation_results.json`](file:///c:/Algo/quantview/reports/gate_g1_validation_results.json).
+  - **Active Production Lake (`Data/lake/` - Manifest Version 3 Live):**
+    * 784 Parquet files, 38,753,287 records, 620.00 MB active, partitioned, and verified bit-for-bit.
+    * 7 Canonical Datasets: `option_candles` (20.33M), `underlying_candles` (437K), `india_vix` (167K), `option_snapshot_captures` (82K), `option_snapshot_rows` (17.45M), `derived_candles` (287K across 3m, 5m, 15m, 30m, 1h, 4h), `data_eligibility` (1,161 sessions).
+    * Manifest Version 3 active: [`Data/lake/manifest_active.json`](file:///c:/Algo/quantview/Data/lake/manifest_active.json); Manifest v2 archived: `manifest_v2_archive.json`.
+  - **8 DuckDB Analytical Views Active in `Data/lake/quantview.duckdb`:**
+    * `v_candles_underlying`, `v_candles_options`, `v_candles_vix`, `v_snapshots_captures`, `v_snapshots_rows`, `v_snapshots_reconstructed_chain`, `v_candles_derived`, `v_data_eligibility`. All queries $\le 50\text{ms}$.
+  - **Tasks M3-10, M3-11, M3-12 Satisfied:**
+    * `M3-10`: Parquet profile & DuckDB benchmarks verified (`ops/evidence/M3-10.md`).
+    * `M3-11`: Exploratory strategy feasibility spike verified on 5m trend & 0-DTE straddle (`ops/evidence/M3-11.md`).
+    * `M3-12`: Supporting datasets audited (`ops/evidence/M3-12.md`).
+- **Automated Verification:** 56/56 unit tests PASS in 3.16s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects).
+- **Next Step:** Stage 2 — Live Market Stream & Collector Integration (`M2-01` to `M2-11`, Gate G0).
 
 ## Canonical Architectural Contracts & Modes
 - **Operating Modes:** `RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`.

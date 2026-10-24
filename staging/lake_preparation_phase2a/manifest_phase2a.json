@@ -1,0 +1,1156 @@
+{
+  "manifest_type": "QUANTVIEW_LAKE_DRY_RUN_PUBLICATION_MANIFEST",
+  "generated_at_utc": "2026-10-23T17:44:56.115132+00:00",
+  "prep_root": "staging/lake_preparation_phase2a",
+  "is_published_to_active_lake": false,
+  "active_pointer_updated": false,
+  "datasets": {
+    "option_candles": {
+      "dataset_name": "option_candles",
+      "status": "PREPARED",
+      "file_count": 95,
+      "total_rows": 20332421,
+      "total_bytes": 215242484,
+      "partitions": [
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-01-02/part-0.parquet",
+          "rows": 85323,
+          "bytes": 935054,
+          "sha256": "c434f54d7066e18a43b609d9ad73636cc006defd88455eaec699f5a1c6d38efa"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-01-09/part-0.parquet",
+          "rows": 224132,
+          "bytes": 2277684,
+          "sha256": "5a9cfa741e62238ac6717cc0a246dd1e44ce3db688c1df33be9b761e503d963c"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-01-16/part-0.parquet",
+          "rows": 216637,
+          "bytes": 2251217,
+          "sha256": "b64087ed851588b893aa88299dd7967364c32f82d93c6feab6632f8a80937beb"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-01-23/part-0.parquet",
+          "rows": 215994,
+          "bytes": 2196562,
+          "sha256": "2fa9b8a27109942a4f21f3ec346b2e870782cc31cd0d06fa628a7357c6c51fa0"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-01-30/part-0.parquet",
+          "rows": 225449,
+          "bytes": 2585943,
+          "sha256": "44e9536f70090fa4eadced32274e4cc20b4fc8d22b739f876112dcff0d3e1133"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-02-06/part-0.parquet",
+          "rows": 276997,
+          "bytes": 2935728,
+          "sha256": "0836b6dfcf3c53bf830bba48a639d77bdee66cb794021491b1f030ad0493c159"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-02-13/part-0.parquet",
+          "rows": 225578,
+          "bytes": 2261942,
+          "sha256": "c51a6a05223d5182856b57bc840347b4dd64adc8f0a446b20833c3c401f2290a"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-02-20/part-0.parquet",
+          "rows": 212334,
+          "bytes": 2205435,
+          "sha256": "771d7739250fee5fa858c3fd000c2e115aa3d1fc7deb6814e7df5f7bc001e6f3"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-02-27/part-0.parquet",
+          "rows": 177303,
+          "bytes": 1847039,
+          "sha256": "567b16fa43b6cc5d9de920890efac70fe592064978bfbad0479dc1e0d2e82c72"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-03-06/part-0.parquet",
+          "rows": 219675,
+          "bytes": 2215750,
+          "sha256": "ad9561c7ba28a85a69f5c046232309d4bacda3e0b26e6674852016bb6b1a03ba"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-03-13/part-0.parquet",
+          "rows": 211990,
+          "bytes": 2103345,
+          "sha256": "d1fa62be770953fe29b8d7e2bf1a1d8fb069a6471c67ce81576488bb57c8bd0e"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-03-20/part-0.parquet",
+          "rows": 177461,
+          "bytes": 1734220,
+          "sha256": "704633af7e6c560646c48e0839df53fdb6fbb137a5df7be18f4471ce59809f8d"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-03-27/part-0.parquet",
+          "rows": 231576,
+          "bytes": 2518641,
+          "sha256": "8f3692500aada47a0bc46a7475238a06df44ac06caf41c996b74048a562cca87"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-04-03/part-0.parquet",
+          "rows": 181251,
+          "bytes": 1902808,
+          "sha256": "96139dc1b5ce48256804bcd63664a1136af237c7cedfcdc0c4c215de8d5a11e6"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-04-09/part-0.parquet",
+          "rows": 209050,
+          "bytes": 2363503,
+          "sha256": "311435c0453c5c0c939dde09788cafe6e9641f782ddf405027dd073cf8b00cd1"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-04-17/part-0.parquet",
+          "rows": 191837,
+          "bytes": 2113595,
+          "sha256": "c329949f17826c1dfb8eacaad6cb932095eb5d740f5c36c48418c0ee4537ef72"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-04-24/part-0.parquet",
+          "rows": 183372,
+          "bytes": 2124609,
+          "sha256": "c43a777b377d54cd53c6f4c7d95ee9d431be64ccd4733c14599af54b59a6d26c"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-04-30/part-0.parquet",
+          "rows": 179004,
+          "bytes": 1946263,
+          "sha256": "d4697088b37b91cfc7a79556ed632a736a20c78cc18c3a0327f5a7ff4986c657"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-05-08/part-0.parquet",
+          "rows": 223587,
+          "bytes": 2367333,
+          "sha256": "13af054f6f96e692c71e64306044ad2e210b1d12cfc025b6090000de5fc22524"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-05-15/part-0.parquet",
+          "rows": 107934,
+          "bytes": 1148244,
+          "sha256": "9d68cc28c41a212cb11a10b06e37b81292de62d4fab00e3c5c7ce59d866874f0"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-05-22/part-0.parquet",
+          "rows": 225466,
+          "bytes": 2406285,
+          "sha256": "b4f67e79085567e3c7b95662fd8d124f7ed73cdb0aee153ebe3d6cd04d8cc3eb"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-05-29/part-0.parquet",
+          "rows": 231255,
+          "bytes": 2490411,
+          "sha256": "52c9ac882f7a1a7598c2b8b074dae9386fd584cc33c5fd5cac65d2f18e8e36c4"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-06-05/part-0.parquet",
+          "rows": 220179,
+          "bytes": 2313601,
+          "sha256": "4f44eda1b12cca293c4da974d4b0e43cc3424fbc252e1121321733c8da7dc45f"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-06-12/part-0.parquet",
+          "rows": 229282,
+          "bytes": 2297109,
+          "sha256": "e194889c2cddcd8520100d60bb7de4ccb1fbd826274b0f031566891c887e115b"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-06-19/part-0.parquet",
+          "rows": 235649,
+          "bytes": 2331368,
+          "sha256": "27f8e8593b18e90607240590e39655cd6f8137683513a8c477a8978f5b072566"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-06-26/part-0.parquet",
+          "rows": 243252,
+          "bytes": 2560772,
+          "sha256": "bfd7c6293d7cdcac56fcc83291324d030ef8fa72f18e2606eb537bfd0f8f8e0a"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-07-03/part-0.parquet",
+          "rows": 216223,
+          "bytes": 2160219,
+          "sha256": "a1f6a8fd3e3c2868d2eada8e7d5d8b8ffa1ac5d806fcba3a898ef656bdea9e51"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-07-10/part-0.parquet",
+          "rows": 210588,
+          "bytes": 2041403,
+          "sha256": "a5d23d88ea5974484e933329858b221949478839fc4824984307b2701fcce9ff"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-07-17/part-0.parquet",
+          "rows": 213665,
+          "bytes": 2071814,
+          "sha256": "1086ecd0148f86097061d264ce3f4a05c69853cd9363ac6e8a28408fb3287774"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-07-24/part-0.parquet",
+          "rows": 213247,
+          "bytes": 2023452,
+          "sha256": "6cbabb91af88962d8654a8a4c24f1864f3611a0d4701517f997b5c2a10f8b442"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-07-31/part-0.parquet",
+          "rows": 236914,
+          "bytes": 2376371,
+          "sha256": "c99141ab4ae522f6587235534e71dca620ec89526fdfcb5127728b394ea833b3"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-08-07/part-0.parquet",
+          "rows": 221551,
+          "bytes": 2168195,
+          "sha256": "a6adbf9abec5ab840aa4bbfa805803747e1933820799570e8e8eb53022d31ffd"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-08-14/part-0.parquet",
+          "rows": 220279,
+          "bytes": 2148131,
+          "sha256": "dcfb91dbaf5bf2fe80592eb8964db46c324b701f051e37a120fa6a9506beb1f7"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-08-21/part-0.parquet",
+          "rows": 177310,
+          "bytes": 1700620,
+          "sha256": "fef22a2690077022bf266305845d2ca4da42a8242397fd4db590bf095f7f852e"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-08-28/part-0.parquet",
+          "rows": 186244,
+          "bytes": 1858336,
+          "sha256": "e0ad1d810a2b0214a308e85a7e5ee26781da78ea95f87d6115d7b8ffc04eaf61"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-09-02/part-0.parquet",
+          "rows": 131101,
+          "bytes": 1313324,
+          "sha256": "e31d6af93c1f167d0d15e74f3bb0a99d07134457b800b14e1054e46629885987"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-09-09/part-0.parquet",
+          "rows": 218721,
+          "bytes": 2120360,
+          "sha256": "12a820c8c3dde05bdbadb10b7619fe881f00390d33f0e95562ec72c537193b3a"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-09-16/part-0.parquet",
+          "rows": 208437,
+          "bytes": 2011066,
+          "sha256": "09357fa436a60d43be3db71bd7df9fcb82b9b57f97f9563763e118e8a92e82cb"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-09-23/part-0.parquet",
+          "rows": 211488,
+          "bytes": 2046330,
+          "sha256": "c8f5a5044370d970cdccc6532c4c19c3dad2e691f0d3a0424e3ee4dd449eee69"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-09-30/part-0.parquet",
+          "rows": 228541,
+          "bytes": 2229075,
+          "sha256": "c7a44a86e2b7cb1c2f54a83dcc30d83ef8a347efe7299efdc99afb7050781773"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-10-07/part-0.parquet",
+          "rows": 186316,
+          "bytes": 1602002,
+          "sha256": "1cae4c79d356f9adb4b50b07e54a6e6b77b2496b6827edb54d326bd5a03b0e31"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-10-14/part-0.parquet",
+          "rows": 208746,
+          "bytes": 2126667,
+          "sha256": "d7878b1429793232760c15e429248778380807eb5ac7e4adbc95dd412cfcae3e"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-10-20/part-0.parquet",
+          "rows": 183754,
+          "bytes": 1940410,
+          "sha256": "4becb2521a7611b10d1b11d83f7113b069e865d8dcc2b29729109a970cb55cff"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-10-28/part-0.parquet",
+          "rows": 192400,
+          "bytes": 2146524,
+          "sha256": "e5743569e7094f0df393a1c2bafcd396331de20a1e3a3e657d94655bed6687d7"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-11-04/part-0.parquet",
+          "rows": 227566,
+          "bytes": 2263802,
+          "sha256": "5782406f1f6ec1d27704c4fb787c9ce2e4684fa0fe1a839ec09ef6caec5c90a6"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-11-11/part-0.parquet",
+          "rows": 176460,
+          "bytes": 1794883,
+          "sha256": "36dc8c788bf092de5a703e977bbc21c76effce2b991f0238ce9137d17ef8f077"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-11-18/part-0.parquet",
+          "rows": 215615,
+          "bytes": 2207923,
+          "sha256": "3604ebb5be4b8735ad57ef300dc87df70f65cc7413da899e5a35142fecde3a96"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-11-25/part-0.parquet",
+          "rows": 222780,
+          "bytes": 2333344,
+          "sha256": "16c27f9312d8b2ddc765bf9b1f65dd590698c01feae1002da2b7dcb6cbc19a21"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-12-02/part-0.parquet",
+          "rows": 232623,
+          "bytes": 2205127,
+          "sha256": "e3f78251cab5bfc3d54e9b947af3a8ba3d526d1795d2cb3f6f12e0c90423ae1e"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-12-09/part-0.parquet",
+          "rows": 224761,
+          "bytes": 2172448,
+          "sha256": "753a990cb39cc065e0e5c842765edaff76b3523794b74614fcbfdb9b35e17191"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-12-16/part-0.parquet",
+          "rows": 213736,
+          "bytes": 2123151,
+          "sha256": "6e79cdfe4a8e7395e507100379b2463e3e7084120197a7b2aed2b9b689682dba"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-12-23/part-0.parquet",
+          "rows": 230671,
+          "bytes": 2082619,
+          "sha256": "3640ac5bf2f83381895a47d2fef24b09dada42c8ca85b7bee9acf6cd7ebdfa58"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2025-12-30/part-0.parquet",
+          "rows": 179969,
+          "bytes": 1697602,
+          "sha256": "9255b0e5f3789f850226edbb557769ba1ad81ea1a4ffa7c10053ecb98784b9a7"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-01-06/part-0.parquet",
+          "rows": 223982,
+          "bytes": 2074470,
+          "sha256": "499448e3b5bbdae41f70dbb1f83a8a32eec3d94f98fa4860a7301396c7b99345"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-01-13/part-0.parquet",
+          "rows": 231689,
+          "bytes": 2314688,
+          "sha256": "25ca8a03da6f8415a3a6dd481ea5f7a1f09b42e3dfe2ca50ad1d5140a1bec332"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-01-20/part-0.parquet",
+          "rows": 167486,
+          "bytes": 1843151,
+          "sha256": "cb6c7d892d01fa8f53c0619d98c2f8f3bb11f68ca4c5813a6cb3dede6a7a12f7"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-01-27/part-0.parquet",
+          "rows": 185709,
+          "bytes": 2209360,
+          "sha256": "e0b7f63bcb3edef06df32b16cfc099b5750cdd24e93cb7e96fc3e846712db75c"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-02-03/part-0.parquet",
+          "rows": 361638,
+          "bytes": 3821604,
+          "sha256": "7a8f3160b1ab9ca97353a0d30c0ef66e18e7cdd974aaa6b7bbec65d8713ef62a"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-02-10/part-0.parquet",
+          "rows": 230496,
+          "bytes": 2431237,
+          "sha256": "d70a7a3cefadd9271aa5c41c03392db55c917c01c04b88e506c4a836d57c3f4b"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-02-17/part-0.parquet",
+          "rows": 240743,
+          "bytes": 2378492,
+          "sha256": "996faa8395d8025146f6e9167ee91ce98962acad98d2796615a6dd86be648aa4"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-02-24/part-0.parquet",
+          "rows": 236987,
+          "bytes": 2579648,
+          "sha256": "a57653cde62cc7d0a4b8aa23d24c1bc145bc5647c1349b7e18c720f988e89a5c"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-03-02/part-0.parquet",
+          "rows": 203666,
+          "bytes": 2187985,
+          "sha256": "7c8eb00feacfa43d9bd6abf5ae3e755d75e7563f56ee7cbaba5e200cc956651b"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-03-10/part-0.parquet",
+          "rows": 242474,
+          "bytes": 2897335,
+          "sha256": "edd0534496acdfd296e00d6d063ee160776dad748c70440849726e9f38c783c5"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-03-17/part-0.parquet",
+          "rows": 282541,
+          "bytes": 3283024,
+          "sha256": "eef243cd96f506ce6fc90fac03850bfb10bcfd12ef357a7780b8e40592ae0415"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-03-24/part-0.parquet",
+          "rows": 264853,
+          "bytes": 2970981,
+          "sha256": "ba4c998959113444f29b6b096fc5abf33627e456c63bdc6f40a92434f271722d"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-03-30/part-0.parquet",
+          "rows": 153049,
+          "bytes": 1897681,
+          "sha256": "5dbf62cc0a43915e2dc21a509929601041529fd0861fb64b4a5ac848bdf6607c"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-04-07/part-0.parquet",
+          "rows": 198600,
+          "bytes": 2297543,
+          "sha256": "b989af25e0e0f359fea7b6a770b5a2942abe567cdf02bf5da75409770b91a81a"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-04-13/part-0.parquet",
+          "rows": 192547,
+          "bytes": 2220518,
+          "sha256": "5a2c6aa5958cd752f7e8bfbc7a807a3e91eb26ebe6799656021e788bd8610b68"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-04-21/part-0.parquet",
+          "rows": 226773,
+          "bytes": 2459870,
+          "sha256": "300ed560b62d90b054b61d1a6a044d85130a9e5a0964a8aac8d0d8c0938da593"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-04-28/part-0.parquet",
+          "rows": 260991,
+          "bytes": 2675401,
+          "sha256": "c698f8cf760d91b500afaf70200bf90c57c96b3dc16e48630ed375a41096240f"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-05-05/part-0.parquet",
+          "rows": 177737,
+          "bytes": 2003175,
+          "sha256": "5fceca77bbf32a88a3190b6802bba03e2aa901cec35468ae59256ea556452417"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-05-12/part-0.parquet",
+          "rows": 243735,
+          "bytes": 2654014,
+          "sha256": "34608b4f4f8198ae9c89216bebcc640888da22324a554f645aa1b32e2d2af3b7"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-05-19/part-0.parquet",
+          "rows": 228232,
+          "bytes": 2759796,
+          "sha256": "aad19c8a11395ffe56f7daabb3773f8595b300f74cb352ddcd28a824e2aef91d"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-05-26/part-0.parquet",
+          "rows": 249525,
+          "bytes": 2807538,
+          "sha256": "fcf80f9815b10ca47876187ac3a12705f3faa14be000ae26b171e08671a6c7a8"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-06-02/part-0.parquet",
+          "rows": 194921,
+          "bytes": 2133432,
+          "sha256": "6804bdc146f1168040ce9bc86f83f5c46c3703529d7dbc170bf9dd278913e737"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-06-09/part-0.parquet",
+          "rows": 231285,
+          "bytes": 2672922,
+          "sha256": "925650c31a6f9427e72a8b50c95c1e6154858af9b49fe4df016c98c6bcb01d37"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-06-16/part-0.parquet",
+          "rows": 251934,
+          "bytes": 2758104,
+          "sha256": "e105b77bf9d8228d1e8bca0f437929efe8a2e80735111489ac4b45230e74bdd2"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-06-23/part-0.parquet",
+          "rows": 217884,
+          "bytes": 2457296,
+          "sha256": "0f21b8e6630fe17337edccbd7c485d9a17a22aec087672c76029f1a1df28b289"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-06-30/part-0.parquet",
+          "rows": 188474,
+          "bytes": 2188788,
+          "sha256": "0a472d3269e817b0ff95d120c3431811d2a45c2676a96818b9d2d4eb26788556"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-07-07/part-0.parquet",
+          "rows": 231846,
+          "bytes": 2517331,
+          "sha256": "fd0faba933803c309aa043e5209a020efe76facbe72094d6571722a0b3230f74"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-07-14/part-0.parquet",
+          "rows": 229689,
+          "bytes": 2530262,
+          "sha256": "2b4a9c33879ccb36604788403484ee4e3668871f4464186aa764c0691d1ba40d"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-07-21/part-0.parquet",
+          "rows": 206954,
+          "bytes": 2390393,
+          "sha256": "952618d6817a081eaa323e68fe94b86f97ba64159e5d40bb472fa957a4a808a7"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-07-28/part-0.parquet",
+          "rows": 237182,
+          "bytes": 2610430,
+          "sha256": "b2867ab59edefa43daee1c586b6552a58ac56fe5b4529fa09ff485f8c2b504da"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-08-04/part-0.parquet",
+          "rows": 235967,
+          "bytes": 2505272,
+          "sha256": "330c47cf9fcf3ee270d37521b61f9e4faf383f01ad91673273fae7be83564d8f"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-08-11/part-0.parquet",
+          "rows": 216925,
+          "bytes": 2368282,
+          "sha256": "340a7336fd5988b3664575b0d4821cfd6a26e21f2158a204afeae6e24061bdc0"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-08-18/part-0.parquet",
+          "rows": 216325,
+          "bytes": 2283785,
+          "sha256": "6d85e59202f11244045084678e24d8257105d7b3938ce12bb5ac9eec522809f4"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-08-25/part-0.parquet",
+          "rows": 221481,
+          "bytes": 2360102,
+          "sha256": "d9f4b81c0e9b0492c3399c4ead0a9d2c775aa2cd1ea15432783ff8314d7de270"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-09-01/part-0.parquet",
+          "rows": 213628,
+          "bytes": 2363706,
+          "sha256": "0014309ea41d9418f3feab9504e4722db1fd614ce88c23b7a6e82ee540528a93"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-09-08/part-0.parquet",
+          "rows": 212751,
+          "bytes": 2399742,
+          "sha256": "6dda3f7bef1f32271e4624365bd41ec35c0ee6f886fa17f103be87f3ea5284d6"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-09-15/part-0.parquet",
+          "rows": 174726,
+          "bytes": 2098259,
+          "sha256": "77cf157a54eba8455035c01308bb3cf7b4bb103138dbd4e6a64f0f5cdb6bddb3"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-09-22/part-0.parquet",
+          "rows": 223063,
+          "bytes": 2443869,
+          "sha256": "114a679cc338826a11c89cfe5ab26af7482cb3a3eb692b759ffbef1b2e2320c0"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-09-29/part-0.parquet",
+          "rows": 250431,
+          "bytes": 2944206,
+          "sha256": "ca85506ed3cfa784cdfad0e7034fd656d7c5ee3ac78dce57579879c4eb16b4c2"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-10-06/part-0.parquet",
+          "rows": 176149,
+          "bytes": 2131848,
+          "sha256": "b7ffe5aff933bf17c40c0da13a516dec0e597a9befa92e1581e53c6b93c6b0dc"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-10-13/part-0.parquet",
+          "rows": 233902,
+          "bytes": 2635634,
+          "sha256": "fc04228d1922fc86217a05d0d5fe2b1ef1d5af94123919c32363022d63976b29"
+        },
+        {
+          "path": "option_candles/underlying=NIFTY/expiry=2026-10-19/part-0.parquet",
+          "rows": 212178,
+          "bytes": 2281651,
+          "sha256": "369b3b9429bf56ab92daf95b82360be52758f9ec122c14f9a7e74a720fcc0c5a"
+        }
+      ]
+    },
+    "underlying_candles": {
+      "dataset_name": "underlying_candles",
+      "status": "PREPARED",
+      "file_count": 64,
+      "total_rows": 437008,
+      "total_bytes": 16163569,
+      "partitions": [
+        {
+          "path": "underlying_candles/interval=1d/year=2021/part-0.parquet",
+          "rows": 228,
+          "bytes": 19589,
+          "sha256": "688aa1d3d8571713404c2b2f8a106e3416b2726822d1378fe3ae180588f5204e"
+        },
+        {
+          "path": "underlying_candles/interval=1d/year=2022/part-0.parquet",
+          "rows": 248,
+          "bytes": 20267,
+          "sha256": "f85b7e65e7716f592a38a831b579ecc86657f115ac7f1b9849a5310f0a4a3a7c"
+        },
+        {
+          "path": "underlying_candles/interval=1d/year=2023/part-0.parquet",
+          "rows": 246,
+          "bytes": 20134,
+          "sha256": "be2311c97541c9c5cebbb365428960195e46fc9363ddd43e9de39f218e1f101b"
+        },
+        {
+          "path": "underlying_candles/interval=1d/year=2024/part-0.parquet",
+          "rows": 249,
+          "bytes": 20320,
+          "sha256": "4d4b701dd3e40bf788f34b088e8c2efaa78b2ad8f06645aa8141d02d2391ff2e"
+        },
+        {
+          "path": "underlying_candles/interval=1d/year=2025/part-0.parquet",
+          "rows": 249,
+          "bytes": 20202,
+          "sha256": "b2f2b3ade727e8b255311d2376b9372d4bf7f5039cf1f1ed5aeabb04740d1ef2"
+        },
+        {
+          "path": "underlying_candles/interval=1d/year=2026/part-0.parquet",
+          "rows": 197,
+          "bytes": 18481,
+          "sha256": "13f11d462b1f13586afed3842b5131f8a085b6bdc5e6b34ee43ce31119318c65"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=01/part-0.parquet",
+          "rows": 7500,
+          "bytes": 279294,
+          "sha256": "83505c7f28cb757eac4c0727680623771e97e4868a1723f7b6d9552fd4c389a1"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=02/part-0.parquet",
+          "rows": 7500,
+          "bytes": 295868,
+          "sha256": "5f348a757bc75e35a0786f3d2509a7f134e8c778c253a4b3dbbb1f82396e20ce"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=03/part-0.parquet",
+          "rows": 7885,
+          "bytes": 310201,
+          "sha256": "e710bb972b636fb5b1592984a8cfd4f5b74ed63a76167cf19d0e24ad12e0db49"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=04/part-0.parquet",
+          "rows": 7169,
+          "bytes": 273147,
+          "sha256": "88f806196f7890c991bbfcbaa0e716cc968a4fa4b20b84b76507e8ccd88ac1c4"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=05/part-0.parquet",
+          "rows": 7927,
+          "bytes": 295749,
+          "sha256": "e064f7ba8bf3f50810eb9010c5611ef94d2da05aae8e80c21c102a34738bee71"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=06/part-0.parquet",
+          "rows": 8310,
+          "bytes": 303057,
+          "sha256": "a79f91b5a9018b4c2c5aa356064788c964813b9d6cb9f01121e210fb64befe64"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=07/part-0.parquet",
+          "rows": 7920,
+          "bytes": 307476,
+          "sha256": "cc259850d9afcaf670c2d09bcd9add69bd299449d6deadc83b4af8a218e1aeaa"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=08/part-0.parquet",
+          "rows": 7500,
+          "bytes": 262200,
+          "sha256": "1e2fedf86a818fa58b6c5d9749caa7c8dfa768b021945294de2d76f41bf8b045"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=09/part-0.parquet",
+          "rows": 8250,
+          "bytes": 292315,
+          "sha256": "2e5fe4b6cb41b95fb2702a34b828604b0ba261acff73db283ddbfbca96ad8d8b"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=10/part-0.parquet",
+          "rows": 6750,
+          "bytes": 247921,
+          "sha256": "812d1c00825301cf68153490a451cef0e6e1cb23cec71492cf1827f54d66221b"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=11/part-0.parquet",
+          "rows": 7875,
+          "bytes": 294712,
+          "sha256": "66b2f90c3c6f0cf4312df3604f01a54badf049bf36f354fc93a23cc733f648f8"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2022/month=12/part-0.parquet",
+          "rows": 8250,
+          "bytes": 305417,
+          "sha256": "46f1cbd6dadd3ab644525bdeff67fece58456fe1233752257390caf749f5999a"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=01/part-0.parquet",
+          "rows": 7875,
+          "bytes": 275141,
+          "sha256": "4728a566e6e32df6c6ebc57f99496f8450b5d98e7342d35a22e713d959bd0085"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=02/part-0.parquet",
+          "rows": 7500,
+          "bytes": 286018,
+          "sha256": "eec20994ba48a14130c325d16c939e777cf4b91a1e2f82167fb6d4be799fd61a"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=03/part-0.parquet",
+          "rows": 7875,
+          "bytes": 300777,
+          "sha256": "5f5d567a43a77d1adeedd22145a92b3943413441a6bd0a79156c76880aa2e239"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=04/part-0.parquet",
+          "rows": 6375,
+          "bytes": 232418,
+          "sha256": "e3432c06b887520baeb45f455a149b32b3b76234356d7157457a49f5c6bc52b6"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=05/part-0.parquet",
+          "rows": 8250,
+          "bytes": 298121,
+          "sha256": "c4fb137340b771903be39a21b891f6329c209838a21fadc65f66aa43a029d13f"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=06/part-0.parquet",
+          "rows": 7875,
+          "bytes": 262690,
+          "sha256": "7314bc71ac236d620746cadd61d230084038d36410167cfc0926e4f862937f4a"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=07/part-0.parquet",
+          "rows": 7875,
+          "bytes": 280884,
+          "sha256": "398d1cdb91a070203ae1d5dd1e631633867bbc8e2cee964fe4aa13198600bbd7"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=08/part-0.parquet",
+          "rows": 8250,
+          "bytes": 303997,
+          "sha256": "552af9e60a0213a0eaf1f313469ce15960e4a918e70f343593ce7e02e8d77868"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=09/part-0.parquet",
+          "rows": 7500,
+          "bytes": 260683,
+          "sha256": "3340ee358b39059820c7981cca3e29a28012f3af25f2d81fc197fb973084c896"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=10/part-0.parquet",
+          "rows": 7500,
+          "bytes": 282274,
+          "sha256": "f14809bf6506c11a1e4f13af5e3c54e57a916ae714f846a2feb469f2b83bb1d5"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=11/part-0.parquet",
+          "rows": 7500,
+          "bytes": 265173,
+          "sha256": "3dabb6b2e863b29569889dd2716d95b7492972c1aac989448f7350fd1a1af168"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2023/month=12/part-0.parquet",
+          "rows": 7500,
+          "bytes": 264649,
+          "sha256": "8babbbe816525d19872c7f2268a2c83a64ded73b2551b8e23e2c3ab5be110855"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=01/part-0.parquet",
+          "rows": 8250,
+          "bytes": 311332,
+          "sha256": "d9b04d8cd5da4edf0eb309811d46480c016a67d7259ae11943acf4619792dc27"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=02/part-0.parquet",
+          "rows": 7875,
+          "bytes": 274593,
+          "sha256": "4da65f589a5904659e6830219c09e98a388ff29009f8108b09cc802e6d0e926a"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=03/part-0.parquet",
+          "rows": 6750,
+          "bytes": 238399,
+          "sha256": "370915417e7342f957799f8bbc5d019f8856dd51cff0185dda17827b779d75b6"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=04/part-0.parquet",
+          "rows": 7500,
+          "bytes": 269331,
+          "sha256": "778edf76d864bf77cc8ed03db624ee81910a1295d292cb51380776739476f363"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=05/part-0.parquet",
+          "rows": 7875,
+          "bytes": 280500,
+          "sha256": "b3ca84398a076ccbf01dcffa6e77e2bd8aed114d79b5bb83eb44f359271e664d"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=06/part-0.parquet",
+          "rows": 7125,
+          "bytes": 279141,
+          "sha256": "a5585b5e08c012e5040f4f52101ba76c711ab0d39d926a61eaa380c4bd843a47"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=07/part-0.parquet",
+          "rows": 8250,
+          "bytes": 300627,
+          "sha256": "a7b95d994857ba5b01c832c492594f9c2d28a22cb44b47a2647a16d79f4c7a81"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=08/part-0.parquet",
+          "rows": 7875,
+          "bytes": 276911,
+          "sha256": "3fc567079dba05c1b00cccb342854bc69332c97478c8dddeb5ad02503624a8c3"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=09/part-0.parquet",
+          "rows": 7875,
+          "bytes": 286816,
+          "sha256": "ac17e2a69b4817dfa9a5481010d2475b87607e22aea6c4d43fd4bbde9db0a8f5"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=10/part-0.parquet",
+          "rows": 8250,
+          "bytes": 308299,
+          "sha256": "dea8fa335c33e3c48a9d45070700c490edb72d0bb851e66df7d8f2c99309aff8"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=11/part-0.parquet",
+          "rows": 6750,
+          "bytes": 250799,
+          "sha256": "69f94d83889f3526fe8418b8041aa25ecc50162297f1a49699616236ce833be8"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2024/month=12/part-0.parquet",
+          "rows": 7874,
+          "bytes": 281399,
+          "sha256": "0679099c4096e490a018c78b8024217df6144e3c3c8b7ab3b9926df6dd062a08"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=01/part-0.parquet",
+          "rows": 8625,
+          "bytes": 335380,
+          "sha256": "283fdc603decc96ac0c396f5aa5e91584effd70a6a48f0592ad54d78a4fcafc0"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=02/part-0.parquet",
+          "rows": 7500,
+          "bytes": 271968,
+          "sha256": "3e09ab5b0f89d0b5746eac2c196d3cacfd88683d101589a995b4595b6fc8d5b5"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=03/part-0.parquet",
+          "rows": 7124,
+          "bytes": 265778,
+          "sha256": "f4e7d3b0143125f8d7b74dd3fbf4bf90c4c559e02f8b6d3e658d4f79f40e7608"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=04/part-0.parquet",
+          "rows": 7127,
+          "bytes": 281003,
+          "sha256": "4c7a751158ce08e9a46de14b2b532eda7b423659876380c775376327772afe07"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=05/part-0.parquet",
+          "rows": 7881,
+          "bytes": 276981,
+          "sha256": "c4d7cef802be2df398f2f617f974aa3244fd25c07ad6098b6f0c123bd6d20a1a"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=06/part-0.parquet",
+          "rows": 7875,
+          "bytes": 290992,
+          "sha256": "34bd3a7702b84439d1af2906506faac20797e2626e3eb77aef41ffff6a10dc30"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=07/part-0.parquet",
+          "rows": 8625,
+          "bytes": 328644,
+          "sha256": "b90cf2c2ddfb3c0bbab2545341b1a57f9b1e27c8345790b2ece4fa968397a95d"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=08/part-0.parquet",
+          "rows": 7125,
+          "bytes": 249539,
+          "sha256": "7e8195415a5da92a8ac7306fe2ceed8e4d01b703e893b96ac8a62300bc8dfec8"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=09/part-0.parquet",
+          "rows": 8250,
+          "bytes": 317106,
+          "sha256": "9658f2e383e9c792eeefe394ac2f977b3478104c0207966518f9b10e830846c3"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=10/part-0.parquet",
+          "rows": 7500,
+          "bytes": 271051,
+          "sha256": "fae38c822b0eba3eb87fc7b1c02d56cfa80a2f25ac718f56576d660fb9841576"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=11/part-0.parquet",
+          "rows": 7125,
+          "bytes": 259283,
+          "sha256": "2a8705eb5e4d2e666b2e4de05d1987d14a4a7a2a5f5f4bee3cc473ae82022579"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2025/month=12/part-0.parquet",
+          "rows": 8250,
+          "bytes": 308600,
+          "sha256": "475218d44f0ba59688c5f0f8e6db87782c58109b8e32369f61a2cf6d210453f7"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2026/month=01/part-0.parquet",
+          "rows": 7500,
+          "bytes": 269846,
+          "sha256": "6b48ba91bc3c7963452611f59683dab46e92e07162b15557472ea007c10c72a3"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2026/month=02/part-0.parquet",
+          "rows": 1125,
+          "bytes": 44425,
+          "sha256": "f7c69f4640da329d8e8fe767cdaa59f7f2b7e6b66471c85f35a3facf205052a0"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2026/month=03/part-0.parquet",
+          "rows": 5625,
+          "bytes": 221707,
+          "sha256": "1a9eaba21ac19ec87d33bea7c3a193eeaa6ccc5aa41808ffbeeaa80ce855421b"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2026/month=04/part-0.parquet",
+          "rows": 7500,
+          "bytes": 278077,
+          "sha256": "5d858a539dff41057a3cf230519f866c484e3051afa24fb57c0e8e3a8398bdb8"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2026/month=05/part-0.parquet",
+          "rows": 7125,
+          "bytes": 279498,
+          "sha256": "b5bac7777c919b9be7ca31f355921de3b7e554090830e08a5c084ff4ea4ef80f"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2026/month=06/part-0.parquet",
+          "rows": 7875,
+          "bytes": 279088,
+          "sha256": "a499ece77f0ee681a4743f483a71f26a77d689ff6c83b81e64c31c2567c206e4"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2026/month=07/part-0.parquet",
+          "rows": 8625,
+          "bytes": 317651,
+          "sha256": "bf6edfaba63a22255453ff9c1be6a67e836d9d959a52f959f95c565a4eff0326"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2026/month=08/part-0.parquet",
+          "rows": 7875,
+          "bytes": 280597,
+          "sha256": "78939966794fc9b8326255b91ec9189c148ca3718f24afa6783b67e1e186e163"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2026/month=09/part-0.parquet",
+          "rows": 7875,
+          "bytes": 302308,
+          "sha256": "eccf0098509113c7be0693e42da0648a95bdecab9c44bb13474e27ef0baa16b7"
+        },
+        {
+          "path": "underlying_candles/interval=1m/year=2026/month=10/part-0.parquet",
+          "rows": 4499,
+          "bytes": 176725,
+          "sha256": "af2ca4e7fe9165218afbd073af8a1e6fd553ee236e51e708e933716c303b1924"
+        }
+      ]
+    },
+    "india_vix": {
+      "dataset_name": "india_vix",
+      "status": "PREPARED",
+      "file_count": 24,
+      "total_rows": 167385,
+      "total_bytes": 4582372,
+      "partitions": [
+        {
+          "path": "india_vix/interval=1d/year=2025/part-0.parquet",
+          "rows": 249,
+          "bytes": 17703,
+          "sha256": "09d15136f146aca41336d687588d8d4f2f5d60f7cb1ca861bdd753313dad0d90"
+        },
+        {
+          "path": "india_vix/interval=1d/year=2026/part-0.parquet",
+          "rows": 197,
+          "bytes": 16287,
+          "sha256": "b67e35e83c57a3d2bb3481388d07ea94817477a81359f6c4189959eb8b5e5eef"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=01/part-0.parquet",
+          "rows": 8625,
+          "bytes": 253504,
+          "sha256": "5f258fd4667c5e2eb343ed5c9fe021a4a9a2b0c3eaf69cacaf78b032de7527f0"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=02/part-0.parquet",
+          "rows": 7500,
+          "bytes": 193314,
+          "sha256": "c87a9af488739611fd013ff8b6d52f3fb0c8a3e53ea1f51bc75cb57ae1a29655"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=03/part-0.parquet",
+          "rows": 7124,
+          "bytes": 181544,
+          "sha256": "3ae1c5e2159b26c1789bcd0efc3e1bcc63ca73ce11ed02f06bcb895ff6e8220a"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=04/part-0.parquet",
+          "rows": 7125,
+          "bytes": 213843,
+          "sha256": "6387cd75862d7d62713d73b9d426b9e7fe0dd66929c14fa691492253500f95ca"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=05/part-0.parquet",
+          "rows": 7880,
+          "bytes": 203991,
+          "sha256": "7a5b3474f46a2dab6aa48908492bf93d1481fcfff1d47136296e8a8e33301b81"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=06/part-0.parquet",
+          "rows": 7875,
+          "bytes": 213505,
+          "sha256": "527f8ab8b7c3a833f200dc48642fbc8914819f99603403859983276446d9e18f"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=07/part-0.parquet",
+          "rows": 8625,
+          "bytes": 239689,
+          "sha256": "6fbb17cac79849aed0f37067c0ad3875b7be536a35898858f76d250efcc69738"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=08/part-0.parquet",
+          "rows": 7125,
+          "bytes": 172689,
+          "sha256": "af220dc28d33a5e6e8f136045a3f4095888122a1569b134fcab1212c5384d84f"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=09/part-0.parquet",
+          "rows": 8250,
+          "bytes": 227880,
+          "sha256": "7fe1effc8a9ef4aa63eadc28c0ebd358148367725a2e17daf27bde14d796fc3f"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=10/part-0.parquet",
+          "rows": 7560,
+          "bytes": 193513,
+          "sha256": "10b4edc7b2766cbad3271e344f2e21ab0c25e9ab0375ae77c1d21213c9eade9c"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=11/part-0.parquet",
+          "rows": 7125,
+          "bytes": 186073,
+          "sha256": "0966ab00f66dbc2b574ec03482ed5821edbdf772846acc7c9ecc10a2377a66f2"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2025/month=12/part-0.parquet",
+          "rows": 8250,
+          "bytes": 237683,
+          "sha256": "509a2e0cd172764f5d8284c11c1d0237aaf14344802e4f7b3092c035259ef1cc"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2026/month=01/part-0.parquet",
+          "rows": 7500,
+          "bytes": 193486,
+          "sha256": "4e623808fbbaf73085f1e7ab2f57f67979b10878d45996a976496f284ca4534d"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2026/month=02/part-0.parquet",
+          "rows": 7875,
+          "bytes": 223969,
+          "sha256": "edeac7f8436103bf4a1af3763ae103cdb87842dc0f84ea39bd8fa3a6452f4e5b"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2026/month=03/part-0.parquet",
+          "rows": 7125,
+          "bytes": 199943,
+          "sha256": "e029af38c7d20fe6956fb2c9c6ad082ba9c4bf9f57be359740b158809173b841"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2026/month=04/part-0.parquet",
+          "rows": 7500,
+          "bytes": 203331,
+          "sha256": "541945ceb8e4eef654bbed28faa512e454d313cd0e68b95f1d1df97b6a768dac"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2026/month=05/part-0.parquet",
+          "rows": 7125,
+          "bytes": 209477,
+          "sha256": "24bba1737c3448d401795a85fcab1c7ab59f9b0d8e0534b0f0fa8ff0fbdfbc7b"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2026/month=06/part-0.parquet",
+          "rows": 7875,
+          "bytes": 202843,
+          "sha256": "18747695f8b202961adfa0ed4120b6a2653ca54c1d8b74f119ba788d6a0c875e"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2026/month=07/part-0.parquet",
+          "rows": 8625,
+          "bytes": 237417,
+          "sha256": "34318013471fa7f5803ad5bd1c0b2d8e464989c9494edd60455855c490767823"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2026/month=08/part-0.parquet",
+          "rows": 7875,
+          "bytes": 205716,
+          "sha256": "5c95c13ac2ecf2739b55fb3f6e523ceef0f945e247567429805fab9eeba87b70"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2026/month=09/part-0.parquet",
+          "rows": 7875,
+          "bytes": 226663,
+          "sha256": "f1431ac7ecff895c15795f54dcea87acac91685ea691c5053e3461e8778674f3"
+        },
+        {
+          "path": "india_vix/interval=1m/year=2026/month=10/part-0.parquet",
+          "rows": 4500,
+          "bytes": 128309,
+          "sha256": "01090a6aa9ec3a319afe69e5a0f57c382040b40e7afd82eb2122fe22ed79a6ce"
+        }
+      ]
+    },
+    "option_snapshot_captures": {
+      "dataset_name": "option_snapshot_captures",
+      "status": "NOT_PREPARED",
+      "file_count": 0,
+      "total_rows": 0,
+      "total_bytes": 0,
+      "partitions": []
+    },
+    "option_snapshot_rows": {
+      "dataset_name": "option_snapshot_rows",
+      "status": "NOT_PREPARED",
+      "file_count": 0,
+      "total_rows": 0,
+      "total_bytes": 0,
+      "partitions": []
+    }
+  },
+  "aggregate_totals": {
+    "total_files": 183,
+    "total_rows": 20936814,
+    "total_bytes": 235988425,
+    "total_mb": 225.06
+  }
+}

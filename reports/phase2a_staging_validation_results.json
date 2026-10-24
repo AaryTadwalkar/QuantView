@@ -1,0 +1,35 @@
+{
+  "option_candles": {
+    "partitions_found": 95,
+    "total_rows": 20332421,
+    "total_bytes": 215242484,
+    "schema_matches_canonical": true,
+    "strike_is_exact_decimal": true,
+    "expected_rows": 20332421,
+    "row_count_reconciled": true
+  },
+  "underlying_candles": {
+    "1m_partitions": 58,
+    "1m_rows": 435591,
+    "1m_expected_rows": 435591,
+    "1m_reconciled": true,
+    "1m_schema_matches": true,
+    "1d_partitions": 6,
+    "1d_rows": 1417,
+    "1d_expected_rows": 1417,
+    "1d_reconciled": true,
+    "1d_schema_matches": true
+  },
+  "india_vix": {
+    "1m_partitions": 22,
+    "1m_rows": 166939,
+    "1m_expected_rows": 166939,
+    "1m_reconciled": true,
+    "1m_schema_matches": true,
+    "1d_partitions": 3,
+    "1d_rows": 446,
+    "1d_expected_rows": 446,
+    "1d_reconciled": true,
+    "1d_schema_matches": true
+  }
+}

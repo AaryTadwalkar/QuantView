@@ -58,8 +58,80 @@
   - 100% data integrity verified: **0 duplicates**, **0 null values**, strictly sorted **chronologically ascending (`09:15:00` to `15:29:00`)**.
   - Cryptographic provenance verified: **32,232 companion JSON manifests** and raw gzip payloads in `Data/raw/upstox_rest/expired_api/` verified bit-for-bit (0 SHA-256 mismatches across 383.41 MB compressed).
   - All 446 daily trading sessions verified valid and ready for canonical Lake Parquet publishing.
-- **India VIX Historical Ingestion (2025-01-01 to 2026-10-19, 446 Trading Days - 100% Complete):**
-  - Acquired `NSE_INDEX|India VIX` across both 1-minute and 1-day intervals from Upstox API v3 (`tools/ingest/import_underlying_candles_v3.py`).
-  - **1-Minute Series:** **166,939 continuous bars** (`staging/india_vix/underlying_NSE_INDEX_India_VIX_1m_2025-01-01_2026-10-19.csv`). 0 nulls, 0 duplicates, 0 OHLC violations, `oi=0`.
-  - **1-Day Series:** **446 daily bars** matching 1:1 with all NIFTY option trading sessions (`staging/india_vix/underlying_NSE_INDEX_India_VIX_1d_2025-01-01_2026-10-19.csv`). 0 nulls, 0 duplicates.
-  - **Cryptographic Provenance:** 25 raw gzipped payloads and SHA-256 companion manifests archived in `Data/raw/upstox_rest/historical_candle/instrument=NSE_INDEX_India_VIX/`. Verified bit-for-bit. Ready for Lake Parquet promotion.
+- **Phase 1 Tooling Scaffolding & Canonical Lake Validation (2026-10-22 - COMPLETE):**
+  - Delivered exhaustive Pre-Implementation Compliance Report (`reports/phase1_tooling_compliance_report.md`).
+  - Integrated canonical schemas as single source of truth in `packages/data/schemas/` (`candles.py`, `snapshots.py`, `__init__.py`). Prohibited duplicate schemas avoided.
+  - Implemented offline tooling scaffolding under `tools/lake/`:
+    * `promote_option_candles.py`: Vectorized PyArrow table builder with exact Decimal(9, 2) strikes and negative-volume clamping (`VENDOR_NEGATIVE_VOLUME`).
+    * `promote_underlying_candles.py`: Line 432594 (`TRUNCATED_LINE`) defensive quarantine, interval partitioning (`1m` monthly, `1d` yearly).
+    * `promote_india_vix.py`: Non-derivative index invariants (`oi=0`, `is_derivative=False`), session-by-session reconciliation (`reports/india_vix_session_coverage_report.json`).
+    * `compact_option_snapshots.py`: Daily Parquet compaction preserving discrete capture identity (`captures` and `rows` tables) without synthetic chain merging.
+    * `prepare_dry_run_manifest.py`: Cryptographic dry-run manifest generator (`staging/lake_preparation/manifest_dry_run.json`).
+  - Implemented automated test suite (`tests/unit/test_lake_scaffolding.py`): 16/16 tests passing in 0.92s.
+  - Staged 38 sample partitions (1,176,311 rows, 15.65 MB) in `staging/lake_preparation/` and produced dry-run manifest (`staging/lake_preparation/manifest_dry_run.json`).
+  - Active lake `Data/lake/` remains 100% UNPUBLISHED and isolated pending owner review.
+- **[2026-10-23] Post-Incident Folder Audit & Phase 1 Verification Re-run (COMPLETE):**
+  - **Recycle Bin & Folder Audit:** Audited all 6 items in Recycle Bin screenshot (`config`, `apps`, `.github`, `__pycache__`, and 2 copies of `underlying_NSE_INDEX_India_VIX_1d_...csv`). Verified they are already 100% restored and up-to-date in repository via `git reset` and manual restoration. Restoring from Recycle Bin is NOT required.
+  - **Comprehensive Folder Audit:** Audited all 14 workspace directories (`apps`, `config`, `Data`, `Data_Collectors`, `.github`, `DOCS`, `memory-bank`, `ops`, `packages`, `reports`, `services`, `staging`, `tests`, `tools`). `Data/` verified restored with 113,385 files (2,355.88 MB), including 82,290 live option chain snapshot files and full NIFTY historical candles (432,967 rows).
+  - **Phase 1 Independent Verification Re-run (8/8 PASS):**
+    1. Directory compliance: PASS (`tools/lake/` and `staging/lake_preparation/`).
+    2. Canonical schema audit: PASS (`packages/data/schemas/` matches DATA Spec §4.1, §4.2, §4.3, §4.4, §4.10).
+    3. India VIX semantics: PASS (Source preservation verified: volume is genuine 0, `oi=0`).
+    4. Snapshot compaction status: PASS on real data (82,290 files, 127 sessions discovered in `Data/live/option_chain/nifty`; 3-session dry run validated 1,187 captures, 212,830 rows, 0 quarantined) + PASS on synthetic fixtures.
+    5. Underlying candle integrity: PASS (`promote_underlying_candles.py` parses 435,591 1m rows + 1,417 1d rows; safely quarantines line 432594 with zero source mutation).
+    6. India VIX session coverage: PASS (311-bar delta reconciled to the single bar; 0 fabricated bars).
+    7. Promotion-tool correctness: PASS (Atomic writes, deterministic sort keys, provenance, 0 writes to `Data/lake/`).
+    8. Full test suite execution: PASS (51/51 tests pass with 0 skipped, 0 failures, 0 errors in 1.42s).
+  - **Phase 2 Gate Status:** Phase 2A and Phase 2B COMPLETE. Production Data Lake `Data/lake/` is active and queryable. Ready for Phase 3 (Snapshot Compaction).
+- **[2026-10-23] Phase 2A — Full-Batch Staging Preparation & Closure Gate (COMPLETE - ALL 9 CHECKS PASS):**
+  - Staged 183 Parquet files (20,936,814 rows, 225.06 MB) into isolated directory `staging/lake_preparation_phase2a/`.
+  - Delivered comprehensive reports: `reports/phase2a_staging_report.md` and `reports/phase2a_closure_gate_evidence.json`.
+- **[2026-10-23] Phase 2B — Production Data Lake Publication & Verification (COMPLETE - ALL PASS):**
+  - Atomically published all 183 Parquet files (20,936,814 rows, 225.06 MB) to active production lake `Data/lake/`.
+  - Activated official production manifest `Data/lake/manifest_active.json` (`is_active = true`, 183/183 SHA-256 bit-for-bit verified).
+  - Registered canonical DuckDB views in `Data/lake/quantview.duckdb` (`v_candles_underlying`, `v_candles_options`, `v_candles_vix`).
+  - Verified point-in-time analytical query benchmarks ($\le 36\text{ms}$, 0 daily bar leaks).
+  - 51/51 automated unit tests PASS in 1.44s. Linter & consistency suite PASS (0 defects).
+  - Delivered comprehensive report: `reports/phase2b_lake_publication_report.md`.
+- **[2026-10-24] Phase 3 — Full Option Snapshot Compaction & Lake Publication (COMPLETE - ALL PASS):**
+  - **Task M3-06 Satisfied:** Compacted full inventory of 82,283 option chain snapshot CSVs across 36 expiries and 126 sessions into canonical Parquet tables (`option_snapshot_captures` and `option_snapshot_rows`).
+  - **100% Inventory-to-Disposition Reconciliation:** 82,274 valid captures + 9 quarantined files (4 0-byte empty + 5 null-byte corrupt) = 82,283 files. Discrepancy: exactly 0. Quarantines recorded in `staging/lake_preparation_phase3/quarantine/quarantine_report.json`.
+  - **Canonical Schemas & Precision:** Exact `Decimal(9, 2)` strikes (`decimal128(9, 2)`), full IEEE-754 64-bit float observed Greeks, UTC microsecond timestamps (naive localized to `Asia/Kolkata` -> `UTC`), zero duplicate capture identities or strike keys.
+  - **Staged Artifacts:** 252 Parquet partitions (17,528,006 rows, 381.21 MB) staged under `staging/lake_preparation_phase3/` and verified against `manifest_phase3.json`.
+  - **Production Lake Publication & Manifest v2 Live:**
+    * Atomically promoted 252 snapshot partitions to `Data/lake/option_snapshot_captures/` and `Data/lake/option_snapshot_rows/`.
+    * Retained all 183 Phase 2B candle partitions byte-for-byte intact (0 SHA-256 mismatches).
+    * Archived manifest v1 to `Data/lake/manifest_v1_archive.json`.
+    * Activated manifest v2 at [`Data/lake/manifest_active.json`](file:///c:/Algo/quantview/Data/lake/manifest_active.json) (435 Parquets, 38,464,820 rows, 606.27 MB).
+  - **DuckDB Canonical Views in `Data/lake/quantview.duckdb` (All 6 Active, All $\le 36\text{ms}$):**
+    * `v_candles_underlying`: 437,008 rows | `v_candles_options`: 20,332,421 rows | `v_candles_vix`: 167,385 rows
+    * `v_snapshots_captures`: 82,274 rows (23.99 ms)
+    * `v_snapshots_rows`: 17,445,732 rows (26.09 ms)
+    * `v_snapshots_reconstructed_chain`: 17,445,732 rows (19.30 ms)
+  - **Tests & Linters:** 52/52 automated unit tests PASS in 1.58s. `tools/qv_check.py lint DOCS` PASS (0). `ops/verify_docs_consistency.py` PASS (0).
+  - Delivered comprehensive reports: `reports/phase3_snapshot_compaction_report.md` and `reports/phase3_snapshot_validation_results.json`.
+- **[2026-10-24] Phase 4 — Multi-Timeframe Derivation, Source-Semantics Audit & Eligibility Matrix (COMPLETE - ALL PASS):**
+  - **Task M3-07 Satisfied (Multi-Timeframe Derivation):** Derived all 6 canonical intraday timeframes (`3m`, `5m`, `15m`, `30m`, `1h`, `4h`) from 1m canonical underlying candles. Session boundaries strictly enforced (09:15 to 15:30 Asia/Kolkata; zero bar spill across session boundary). Staged 348 Parquet partitions (287,306 rows, 13.72 MB). High-fidelity ground truth cross-validation against vendor CSVs: 4h (100.0%), 1h (99.99%), 15m (99.99%), 5m (99.89%), 3m (99.93%). Deliverable: `reports/derived_intervals_vendor_comparison.md`.
+  - **Task M3-08 Satisfied (Source-Semantics Audit):** Audited all 6 semantic domains across active lake (option volume/OI, cash index volume, India VIX `oi=0` invariant, snapshot v1 vs v3 format, observed Greeks Black-Scholes units, WS session reset at 09:15:00 IST). Deliverable: `reports/source-semantics.md`.
+  - **Task M3-09 Satisfied (Data Eligibility Matrix):** Evaluated all 1,161 historical trading sessions (2022 to 2026) against 9 canonical quality invariants (`MISSING_BARS`, `FLAT_BAR`, `STALE_DATA`, `INVALID_OHLC`, `DUPLICATE_ACTIVE_KEY`, `CONTRACT_INVALID`, `INSUFFICIENT_WARMUP`, `SOURCE_SEMANTICS_UNVERIFIED`, `INCOMPLETE_CAPTURE`). Staged Parquet dataset: `staging/lake_preparation_phase4/data_eligibility/part-0.parquet` (1,161 rows: 1,144 `ELIGIBLE`, 17 `ELIGIBLE_WITH_WARNINGS`, 0 `INELIGIBLE`). Deliverable: `reports/data_eligibility_report.md`.
+  - **Phase 4 Manifest & Validation Suite:** Staged manifest `staging/lake_preparation_phase4/manifest_phase4.json` (349 files, 288,467 rows, 13.73 MB, SHA-256: `a6c348fac38b421b8c484069297937afcc89f7a45f69d22ebb6f7109be50a72b`). All 6 validation gates PASS (`reports/phase4_staging_validation_results.json`).
+  - **Automated Verification:** 54/54 automated unit tests PASS in 1.60s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks). Active lake partitions remain 100% byte-for-byte immutable.
+- **[2026-10-24] Phase 5 & Stage 1 Gate G1 Closure (COMPLETE - 100% PASS):**
+  - **Stage 1 (Historical Data Foundation) Officially Closed:** Formally passed Gate G1 per `DOCS/AGENTS.md` §5. All 12 Stage 1 tasks (`M3-01` to `M3-12`) verified and certified with zero defects.
+  - **Active Production Lake (`Data/lake/` - Manifest Version 3 Live):**
+    * Promoted 349 Phase 4 Parquet partitions (`derived_candles` and `data_eligibility`) into `Data/lake/`.
+    * Retained all 435 baseline candle and snapshot Parquets byte-for-byte immutable (0 SHA-256 mismatches).
+    * Archived manifest v2 to `Data/lake/manifest_v2_archive.json`.
+    * Activated manifest v3 at [`Data/lake/manifest_active.json`](file:///c:/Algo/quantview/Data/lake/manifest_active.json) (784 Parquets, 38,753,287 records, 620.00 MB).
+  - **8 Canonical DuckDB Views in `Data/lake/quantview.duckdb`:**
+    * `v_candles_underlying`: 437,008 rows | `v_candles_options`: 20,332,421 rows | `v_candles_vix`: 167,385 rows
+    * `v_snapshots_captures`: 82,274 rows | `v_snapshots_rows`: 17,445,732 rows | `v_snapshots_reconstructed_chain`: 17,445,732 rows
+    * `v_candles_derived`: 287,306 rows | `v_data_eligibility`: 1,161 rows
+    * Point-in-time analytical query benchmarks all verified ($\le 50\text{ms}$).
+  - **Tasks M3-10, M3-11, M3-12 Satisfied:**
+    * Task M3-10: Parquet Profile & DuckDB Benchmarks (`ops/evidence/M3-10.md`).
+    * Task M3-11: Exploratory Strategy Spike on 5m trend and 0-DTE straddle (`ops/evidence/M3-11.md`).
+    * Task M3-12: Supporting Datasets Canonicalization (`ops/evidence/M3-12.md`).
+  - **Audit Deliverables:** [`reports/gate_g1_audit_report.md`](file:///c:/Algo/quantview/reports/gate_g1_audit_report.md) and [`reports/gate_g1_validation_results.json`](file:///c:/Algo/quantview/reports/gate_g1_validation_results.json).
+  - **Automated Verification:** 56/56 automated unit tests PASS in 3.16s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects).
+  - Next: Stage 2 — Live Market Stream & Collector Integration (`M2-01` to `M2-11`, Gate G0).

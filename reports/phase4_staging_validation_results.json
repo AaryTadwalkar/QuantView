@@ -1,0 +1,68 @@
+{
+  "report_name": "QuantView Phase 4 Validation Results (M3-07, M3-08, M3-09)",
+  "generated_at_utc": "2026-10-24T13:08:27.876959+00:00",
+  "overall_status": "PASS",
+  "gates": {
+    "gate_1_derived_candles_integrity": {
+      "status": "PASS",
+      "total_intervals": 6,
+      "total_files": 348,
+      "total_rows": 287306,
+      "schema_mismatches": 0,
+      "intervals": {
+        "3m": {
+          "files": 58,
+          "rows": 145387
+        },
+        "5m": {
+          "files": 58,
+          "rows": 87253
+        },
+        "15m": {
+          "files": 58,
+          "rows": 29119
+        },
+        "30m": {
+          "files": 58,
+          "rows": 15098
+        },
+        "1h": {
+          "files": 58,
+          "rows": 8127
+        },
+        "4h": {
+          "files": 58,
+          "rows": 2322
+        }
+      }
+    },
+    "gate_2_vendor_comparison_fidelity": {
+      "status": "PASS",
+      "report_path": "reports/derived_intervals_vendor_comparison.md",
+      "high_fidelity_matches_verified": true
+    },
+    "gate_3_source_semantics_register": {
+      "status": "PASS",
+      "report_path": "reports/source-semantics.md",
+      "all_semantic_domains_covered": true
+    },
+    "gate_4_data_eligibility_dataset": {
+      "status": "PASS",
+      "parquet_file": "staging/lake_preparation_phase4/data_eligibility/part-0.parquet",
+      "schema_exact_match": true,
+      "evaluated_sessions": 1161
+    },
+    "gate_5_staging_checksum_verification": {
+      "status": "PASS",
+      "total_files_verified": 349,
+      "sha256_mismatches": 0,
+      "manifest_sha256": "a6c348fac38b421b8c484069297937afcc89f7a45f69d22ebb6f7109be50a72b"
+    },
+    "gate_6_active_lake_baseline_immutability": {
+      "status": "PASS",
+      "total_lake_files_checked": 435,
+      "sha256_mismatches": 0,
+      "active_manifest_version": 2
+    }
+  }
+}

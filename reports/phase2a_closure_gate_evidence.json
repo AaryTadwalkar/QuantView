@@ -1,0 +1,152 @@
+{
+  "check_1": {
+    "manifest_exists": true,
+    "total_referenced_files": 184,
+    "physical_parquet_files": 184,
+    "missing_files_count": 0,
+    "missing_files": [],
+    "verdict": "PASS"
+  },
+  "check_2": {
+    "sha_matches": 184,
+    "sha_mismatches": 0,
+    "total_checked": 184,
+    "verdict": "PASS"
+  },
+  "check_3": {
+    "schema_stats": {
+      "option_candles": {
+        "count": 95,
+        "schema_match": 95,
+        "decimal_strike_pass": 95
+      },
+      "underlying_candles": {
+        "count": 64,
+        "schema_match": 64
+      },
+      "india_vix": {
+        "count": 25,
+        "schema_match": 25,
+        "non_derivative_pass": 25
+      }
+    },
+    "verdict": "PASS"
+  },
+  "check_4": {
+    "option_candles_rows": 20332421,
+    "option_candles_expected": 20332421,
+    "underlying_candles_rows": 437008,
+    "underlying_candles_expected": 437008,
+    "india_vix_rows": 167385,
+    "india_vix_expected": 167385,
+    "total_rows": 20936814,
+    "total_expected": 20936814,
+    "verdict": "PASS"
+  },
+  "check_5": {
+    "raw_negative_records_found": 8,
+    "raw_records_detail": [
+      {
+        "file": "nifty_options_1m_2025-02-06_2025-02-01.csv",
+        "timestamp": "2025-02-01T09:15:00+05:30",
+        "symbol": "",
+        "strike": 22950.0,
+        "option_type": "PE",
+        "raw_volume": -9368475
+      },
+      {
+        "file": "nifty_options_1m_2025-02-06_2025-02-01.csv",
+        "timestamp": "2025-02-01T09:15:00+05:30",
+        "symbol": "",
+        "strike": 23250.0,
+        "option_type": "PE",
+        "raw_volume": -21017925
+      },
+      {
+        "file": "nifty_options_1m_2025-02-06_2025-02-01.csv",
+        "timestamp": "2025-02-01T09:15:00+05:30",
+        "symbol": "",
+        "strike": 23350.0,
+        "option_type": "PE",
+        "raw_volume": -34283175
+      },
+      {
+        "file": "nifty_options_1m_2025-02-06_2025-02-01.csv",
+        "timestamp": "2025-02-01T09:15:00+05:30",
+        "symbol": "",
+        "strike": 23650.0,
+        "option_type": "PE",
+        "raw_volume": -2767575
+      },
+      {
+        "file": "nifty_options_1m_2025-02-06_2025-02-01.csv",
+        "timestamp": "2025-02-01T09:15:00+05:30",
+        "symbol": "",
+        "strike": 23800.0,
+        "option_type": "PE",
+        "raw_volume": -2314425
+      },
+      {
+        "file": "nifty_options_1m_2025-02-06_2025-02-01.csv",
+        "timestamp": "2025-02-01T09:15:00+05:30",
+        "symbol": "",
+        "strike": 24450.0,
+        "option_type": "CE",
+        "raw_volume": -8295225
+      },
+      {
+        "file": "nifty_options_1m_2025-02-06_2025-02-01.csv",
+        "timestamp": "2025-02-01T09:15:00+05:30",
+        "symbol": "",
+        "strike": 24600.0,
+        "option_type": "CE",
+        "raw_volume": -10612950
+      },
+      {
+        "file": "nifty_options_1m_2025-02-06_2025-02-01.csv",
+        "timestamp": "2025-02-01T09:15:00+05:30",
+        "symbol": "",
+        "strike": 24950.0,
+        "option_type": "CE",
+        "raw_volume": -3568650
+      }
+    ],
+    "staged_flagged_rows_count": 8,
+    "all_staged_volumes_clamped_to_zero": true,
+    "any_negative_volumes_in_parquet": false,
+    "verdict": "PASS"
+  },
+  "check_6": {
+    "nifty_1m_csv_sha256": "359264ada538231af9064954c6a52710c9b093838fca546104bd3ff4bbceb027",
+    "expected_sha256": "359264ada538231af9064954c6a52710c9b093838fca546104bd3ff4bbceb027",
+    "sha_matches_post_incident": true,
+    "line_432594_content": "'2026-10-08 0    \\n'",
+    "line_is_truncated": true,
+    "staged_oct2026_rows": 4499,
+    "verdict": "PASS"
+  },
+  "check_7": {
+    "total_snapshot_files": 82283,
+    "v3_files": 72468,
+    "v1_files": 9806,
+    "empty_files": 4,
+    "corrupt_files": 5,
+    "category_sum": 82283,
+    "discrepancy": 0,
+    "total_data_files": 113385,
+    "data_subfolder_counts": {
+      "historical": 8,
+      "live": 82347,
+      "raw": 31030
+    },
+    "snapshots_outside_active_lake": true,
+    "verdict": "PASS"
+  },
+  "check_9": {
+    "data_lake_absent": true,
+    "no_active_manifest": true,
+    "phase1_artifacts_intact": true,
+    "phase1_parquet_file_count": 38,
+    "verdict": "PASS"
+  }
+}

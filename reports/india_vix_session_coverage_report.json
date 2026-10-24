@@ -1,0 +1,111 @@
+{
+  "summary_1m": {
+    "interval": "1m",
+    "partitions": 22,
+    "total_rows": 166939,
+    "unique_sessions": 446,
+    "partition_details": {
+      "2025-01": 8625,
+      "2025-02": 7500,
+      "2025-03": 7124,
+      "2025-04": 7125,
+      "2025-05": 7880,
+      "2025-06": 7875,
+      "2025-07": 8625,
+      "2025-08": 7125,
+      "2025-09": 8250,
+      "2025-10": 7560,
+      "2025-11": 7125,
+      "2025-12": 8250,
+      "2026-01": 7500,
+      "2026-02": 7875,
+      "2026-03": 7125,
+      "2026-04": 7500,
+      "2026-05": 7125,
+      "2026-06": 7875,
+      "2026-07": 8625,
+      "2026-08": 7875,
+      "2026-09": 7875,
+      "2026-10": 4500
+    }
+  },
+  "summary_1d": {
+    "interval": "1d",
+    "partitions": 2,
+    "total_rows": 446,
+    "partition_details": {
+      "2025": 249,
+      "2026": 197
+    }
+  },
+  "reconciliation": {
+    "expected_regular_bars": 167250,
+    "actual_bars": 166939,
+    "net_delta_bars": -311,
+    "special_sessions": [
+      {
+        "trade_date": "2025-03-25",
+        "bar_count": 374,
+        "expected": 375,
+        "delta": -1,
+        "note": "Special Session / Shortened Hours"
+      },
+      {
+        "trade_date": "2025-04-04",
+        "bar_count": 374,
+        "expected": 375,
+        "delta": -1,
+        "note": "Special Session / Shortened Hours"
+      },
+      {
+        "trade_date": "2025-04-23",
+        "bar_count": 374,
+        "expected": 375,
+        "delta": -1,
+        "note": "Special Session / Shortened Hours"
+      },
+      {
+        "trade_date": "2025-04-25",
+        "bar_count": 377,
+        "expected": 375,
+        "delta": 2,
+        "note": "Special Session / Shortened Hours"
+      },
+      {
+        "trade_date": "2025-05-06",
+        "bar_count": 376,
+        "expected": 375,
+        "delta": 1,
+        "note": "Special Session / Shortened Hours"
+      },
+      {
+        "trade_date": "2025-05-08",
+        "bar_count": 377,
+        "expected": 375,
+        "delta": 2,
+        "note": "Special Session / Shortened Hours"
+      },
+      {
+        "trade_date": "2025-05-13",
+        "bar_count": 376,
+        "expected": 375,
+        "delta": 1,
+        "note": "Special Session / Shortened Hours"
+      },
+      {
+        "trade_date": "2025-05-23",
+        "bar_count": 376,
+        "expected": 375,
+        "delta": 1,
+        "note": "Special Session / Shortened Hours"
+      },
+      {
+        "trade_date": "2025-10-21",
+        "bar_count": 60,
+        "expected": 375,
+        "delta": -315,
+        "note": "Diwali Muhurat Trading"
+      }
+    ]
+  }
+}

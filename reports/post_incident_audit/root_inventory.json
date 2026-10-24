@@ -1,0 +1,242 @@
+[
+  {
+    "rel": "'.git'",
+    "name": "'.git'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-23T12:54:34.315083",
+    "git_status": "untracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'.github'",
+    "name": "'.github'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-22T22:36:54.319235",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'apps'",
+    "name": "'apps'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-22T22:36:54.333162",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'config'",
+    "name": "'config'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-22T23:03:24.562723",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'Data'",
+    "name": "'Data'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-20T12:58:54.583185",
+    "git_status": "ignored",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'Data_Collectors'",
+    "name": "'Data_Collectors'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-13T23:35:51.795150",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'DOCS'",
+    "name": "'DOCS'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-20T19:58:51.241576",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'memory-bank'",
+    "name": "'memory-bank'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-09T23:03:52.818432",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'ops'",
+    "name": "'ops'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-20T12:56:21.085087",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'packages'",
+    "name": "'packages'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-20T15:22:21.776364",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'reports'",
+    "name": "'reports'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-23T12:53:12.446135",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'services'",
+    "name": "'services'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-20T15:20:48.664207",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'staging'",
+    "name": "'staging'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-22T23:04:03.159175",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'tests'",
+    "name": "'tests'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-20T13:01:58.866899",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'tools'",
+    "name": "'tools'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-22T22:54:17.992594",
+    "git_status": "tracked",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'venv'",
+    "name": "'venv'",
+    "is_dir": true,
+    "is_link": false,
+    "size": 0,
+    "mtime": "2026-10-09T18:42:02.553811",
+    "git_status": "ignored",
+    "sha256": "DIRECTORY"
+  },
+  {
+    "rel": "'.env'",
+    "name": "'.env'",
+    "is_dir": false,
+    "is_link": false,
+    "size": 414,
+    "mtime": "2026-10-21T19:40:51.459419",
+    "git_status": "ignored",
+    "sha256": "7351885af4d0810f86524d30feefb6b993f204f73e8dccfff22d9d45a0a6f024"
+  },
+  {
+    "rel": "'.gitattributes'",
+    "name": "'.gitattributes'",
+    "is_dir": false,
+    "is_link": false,
+    "size": 17,
+    "mtime": "2026-10-17T15:22:31.669343",
+    "git_status": "tracked",
+    "sha256": "d2eb1a317920a1e2fd04a1b7352ef04bfb1f0b9f4d0594f4dc395a87ce2ccfba"
+  },
+  {
+    "rel": "'.gitignore'",
+    "name": "'.gitignore'",
+    "is_dir": false,
+    "is_link": false,
+    "size": 156,
+    "mtime": "2026-10-20T16:11:21.308329",
+    "git_status": "tracked",
+    "sha256": "6fa9ca24521c8fa324d299effd1967cea8c9986b4588c34c80cb60ad23ac7b2c"
+  },
+  {
+    "rel": "'.importlinter'",
+    "name": "'.importlinter'",
+    "is_dir": false,
+    "is_link": false,
+    "size": 814,
+    "mtime": "2026-10-20T16:08:23.949029",
+    "git_status": "tracked",
+    "sha256": "8c1941df538700f81d8cef00cbfcff64ef5381a5c0dc0a6ab1be5bb0100ee60c"
+  },
+  {
+    "rel": "'pyproject.toml'",
+    "name": "'pyproject.toml'",
+    "is_dir": false,
+    "is_link": false,
+    "size": 1851,
+    "mtime": "2026-10-20T16:08:17.419236",
+    "git_status": "tracked",
+    "sha256": "f4d5cd59682c90eb5121ac0f5eb163ec4e2b7c01d60564048047b0ae8e698330"
+  },
+  {
+    "rel": "'requirements-ci.txt'",
+    "name": "'requirements-ci.txt'",
+    "is_dir": false,
+    "is_link": false,
+    "size": 440,
+    "mtime": "2026-10-20T16:08:30.087664",
+    "git_status": "tracked",
+    "sha256": "65c63537ca126afd9a2b0607e5b52a2acf5731c284be44527b31e09ff2bc6a16"
+  },
+  {
+    "rel": "'requirements.txt'",
+    "name": "'requirements.txt'",
+    "is_dir": false,
+    "is_link": false,
+    "size": 364,
+    "mtime": "2026-10-09T18:43:24.535154",
+    "git_status": "tracked",
+    "sha256": "d4acfaab164ca0a161dc7e1769a03e202d67febfd48163f7b2211ba85e033cc9"
+  },
+  {
+    "rel": "'s -ExecutionPolicy RemoteSigned) ; (& c\\uf03aAlgoquantviewvenvScriptsActivate.ps1)'",
+    "name": "'s -ExecutionPolicy RemoteSigned) ; (& c\\uf03aAlgoquantviewvenvScriptsActivate.ps1)'",
+    "is_dir": false,
+    "is_link": false,
+    "size": 2542,
+    "mtime": "2026-10-22T15:18:22.247362",
+    "git_status": "untracked",
+    "sha256": "8c6f9776f39ad191701c625e3b7fb221e2944d7ae32a6f26242f444158b48930"
+  }
+]

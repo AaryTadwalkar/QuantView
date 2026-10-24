@@ -1,0 +1,43 @@
+{
+  "status": "PASS",
+  "manifest": {
+    "exists": true,
+    "is_active": true,
+    "version": 1
+  },
+  "files_and_checksums": {
+    "total_files": 183,
+    "expected_files": 183,
+    "sha_matches": 183,
+    "sha_mismatches": 0,
+    "missing_files": []
+  },
+  "schemas": {
+    "option_candles_match": 95,
+    "option_decimal_strike_match": 95,
+    "underlying_candles_match": 64,
+    "india_vix_match": 24
+  },
+  "row_counts": {
+    "option_candles": 20332421,
+    "underlying_candles": 437008,
+    "india_vix": 167385,
+    "total_rows": 20936814,
+    "reconciled": true
+  },
+  "data_quality": {
+    "flagged_negative_volume_rows": 8,
+    "volumes_clamped_to_zero": true,
+    "negative_volumes_remaining": 0
+  },
+  "duckdb_views": {
+    "underlying_rows": 437008,
+    "underlying_latency_ms": 35.39,
+    "options_rows": 20332421,
+    "options_latency_ms": 34.14,
+    "vix_rows": 167385,
+    "vix_latency_ms": 7.05,
+    "point_in_time_query_ms": 18.65,
+    "intraday_daily_leaks": 0
+  }
+}

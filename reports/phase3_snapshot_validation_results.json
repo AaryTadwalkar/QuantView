@@ -1,0 +1,47 @@
+{
+  "report_name": "QuantView Phase 3 Snapshot Compaction Validation Results",
+  "generated_at_utc": "2026-10-23T18:43:19.927383+00:00",
+  "overall_status": "PASS",
+  "gates": {
+    "gate_1_inventory_disposition_reconciliation": {
+      "status": "PASS",
+      "expected_source_files": 82283,
+      "compacted_captures": 82274,
+      "total_strike_rows": 17445732,
+      "total_quarantined": 9,
+      "empty_0_byte_quarantined": 4,
+      "corrupt_null_byte_quarantined": 5,
+      "sum_disposition": 82283,
+      "discrepancy": 0,
+      "quarantine_report_path": "staging/lake_preparation_phase3/quarantine/quarantine_report.json"
+    },
+    "gate_2_canonical_schemas_and_strike_precision": {
+      "status": "PASS",
+      "captures_schema_exact_match": true,
+      "rows_schema_exact_match": true,
+      "strike_precision": "decimal128(9, 2)",
+      "greek_precision": "double",
+      "captures_partitions_checked": 126,
+      "rows_partitions_checked": 126
+    },
+    "gate_3_capture_identity_uniqueness": {
+      "status": "PASS",
+      "total_captures": 82274,
+      "distinct_captures": 82274,
+      "duplicate_count": 0,
+      "query_time_ms": 64.56
+    },
+    "gate_4_cryptographic_checksum_verification": {
+      "status": "PASS",
+      "total_files_verified": 252,
+      "sha256_mismatches": 0,
+      "manifest_sha256": "e1c7e82036ac75fc13b38d04e7cb614ea9c9078e9e69cbb282addbca6e086c83"
+    },
+    "gate_5_phase2b_candle_lake_immutability": {
+      "status": "PASS",
+      "total_baseline_files_checked": 183,
+      "sha256_mismatches": 0,
+      "baseline_manifest_version": 1
+    }
+  }
+}

@@ -1,0 +1,1544 @@
+{
+  "manifest_type": "QUANTVIEW_STAGING_MANIFEST_PHASE3",
+  "manifest_version": 1,
+  "generated_at_utc": "2026-10-23T18:43:09.781994+00:00",
+  "staging_root": "staging/lake_preparation_phase3",
+  "datasets": {
+    "option_snapshot_captures": {
+      "dataset_name": "option_snapshot_captures",
+      "status": "PREPARED",
+      "file_count": 126,
+      "total_rows": 82274,
+      "total_bytes": 3114093,
+      "partitions": [
+        {
+          "path": "option_snapshot_captures/trade_date=2026-01-20/part-0.parquet",
+          "rows": 614,
+          "bytes": 22514,
+          "sha256": "08c90b93147ec463be7d91c31e17ec0f22ab3681043eef0fba93cce7d04de6d2"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-01-21/part-0.parquet",
+          "rows": 412,
+          "bytes": 16033,
+          "sha256": "515247bd0150e18d49f9caec5ed5692c7c31c5bafaac6ff6174020cfd2135eae"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-01-23/part-0.parquet",
+          "rows": 161,
+          "bytes": 9104,
+          "sha256": "ecc41aca7438ccb5bc7091af37574ba9c8e67600d6c4580a681c9a9e60509fae"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-01-27/part-0.parquet",
+          "rows": 738,
+          "bytes": 25788,
+          "sha256": "aaac2687d2ae640286f8ce4f23d21a768407e46e3a19b0470387dde0eae62944"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-01-28/part-0.parquet",
+          "rows": 730,
+          "bytes": 24559,
+          "sha256": "b69f75f77aac44199a5c7edd0d57b60af6c4219d2742ef8cf325700e579962ac"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-01-29/part-0.parquet",
+          "rows": 738,
+          "bytes": 25450,
+          "sha256": "1d5e1e2bdaf02f6288cdd2c83062a76c6fda7bf72216e4c3d70a2cb125389c17"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-01-30/part-0.parquet",
+          "rows": 512,
+          "bytes": 19089,
+          "sha256": "c131d6ea6e66c480aa6ec782a12f649aa0f52aa6a9a9d82332d1cdc12d167589"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-01/part-0.parquet",
+          "rows": 738,
+          "bytes": 25302,
+          "sha256": "28dc00441fd2ec48523b83f866dc1018d45a942102074c4fa993805f5d18082c"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-02/part-0.parquet",
+          "rows": 738,
+          "bytes": 25461,
+          "sha256": "70dd605bf906cd715deb5fdf2d8a5c4c10428e331453af8953a31e527189bcb5"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-03/part-0.parquet",
+          "rows": 738,
+          "bytes": 25451,
+          "sha256": "3c8482b8283f90834ae451ed7b687ef233adfe6465244bad7b23a7c3f178ce12"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-04/part-0.parquet",
+          "rows": 738,
+          "bytes": 25367,
+          "sha256": "f729e8e6c1adf78eaabc5bb0e5795bab48e502db45e6154cde049471ef766f1c"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-05/part-0.parquet",
+          "rows": 738,
+          "bytes": 25167,
+          "sha256": "0f2bbdd50636faa26a7bcb55290fda320a62b13acf9b043e6b124c4edd3db2ca"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-06/part-0.parquet",
+          "rows": 738,
+          "bytes": 25316,
+          "sha256": "392014d095804f5cc3d5ace692b7b521752111f7f0e29187d027bcfbb87dd23f"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-10/part-0.parquet",
+          "rows": 738,
+          "bytes": 25530,
+          "sha256": "2dd3e09180c3d26bb30af6c70115d17459027fb4a82860b79449949e91fd471f"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-11/part-0.parquet",
+          "rows": 735,
+          "bytes": 25689,
+          "sha256": "266d3a7a31743aeeaabb7dee3a59c499df8f13de8f5c18a718d24ce0f07bac25"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-12/part-0.parquet",
+          "rows": 665,
+          "bytes": 25469,
+          "sha256": "9678dca31bad979ef6d538ec68ee47bf9b1a947d79af853d63da12ba485baaa3"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-13/part-0.parquet",
+          "rows": 696,
+          "bytes": 26485,
+          "sha256": "4a0a8fb0c3b554d775da9d3db3438095081a78c2de2e93052dd035e73b028987"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-16/part-0.parquet",
+          "rows": 565,
+          "bytes": 23006,
+          "sha256": "929b1ce7625d516df99b5c8ae938c8c882fc333cd64ca3d7ea54518bf2f15d64"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-17/part-0.parquet",
+          "rows": 695,
+          "bytes": 26140,
+          "sha256": "446e7218e67f1be680c7a6ebca731634962668b44115e3c9c1c8ff11082f2c4a"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-24/part-0.parquet",
+          "rows": 688,
+          "bytes": 26033,
+          "sha256": "66a253089d1c3fd7116aca1a3b064f5886936490c59825515509dc4f9cb87116"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-26/part-0.parquet",
+          "rows": 698,
+          "bytes": 27275,
+          "sha256": "b044e8f6dbfeefda3c3d66c1308c5743a7970a08a8d3c9dd8be5008a4dd07d50"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-02-27/part-0.parquet",
+          "rows": 699,
+          "bytes": 27354,
+          "sha256": "c13623b28c3ccf2c812b96cd4540377c5497b7b91615a1a5399eb52295a42003"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-03-02/part-0.parquet",
+          "rows": 698,
+          "bytes": 27137,
+          "sha256": "361072e962fc827c9ca041633bef09766bb7ac67b9dc0ef139b2e9f96582ed3b"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-03-04/part-0.parquet",
+          "rows": 698,
+          "bytes": 27021,
+          "sha256": "10fa23edd9500dd300aff7d954f930aa25714c985c0b102cfca4b39983c2f3ed"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-03-05/part-0.parquet",
+          "rows": 697,
+          "bytes": 27573,
+          "sha256": "5286055b982e1a30e863f687da8fe1c27596a9f6df920dd7262f811d87a5aba7"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-03-06/part-0.parquet",
+          "rows": 697,
+          "bytes": 26748,
+          "sha256": "c5ce4f94484fbb3cc71289609df155112a43f929d23bf483631cda1ea150f11e"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-03-09/part-0.parquet",
+          "rows": 686,
+          "bytes": 26432,
+          "sha256": "6a82d37aa6ac5ee395d01e7efc772864f311cf474152b640b585a473143a56c2"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-03-10/part-0.parquet",
+          "rows": 139,
+          "bytes": 9269,
+          "sha256": "79931ada62faa4c4050a88dd9ff64a9ea6e4671e9375bf6d3503b213edfc1aa7"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-03-11/part-0.parquet",
+          "rows": 678,
+          "bytes": 26783,
+          "sha256": "d70d29196cc1d7a91895bb63bb9ecad19bd37024b602ccb28f61cb66fa2c1e13"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-03-17/part-0.parquet",
+          "rows": 606,
+          "bytes": 24602,
+          "sha256": "3406d2a053d06288c1d6b33246afa9a51f7d01f1d16cca464bcce3bd1f4ff31f"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-03-18/part-0.parquet",
+          "rows": 613,
+          "bytes": 23651,
+          "sha256": "11f4772a856db4661a933c81b5c148b1d9d6f7093f32888745d9f93ea662ced4"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-03-19/part-0.parquet",
+          "rows": 645,
+          "bytes": 25851,
+          "sha256": "5fb8eb2bd19cb425eb5e797346f90433690fe3387728bd5affa527f677838165"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-04-06/part-0.parquet",
+          "rows": 629,
+          "bytes": 24989,
+          "sha256": "b0b3b82cb94155fb2dbe5be70543ae723c51d3a5457bf96a657f95f2ca35f8e5"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-04-08/part-0.parquet",
+          "rows": 554,
+          "bytes": 22089,
+          "sha256": "d5ad20bc9bfb4ce122abfe7ee8538beb3ec454f73dbff3dee93e375dace75313"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-04-09/part-0.parquet",
+          "rows": 600,
+          "bytes": 23641,
+          "sha256": "8947b5b92c0919056b502204ea4a99e9a5ee80454dcb3f3e4eaad76ab0ebb4c6"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-04-10/part-0.parquet",
+          "rows": 688,
+          "bytes": 26869,
+          "sha256": "15d0a2a90615006fb116cd7a6c5becba2d2de888e3a9b204debbde695229b2db"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-04-16/part-0.parquet",
+          "rows": 453,
+          "bytes": 18921,
+          "sha256": "d83524146646c2270abb2da9252c955ec4cd45d36de4c848e0e6fed1336cd4bd"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-04-20/part-0.parquet",
+          "rows": 679,
+          "bytes": 26198,
+          "sha256": "f7fd927ac9a949c3a20d41e98d315e0c30ae2da8e0ae148cfcda8c2874a78bfe"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-04-21/part-0.parquet",
+          "rows": 675,
+          "bytes": 25715,
+          "sha256": "04f9f7ee8abdf397ed280afac48b43279eef4e9c57216476fe238a82b04b77f8"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-04-23/part-0.parquet",
+          "rows": 252,
+          "bytes": 12774,
+          "sha256": "bb72dd59b01f27b637a0a4017039ee233ba1de5a1977081926681af320400c41"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-04-27/part-0.parquet",
+          "rows": 606,
+          "bytes": 24101,
+          "sha256": "fab90a40da572c209364352cde9b98aa911fc5d6fa55505e257185e26e567683"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-05-07/part-0.parquet",
+          "rows": 680,
+          "bytes": 26445,
+          "sha256": "0382334e965d87f3d22382e736545fe5ac9b4f1824768c20bb0a19d95084a278"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-05-14/part-0.parquet",
+          "rows": 502,
+          "bytes": 21016,
+          "sha256": "75b28190269f9777f4228bf1144ee08cfbc60a7c8cea72493b99aecf0a4c4cbd"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-05-18/part-0.parquet",
+          "rows": 680,
+          "bytes": 26640,
+          "sha256": "0268b7b21053fb43a089e4fa8e6c72b11733880fec4825811913eeee43de7497"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-05-26/part-0.parquet",
+          "rows": 666,
+          "bytes": 26233,
+          "sha256": "ac1a6a54aefce0ac8e5efbfd835b8385ea082512b33c7389af9cea65c1f449a7"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-05-27/part-0.parquet",
+          "rows": 676,
+          "bytes": 26275,
+          "sha256": "544b99ce8b245a9dd21eaa0ab27f8776951e69d0b9e423047cbe9392eeb12b85"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-06-02/part-0.parquet",
+          "rows": 578,
+          "bytes": 23673,
+          "sha256": "4fd10cec837eebcb568844f5c4830aff937566db670f88200a7d0f6bbecb02f1"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-06-03/part-0.parquet",
+          "rows": 677,
+          "bytes": 26795,
+          "sha256": "9e69f806d90f078146eab9926072e92889fb14fc49425a4774e18bd790a6f172"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-06-04/part-0.parquet",
+          "rows": 593,
+          "bytes": 23555,
+          "sha256": "04b0a47a387180a482b9d4d413262f193c053fb823bf8d2516dda2e9a3d01721"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-06-05/part-0.parquet",
+          "rows": 677,
+          "bytes": 26609,
+          "sha256": "de72573b96e2994afdda60de6f4b2a55d88d2b4e4d5c35a6dae4b0a168a80d21"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-06-08/part-0.parquet",
+          "rows": 631,
+          "bytes": 24997,
+          "sha256": "d9fc4029c7cfc2a04dcaeb2f2b22619fdae763f2d826b262157930fe5d05b0dc"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-06-10/part-0.parquet",
+          "rows": 559,
+          "bytes": 22241,
+          "sha256": "4437745d8a8a22de39f463224950009c902a24b5768e99acfe41c7673f2cb874"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-06-11/part-0.parquet",
+          "rows": 460,
+          "bytes": 19024,
+          "sha256": "4ba82ba6329516b8a14707f644ab9ea048fe04cd15e80966bb7138790dc13c74"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-06-12/part-0.parquet",
+          "rows": 648,
+          "bytes": 25421,
+          "sha256": "601d4cbbcdee42bf6a932862f02b0cbcc9bd19e32e54be899dcdceeab4318ff7"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-02/part-0.parquet",
+          "rows": 521,
+          "bytes": 21664,
+          "sha256": "4a6bd4c4b86bb72a63d0e055917b0a831c04b2ffb10afcf394842a3214304e20"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-03/part-0.parquet",
+          "rows": 692,
+          "bytes": 26944,
+          "sha256": "014c2caba2a69d12d695881fadacf04b14b17d748969d60ff598eee2ad6c9e81"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-04/part-0.parquet",
+          "rows": 2,
+          "bytes": 4663,
+          "sha256": "3dd1d70d065a12691bf3daa3edb20d18dbf53ed8a7c27e72ffab9461acbdb71d"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-06/part-0.parquet",
+          "rows": 641,
+          "bytes": 24613,
+          "sha256": "ddef03ae6af3d8cc77cf77bf67dfe92ff823c0c75fe3935ec218cf2f27afae8b"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-07/part-0.parquet",
+          "rows": 659,
+          "bytes": 25836,
+          "sha256": "fb1c7c97f753602476df3b73c5423f0523045402d6111f190befbc66434fdc49"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-08/part-0.parquet",
+          "rows": 695,
+          "bytes": 27009,
+          "sha256": "4017f03c0a806f4e3077ac5fd070b029b929b2d3329c0505a5cb0882aaa2c7ef"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-09/part-0.parquet",
+          "rows": 692,
+          "bytes": 27079,
+          "sha256": "0ee3aa664f75b7f44e05df70281deadbee64b019aff1fbe88025d29a6bd65f25"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-10/part-0.parquet",
+          "rows": 672,
+          "bytes": 26098,
+          "sha256": "f61d9b35fcd885a3c0fa0d522766b7e081e6b9dd5803fd371a3175d6f2554759"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-13/part-0.parquet",
+          "rows": 746,
+          "bytes": 27342,
+          "sha256": "f59ab202f4f0d8268fa95cb5c1dabd4b5b31e9fe7266a2b5f08d6bacc7636d14"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-14/part-0.parquet",
+          "rows": 750,
+          "bytes": 26654,
+          "sha256": "394499fe590c562772138e2f700c197de044d652188ba8450edf429fa4c3fdba"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-15/part-0.parquet",
+          "rows": 638,
+          "bytes": 24268,
+          "sha256": "f6f8e427460e1b0c4499ccc9527c5a4bbea2494e5e2322ca25c9b57750ec19c5"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-16/part-0.parquet",
+          "rows": 740,
+          "bytes": 27198,
+          "sha256": "3fbdfee504455d7eeb3a532a6e92b2bc7380f732f5a066577b8dcac4787e19c1"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-17/part-0.parquet",
+          "rows": 692,
+          "bytes": 25430,
+          "sha256": "703dc8a5694df9831968c9f1df06c1522ed5dd6a890bd70272c4a8904fc45cf5"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-20/part-0.parquet",
+          "rows": 708,
+          "bytes": 26172,
+          "sha256": "c27a8c3fc8ae3b6dd0518dea342c8c7ad10b2e4f676c62ed97d4a468b30b6c6b"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-21/part-0.parquet",
+          "rows": 708,
+          "bytes": 25918,
+          "sha256": "13fef9988ff7e6ec43a474812e483cfde09e19417051ab0f6755493e1906b18e"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-22/part-0.parquet",
+          "rows": 750,
+          "bytes": 27724,
+          "sha256": "3dd8c026e5d07d56115338a2d0386e78399fd5ec0461bf61d2ed965ae230e438"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-23/part-0.parquet",
+          "rows": 750,
+          "bytes": 27421,
+          "sha256": "e1b4fc988bde6e3a025d6afd3b614ad3ba8c02c66ed978e4a60014f07006d7dd"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-24/part-0.parquet",
+          "rows": 750,
+          "bytes": 27502,
+          "sha256": "42626d75350092a8d3b6f1f2ab4dd4a27c97fae3c947b52f39f43bc3c52e8b0b"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-27/part-0.parquet",
+          "rows": 690,
+          "bytes": 26253,
+          "sha256": "e1368173c006759da43726a0209a8d7097770a5a233554fc45c5e1d5b3c974db"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-28/part-0.parquet",
+          "rows": 709,
+          "bytes": 26203,
+          "sha256": "95d4632f0b2da13a29f564191b73a290ce6e8e57df2ba878d5e628ff1180ec62"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-29/part-0.parquet",
+          "rows": 625,
+          "bytes": 22839,
+          "sha256": "5a08de08b260b2939329c51ae95c4b7cb83515b4fec38d4ec24a21627042ea10"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-30/part-0.parquet",
+          "rows": 717,
+          "bytes": 25996,
+          "sha256": "6902d9ad648e8cb383ef2e313fcb0e4bf48c5fe9a500bd95d1ab32e2c8175c8c"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-07-31/part-0.parquet",
+          "rows": 692,
+          "bytes": 25479,
+          "sha256": "a5f711ec40477d1f4e7e0045ebc60597f202d6e88cfc6da071fd31b303488bba"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-05/part-0.parquet",
+          "rows": 704,
+          "bytes": 26467,
+          "sha256": "2a01331cd4208801e306693acb6e09b57cbe8945bcef9fcf780d734e3f3cc562"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-06/part-0.parquet",
+          "rows": 523,
+          "bytes": 20644,
+          "sha256": "1594cc30965bb0bec96c554a37601b69116f6d7a8f6ffd90cc2cae105f05d1e6"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-07/part-0.parquet",
+          "rows": 750,
+          "bytes": 27503,
+          "sha256": "9c394b83dc1af391ccf68db173180a0de74ec153a004b7fcad028f758bc029b8"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-10/part-0.parquet",
+          "rows": 750,
+          "bytes": 27444,
+          "sha256": "cafdc2e5c9e93c54d47bee4e6f5864839a085d759c0ce23e35c337fbe869a0fc"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-11/part-0.parquet",
+          "rows": 736,
+          "bytes": 26589,
+          "sha256": "b81e882cf404a10c4dc153bf6aae976a3168f407eee6a556eb40391a2bb4df72"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-12/part-0.parquet",
+          "rows": 750,
+          "bytes": 26871,
+          "sha256": "9ca5197268749db43ed32cdba4b97303bdf0a9aa756c2194e98c6d518942697e"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-13/part-0.parquet",
+          "rows": 749,
+          "bytes": 27053,
+          "sha256": "8926cfc511a50dae912ed79b105a0734bc8610310c50232d983fc519d8ab999e"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-14/part-0.parquet",
+          "rows": 749,
+          "bytes": 27255,
+          "sha256": "05da94e9ba87939cfbc79bfcf0dc4c51747413807c4a4976271fb31ed445aaf1"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-17/part-0.parquet",
+          "rows": 722,
+          "bytes": 26397,
+          "sha256": "868517f53b99b3fa6065f20f9ff68a93d4f096c6014892504516b30d80ba4f68"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-19/part-0.parquet",
+          "rows": 750,
+          "bytes": 26991,
+          "sha256": "ab9e90c2f722edd09f8d6456a94c7af1df5420973802b5a47e9d36a8311a80f6"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-20/part-0.parquet",
+          "rows": 750,
+          "bytes": 26661,
+          "sha256": "1f035b8c6e88d9ff97e6619843772a56d5954672b832426015d211fd34cc61e4"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-21/part-0.parquet",
+          "rows": 750,
+          "bytes": 26968,
+          "sha256": "ae3742456af98b9231d2b8cc09d71ca7397ec1b7e24fe32d557bea87efbca29e"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-24/part-0.parquet",
+          "rows": 750,
+          "bytes": 26852,
+          "sha256": "1d6b47d106b9e8cc631736061a073bb750065fe8888bf734353726ffec6d190a"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-25/part-0.parquet",
+          "rows": 309,
+          "bytes": 14000,
+          "sha256": "61a6536a0d945762151b9a9a363f479da8f60cf0a88a7031e9e3e135e264fad9"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-26/part-0.parquet",
+          "rows": 573,
+          "bytes": 22128,
+          "sha256": "e2d888b812e8dd1752162023936dafd3fd2f2cff26d9ea3b29665a9fe063858f"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-27/part-0.parquet",
+          "rows": 750,
+          "bytes": 27895,
+          "sha256": "31785edfc1a4a1733835a82635707c58d8b904216e0c01b10878ed286dd43918"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-28/part-0.parquet",
+          "rows": 750,
+          "bytes": 27280,
+          "sha256": "039a354ca1c2c3aaf950df585efc725d994224935fce7c5b166140a5b0a206fb"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-08-31/part-0.parquet",
+          "rows": 550,
+          "bytes": 21538,
+          "sha256": "498bb82feaae02765fb44c1fe0572fe139cd1731d2d5b1021022d8890d16fe40"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-01/part-0.parquet",
+          "rows": 728,
+          "bytes": 27545,
+          "sha256": "de541e3122042e8944e26a59b30fc92a8d0de201cc73d448b7fa9515ec25fc6e"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-03/part-0.parquet",
+          "rows": 346,
+          "bytes": 15073,
+          "sha256": "7ccc18341873cd00a0a5d698fdad29711ca487cc21676f0deddfc150ffad262e"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-04/part-0.parquet",
+          "rows": 361,
+          "bytes": 15701,
+          "sha256": "6577bfc872fc19e50abaa09d0961fb5cc92a5829d79139d6d6fe74b60d83c060"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-08/part-0.parquet",
+          "rows": 506,
+          "bytes": 19534,
+          "sha256": "7a2a7e56751b3b8c6477dde0dbc4324d222ba28e51dd56c45962ac4bfdc104b7"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-09/part-0.parquet",
+          "rows": 750,
+          "bytes": 26718,
+          "sha256": "824affeba842b89fc5f64ca68d3c6e0e6e115aa76a537b2d58aad0bc45d6b944"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-10/part-0.parquet",
+          "rows": 679,
+          "bytes": 24877,
+          "sha256": "d53140c732ad4e20a44d3deabcffa94a416794fd6df836e5ffd4976d23394478"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-11/part-0.parquet",
+          "rows": 750,
+          "bytes": 27425,
+          "sha256": "81ca5c57935e16adbfb6d8a054274abd22fd0eafcb9c3381ea7f2d4ec23fc809"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-15/part-0.parquet",
+          "rows": 735,
+          "bytes": 26836,
+          "sha256": "7a1ff732694becd8c8f54ae0ff5ec0b41de547528abaf08dab88c4ac84ed0890"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-16/part-0.parquet",
+          "rows": 750,
+          "bytes": 27108,
+          "sha256": "17ffc799860d2358517d66ccd3f200cb7fdb6932a6781dc9e571dc71255dec9c"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-17/part-0.parquet",
+          "rows": 750,
+          "bytes": 27439,
+          "sha256": "d9c9cbc93aa9223243a0cb78f34ed77060aea2f553ff506ed59465229968501a"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-18/part-0.parquet",
+          "rows": 749,
+          "bytes": 27240,
+          "sha256": "0b3da6bc812d506b72ba50b4f2ec6696d6e99da71b3564960b29a574f0480b3e"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-21/part-0.parquet",
+          "rows": 686,
+          "bytes": 24512,
+          "sha256": "100ccc5084e841bde8d60a04ba74c458f4b7e0a8ddfd43cc41a02ddf6f307d64"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-22/part-0.parquet",
+          "rows": 750,
+          "bytes": 26459,
+          "sha256": "b73b4a1094a3c12a569021ce05d563a6d89092b084c5382360d1a1f247414344"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-23/part-0.parquet",
+          "rows": 750,
+          "bytes": 26717,
+          "sha256": "2cef8669c9241ed9d99a04d2abcb7120f4e105342e0bf4650aa2915b141d43c2"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-24/part-0.parquet",
+          "rows": 748,
+          "bytes": 27357,
+          "sha256": "1bfcab4b8a7064a67a6048e69567f6018b846fb33437add6284c05bfff470fb2"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-25/part-0.parquet",
+          "rows": 750,
+          "bytes": 27542,
+          "sha256": "14e3613d566be956d71f8d84e8b3080d55fe4b73f84b1c706171022638967283"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-28/part-0.parquet",
+          "rows": 689,
+          "bytes": 26035,
+          "sha256": "63bb728f6d8d57dc176d0f28572393b3954ce9da6b028a5a9770cef8c9dfe022"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-29/part-0.parquet",
+          "rows": 750,
+          "bytes": 26778,
+          "sha256": "d44b487e4af712439bbc17906bf44f720181f1092ba0d31f33c7d4f6020bda16"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-09-30/part-0.parquet",
+          "rows": 750,
+          "bytes": 27315,
+          "sha256": "3c26c1b27fe0ac6c264f86fe6e321eee3c9be9e8c1abd5ba1324d43286704dae"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-01/part-0.parquet",
+          "rows": 729,
+          "bytes": 27136,
+          "sha256": "08cfcaca7b8233b99ac7de1e8df0e572f593b8ccb17f54b7b23287ede3b427f3"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-05/part-0.parquet",
+          "rows": 676,
+          "bytes": 26435,
+          "sha256": "b7ba7010e04f20e0a0e3fddc2740c936f54efa3879579812a354a1c041b88b1e"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-06/part-0.parquet",
+          "rows": 681,
+          "bytes": 26849,
+          "sha256": "6505940faad291d8fcbcd9d4af8bcf69495005053ecb7a6b5b7f59ff1dea1691"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-07/part-0.parquet",
+          "rows": 674,
+          "bytes": 26326,
+          "sha256": "32398103c794b9bf071322c52a9daaf00e0ee85ec6f703fda7ad1956fdb117b0"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-08/part-0.parquet",
+          "rows": 677,
+          "bytes": 26594,
+          "sha256": "745bfbc8aa42d0180824dada88b74ca31448d7566d447363720a0a31d7f3ff72"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-09/part-0.parquet",
+          "rows": 676,
+          "bytes": 26268,
+          "sha256": "c85d6c5197a77706e37b8f1b1e3e9cd016a2bd260a91733891c3fcc62e1675b0"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-12/part-0.parquet",
+          "rows": 677,
+          "bytes": 26189,
+          "sha256": "017928bd6388b3bd87e2b1b055040749277bcd11cdf67ead5f6462ddba7c7e79"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-13/part-0.parquet",
+          "rows": 539,
+          "bytes": 21851,
+          "sha256": "33c6e102e6b53cdcb34d3e67720893d74c62947e728025812f028274620fdb17"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-14/part-0.parquet",
+          "rows": 663,
+          "bytes": 25693,
+          "sha256": "0edd4f97f5cbf093aac98b06a9020ba1dd8a843fc921841162cef8af638907d7"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-15/part-0.parquet",
+          "rows": 556,
+          "bytes": 22313,
+          "sha256": "6125aaf292e05beae73ae0a25b8eedac81bbddde21a51dd2c1685e0c689bea60"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-16/part-0.parquet",
+          "rows": 679,
+          "bytes": 25866,
+          "sha256": "535011cd6c82b4debf0c30b5d8430040c65f2fee95c8e0e1a43945153f77cf04"
+        },
+        {
+          "path": "option_snapshot_captures/trade_date=2026-10-19/part-0.parquet",
+          "rows": 634,
+          "bytes": 24651,
+          "sha256": "ce88d1698f2271aa9d9babf9c6947dd23e724b5643f127a2378d6d8440e27be2"
+        }
+      ]
+    },
+    "option_snapshot_rows": {
+      "dataset_name": "option_snapshot_rows",
+      "status": "PREPARED",
+      "file_count": 126,
+      "total_rows": 17445732,
+      "total_bytes": 396618353,
+      "partitions": [
+        {
+          "path": "option_snapshot_rows/trade_date=2026-01-20/part-0.parquet",
+          "rows": 105608,
+          "bytes": 1168709,
+          "sha256": "389956cebd792d012138f668a8c621f649660c16d09929e1bb6dcc0e3d3ecda0"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-01-21/part-0.parquet",
+          "rows": 76632,
+          "bytes": 1017256,
+          "sha256": "0da3fa592a5e0597b14df4b91c070ea73877208f328036b1f5e8f770ba8c0832"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-01-23/part-0.parquet",
+          "rows": 30590,
+          "bytes": 360100,
+          "sha256": "8127abe491069f1c5e94539b8b6d214e0b4984b3489b460f931eeaf4211abc72"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-01-27/part-0.parquet",
+          "rows": 143172,
+          "bytes": 1456014,
+          "sha256": "b89e20033b6e096511989f9b1c5def1bba3cbaabea506cea3e7d5ed36a777b53"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-01-28/part-0.parquet",
+          "rows": 141620,
+          "bytes": 1431833,
+          "sha256": "be00b40d3eef1c2e98de691b21ebd7157b1b61c04267f0e954112e43f3193844"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-01-29/part-0.parquet",
+          "rows": 143172,
+          "bytes": 1455580,
+          "sha256": "d8525417d25dc971471f73ced3905a528af610a302f0612d71ee15fbcee955e3"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-01-30/part-0.parquet",
+          "rows": 99328,
+          "bytes": 1053154,
+          "sha256": "d77ab3f8a4173fbfd6662775fad216e11aceabbcecb32b59bf0cb9dfbe0a6846"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-01/part-0.parquet",
+          "rows": 143172,
+          "bytes": 1532160,
+          "sha256": "ef9d11db47edcc37f7f07f76561886cbeb8b5e3fd35891910e24e46992f3fd2d"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-02/part-0.parquet",
+          "rows": 149076,
+          "bytes": 1505646,
+          "sha256": "983cc2e6fd7ac97577c5c481baed8a9120b30fec347e5445d5d5dcb8db5591aa"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-03/part-0.parquet",
+          "rows": 149076,
+          "bytes": 1592103,
+          "sha256": "03630197e0044379ed3a4763b08cba64af3dff2beb612d4486831bce67235757"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-04/part-0.parquet",
+          "rows": 144648,
+          "bytes": 1413169,
+          "sha256": "bc2202de700f5047a03876ed4d4c75cd618f015bec4d43f0e006c4cede3ac901"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-05/part-0.parquet",
+          "rows": 144648,
+          "bytes": 1364504,
+          "sha256": "663f8d8b910ca9c9ed5f276f7906c9c9bf8e972c536c9fc99add7b7ac9361e9a"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-06/part-0.parquet",
+          "rows": 144648,
+          "bytes": 1403816,
+          "sha256": "9d6f0cbac5a622ae8bc23abceaefdb5ac94c214b5685a6d4da6a66ff7755df63"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-10/part-0.parquet",
+          "rows": 144648,
+          "bytes": 1339756,
+          "sha256": "b3e6916ac28d91478ce94c80e79cf086ded461f0291bb0c34a32feb0ba7aaf9c"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-11/part-0.parquet",
+          "rows": 144060,
+          "bytes": 58526,
+          "sha256": "6ef9040e5914d9ceb0e37713710e6ba064f33e2d75729279a1a1246de4efdb6a"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-12/part-0.parquet",
+          "rows": 123690,
+          "bytes": 1710358,
+          "sha256": "f990a61093c520a269e3b95aff10de67980266ef3fa3c7b8ba8fd0cfe93225fc"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-13/part-0.parquet",
+          "rows": 129456,
+          "bytes": 1876934,
+          "sha256": "99673130fae4c6fcb156972111401eb332dc1a200f280652106828a326caef05"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-16/part-0.parquet",
+          "rows": 105090,
+          "bytes": 3076419,
+          "sha256": "60efd8d262f88742a478b231d7401c8a12dfbb5dd454bb61f4a38f5e36f54ae1"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-17/part-0.parquet",
+          "rows": 129270,
+          "bytes": 3560815,
+          "sha256": "c0e797cd1b6cb24abbd932eec435a13cb5275b22eafc50c7d3be167ebc566ac7"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-24/part-0.parquet",
+          "rows": 138976,
+          "bytes": 3846711,
+          "sha256": "8fe142d912676455e56e43a4d807fa2f3a8c4a2c5d5eed541cee2bac7af61fea"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-26/part-0.parquet",
+          "rows": 129828,
+          "bytes": 3514789,
+          "sha256": "ac436bba863cafea083e115b44aede05b10f2339be8a7672fef728e69610eb2e"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-02-27/part-0.parquet",
+          "rows": 130014,
+          "bytes": 3604463,
+          "sha256": "4291d22fd21f2f6fdd6ca81f270b6c91a312ab61485a75f9d63bcf1b092eb019"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-03-02/part-0.parquet",
+          "rows": 129828,
+          "bytes": 3790602,
+          "sha256": "95def0ae648e401a9b9e5b65849b312a95ef0726a4ce2d4847b668a8266dcce4"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-03-04/part-0.parquet",
+          "rows": 129828,
+          "bytes": 3663859,
+          "sha256": "d444afbf48740e3d01c2473bf95817d8942e132ba37b99a9b820cf7a175c22d6"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-03-05/part-0.parquet",
+          "rows": 139400,
+          "bytes": 3673829,
+          "sha256": "d2eb0b572ed325003b9c6033939abd726420c5c1edc485843f0bce4dc17d16a4"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-03-06/part-0.parquet",
+          "rows": 139400,
+          "bytes": 3617090,
+          "sha256": "e6776e070b95249c3a01ca7d67937e7373e5018ee3c4adbbc593c43c901c5053"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-03-09/part-0.parquet",
+          "rows": 138572,
+          "bytes": 3896661,
+          "sha256": "59924c3097414b94713dc1b8bfd7a9435db31d493f49768ac90b87b79900cd4e"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-03-10/part-0.parquet",
+          "rows": 35028,
+          "bytes": 954687,
+          "sha256": "273dd6478d30143ab10df734c6fc10b67b6ea024a9d28fbe84a386d89e4f0bb6"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-03-11/part-0.parquet",
+          "rows": 170856,
+          "bytes": 4314327,
+          "sha256": "539e4f026b51608e7ae5a2e41c98246a7980d11aac2f9060577a23a87130d1bb"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-03-17/part-0.parquet",
+          "rows": 164832,
+          "bytes": 3918969,
+          "sha256": "81537b199c81043f00d291ab1318a8fc802c2134f255d0cd198cc1205a1b0b16"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-03-18/part-0.parquet",
+          "rows": 166736,
+          "bytes": 84422,
+          "sha256": "e8924331f63d3e3bfb53648924091eb74a27c3ec4970e8d9fa0e2b41d8494230"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-03-19/part-0.parquet",
+          "rows": 171570,
+          "bytes": 4590288,
+          "sha256": "7a1f58eab7e6eb07abfadbe31b213cad3d0f7ee4de4e56fe1ca904df155c6d89"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-04-06/part-0.parquet",
+          "rows": 164798,
+          "bytes": 4520143,
+          "sha256": "6e42f1f04e8eb66872dc35688e09f387a53deeeac69937ea4fef117fae3859bf"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-04-08/part-0.parquet",
+          "rows": 131852,
+          "bytes": 3619070,
+          "sha256": "ea771c81cf7f7e49bee3b58e8c10bab2376ca3f810a026c5c42a49eca4a48993"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-04-09/part-0.parquet",
+          "rows": 146400,
+          "bytes": 3758455,
+          "sha256": "53b2c71c51572dc47b10d31234af074292d8125e806085096eb478cf8d30abf4"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-04-10/part-0.parquet",
+          "rows": 167872,
+          "bytes": 4030839,
+          "sha256": "46c9822c88106a5f9340a277726ea2cb42c575ddc563f3e8ac74b430dadc54ac"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-04-16/part-0.parquet",
+          "rows": 117780,
+          "bytes": 2813176,
+          "sha256": "52c9388f9a7e7f22757a14063c978231e63a73eaa7660be0ab2cd1958b307202"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-04-20/part-0.parquet",
+          "rows": 176540,
+          "bytes": 4019382,
+          "sha256": "bc18e4c46053ee8a865d5fef90a02d2d8c141641738c7557805da1f2d8de5ed6"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-04-21/part-0.parquet",
+          "rows": 175500,
+          "bytes": 3885411,
+          "sha256": "f8b93201f0d9528f00d3d7b003ff38236ccee4392e830d2078b069913121d3e5"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-04-23/part-0.parquet",
+          "rows": 77112,
+          "bytes": 2076244,
+          "sha256": "57955eedeb22c46abc807d0504937381dfda506ebdea770b8de0aa37feb477f1"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-04-27/part-0.parquet",
+          "rows": 185436,
+          "bytes": 4450323,
+          "sha256": "96da4fc3150f28d4fc38146af9d411b5d399a759b70bd3a4110a517eb5945411"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-05-07/part-0.parquet",
+          "rows": 146880,
+          "bytes": 3475116,
+          "sha256": "8a51cfcc36b330d0772d90cafa61afcccca3e5f6a00c4b3a76dda88544e35e9d"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-05-14/part-0.parquet",
+          "rows": 110440,
+          "bytes": 2951970,
+          "sha256": "d6c752f542ae5a8b59448dc7a2fa04c38811acc4d0e341e2c1b1fad5d958ef84"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-05-18/part-0.parquet",
+          "rows": 149600,
+          "bytes": 3838831,
+          "sha256": "9288f30b7763df7a41da905fef843dc0e6e05862180098ca9fbe525fe7e4afe0"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-05-26/part-0.parquet",
+          "rows": 191808,
+          "bytes": 4401586,
+          "sha256": "92fcb824caf77f0328e43194f37fade6a0bd5ad8d291cca893042447ebaa2349"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-05-27/part-0.parquet",
+          "rows": 143312,
+          "bytes": 3368717,
+          "sha256": "1a521891988057cefc0bdc680c843ffd69670e20dd96039b8f4ad8e061d72093"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-06-02/part-0.parquet",
+          "rows": 122536,
+          "bytes": 3122932,
+          "sha256": "afacf46e236c4939ef1c72cc3856f1215ba5164689d929e3564b3241a4aacd0b"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-06-03/part-0.parquet",
+          "rows": 136754,
+          "bytes": 3829658,
+          "sha256": "79b2951b1af97a5df8c82415a6eced4713f297ce43b295091c83992d3b5b1422"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-06-04/part-0.parquet",
+          "rows": 119786,
+          "bytes": 3274088,
+          "sha256": "2ca56cdc290bc43887cbd56d633a9953e369c9e93557d73ed50401793f6e924a"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-06-05/part-0.parquet",
+          "rows": 136754,
+          "bytes": 3735356,
+          "sha256": "1e3fb42d22c1091b4f324621a75d4bcc3298b763219adbd123289ac8c9d3e2d1"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-06-08/part-0.parquet",
+          "rows": 127462,
+          "bytes": 3425175,
+          "sha256": "cbc14be833d5ec0dbc37f431cb67276a098ecc0a084d29e6c3f368901620eaa2"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-06-10/part-0.parquet",
+          "rows": 110682,
+          "bytes": 3239835,
+          "sha256": "5d31ef9dfc0e08ea2c18990a1a71ba233949de03aac7b8ea89d836fe759345f3"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-06-11/part-0.parquet",
+          "rows": 91080,
+          "bytes": 2692967,
+          "sha256": "f3655e76f5f828e8cf0ecef8baa5e6efcc19aa36dca4f28dc447af38f4a89659"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-06-12/part-0.parquet",
+          "rows": 128304,
+          "bytes": 3687963,
+          "sha256": "e3e935e19ff64709e23b0262e980cf5220dd2f471727adca8af90d0ae48af269"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-02/part-0.parquet",
+          "rows": 104200,
+          "bytes": 2535459,
+          "sha256": "1f941cbbc5df0e86b1b971bd1c7f90a0e73b9627af66bef16c984c9ee9b98ba5"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-03/part-0.parquet",
+          "rows": 138400,
+          "bytes": 3319718,
+          "sha256": "55d0c61d105c7895633a9a491c527953d43a30982f6edf8cda43c77476f1ea44"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-04/part-0.parquet",
+          "rows": 400,
+          "bytes": 18576,
+          "sha256": "6ec76b4abb216b2f7e547179f418d975a6553a649bc88de0fe651cd1b7d2efb9"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-06/part-0.parquet",
+          "rows": 128200,
+          "bytes": 2983161,
+          "sha256": "8e9eb4c3ab2eba7c149b14213ff7395dc7c297fb762c79e09b804a2019970bf2"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-07/part-0.parquet",
+          "rows": 131800,
+          "bytes": 3169161,
+          "sha256": "3a0898bce229c452cd4a023022763f3b52f9ec2cb74da80baec4a676ea1d2084"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-08/part-0.parquet",
+          "rows": 137610,
+          "bytes": 3609610,
+          "sha256": "07b9f55160d2196cd9f9f92512df80d56c4c07e4f4b99254f13d9b6782c9ea4a"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-09/part-0.parquet",
+          "rows": 137016,
+          "bytes": 3729869,
+          "sha256": "cd8c626b93b28978360998ef4eab57ba8d0cabcb4bb36726c58c8a8d1da2b284"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-10/part-0.parquet",
+          "rows": 133056,
+          "bytes": 3583988,
+          "sha256": "73adb5fdd3cfeae5e395c829b34d827823938a3e5e484a32bcaeb7e627a32f2f"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-13/part-0.parquet",
+          "rows": 147708,
+          "bytes": 4049096,
+          "sha256": "cd79fa16c655e83ce5c67cf170a1d1299194d3db03da81466c187860c84cb76d"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-14/part-0.parquet",
+          "rows": 148500,
+          "bytes": 4119331,
+          "sha256": "eedca01227fd961bc08f9ddc975e893c37bc91131520e991d68f8b72350ab77a"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-15/part-0.parquet",
+          "rows": 118668,
+          "bytes": 3177423,
+          "sha256": "5906ff8b1000714b943f90e21e477389f129fa43637301d984e5cfce0efcdc8d"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-16/part-0.parquet",
+          "rows": 137640,
+          "bytes": 3514331,
+          "sha256": "4bdc125e6a331b23b904cd2c15c6003de1c4fef5f0b1bfca42158e241f50bf27"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-17/part-0.parquet",
+          "rows": 128712,
+          "bytes": 3413908,
+          "sha256": "4187e08c0bedd7390a9f66a9df92f658198d30824f4936557c7bf86ac8e99f18"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-20/part-0.parquet",
+          "rows": 131688,
+          "bytes": 3437181,
+          "sha256": "c18bc7e2aa2a2fb197afbc5a8f8befba88b6513ff9ad1c591e96a86827cd7ee2"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-21/part-0.parquet",
+          "rows": 131688,
+          "bytes": 3557516,
+          "sha256": "f4c46b639a073e4df4e4b95f12655e401d9b9f5789d967fa6687bc53a09b07ed"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-22/part-0.parquet",
+          "rows": 157500,
+          "bytes": 4090025,
+          "sha256": "8d896e4119816b57263d5adcfb088325e287b06ac3d52422cac670234fc69198"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-23/part-0.parquet",
+          "rows": 157500,
+          "bytes": 4106498,
+          "sha256": "f4ec0737f2ebb6f27eb4c36381d56f80839ba8b44000c4bd677858f5ca2366d5"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-24/part-0.parquet",
+          "rows": 157500,
+          "bytes": 4282156,
+          "sha256": "aeaca477e50075293dadbe4b7d4a305bb8ba775d66070a290d2285d7115e9265"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-27/part-0.parquet",
+          "rows": 144900,
+          "bytes": 3764972,
+          "sha256": "51e18f269be19014d5e00efe0f73da65eb34ecb43f03581c5ce03916786b95ee"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-28/part-0.parquet",
+          "rows": 148890,
+          "bytes": 3996317,
+          "sha256": "3fed36b95f3b162bea36fd5fbfa91cb6adc449e3a34b3ecd0ea703308f0ea55b"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-29/part-0.parquet",
+          "rows": 116250,
+          "bytes": 2907470,
+          "sha256": "90e7d610e841b42cd0c4c6042670d29b8dc80acc7f63c350a907efbd0795e493"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-30/part-0.parquet",
+          "rows": 133362,
+          "bytes": 3277444,
+          "sha256": "ea60deb9ec8db05914a153a5016ce8c4dc15fe1d90647558628e85d7b2ecb4c9"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-07-31/part-0.parquet",
+          "rows": 128712,
+          "bytes": 3181561,
+          "sha256": "292df84a1eda2ca86ba7a9a48f82117ce25e3b76014bf6ade7b505caf9eaba7f"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-05/part-0.parquet",
+          "rows": 159104,
+          "bytes": 3719715,
+          "sha256": "f8fe26ba7f19f72aa045d9c8d945a845106b9d906ebb2dc9940d54b22168792b"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-06/part-0.parquet",
+          "rows": 118198,
+          "bytes": 2759863,
+          "sha256": "363c68ea63c019c3af0f447913f0cbf95c812c9a79e1313269f41294bf33d3a8"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-07/part-0.parquet",
+          "rows": 169500,
+          "bytes": 3729058,
+          "sha256": "07e1132896357b53bd75626d7a6ca892a5f00dc4e7a3eacc2965272fc5705f7c"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-10/part-0.parquet",
+          "rows": 169500,
+          "bytes": 3800856,
+          "sha256": "2f7c31d699aff3a28978ed1ed9089deba2b2e306185c17e499cb18c165694174"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-11/part-0.parquet",
+          "rows": 166336,
+          "bytes": 3731751,
+          "sha256": "93eda6649c5598090186f093334d7afadcb9feeae4e0703e115be38630221c71"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-12/part-0.parquet",
+          "rows": 157500,
+          "bytes": 3572884,
+          "sha256": "29c0a025a152a3fc26ead5d51c75313ddf407c30c812066f83b5968c39803681"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-13/part-0.parquet",
+          "rows": 157290,
+          "bytes": 3410490,
+          "sha256": "2f3bed02fd261dec255bbbbfcce4c6045c9849df3e3edc779db8111daab36220"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-14/part-0.parquet",
+          "rows": 157290,
+          "bytes": 3427359,
+          "sha256": "b71d2daa62330a0a8260d1b2a9e2444303df846cb92b45594c31054e80eda4c9"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-17/part-0.parquet",
+          "rows": 151620,
+          "bytes": 3396306,
+          "sha256": "af6072c5bd6c9bf1b0b80cd0355fd637265dd9a621c5d06c974c14afa9394167"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-19/part-0.parquet",
+          "rows": 181500,
+          "bytes": 4121236,
+          "sha256": "c54922cb96ff4d7834872b5ef0fca25c6f93771d4b7ef55d8d61922ceb7d8cbf"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-20/part-0.parquet",
+          "rows": 181500,
+          "bytes": 4037246,
+          "sha256": "5ccaf10c955f6e070fcf8d30fbb76dad78bba5618ff7d9e6de6a796a87291db8"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-21/part-0.parquet",
+          "rows": 181500,
+          "bytes": 3950504,
+          "sha256": "957973b4513fc6fd65b948132e9b735f517dceebcea2b6b7a538141c9bece02a"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-24/part-0.parquet",
+          "rows": 181500,
+          "bytes": 4189701,
+          "sha256": "28df4e2e81b39ec356bc6631d74f53520b92dc72504a04e79b1b375ec977d21d"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-25/part-0.parquet",
+          "rows": 74778,
+          "bytes": 1934063,
+          "sha256": "8284183ed3049315c2939668e8cdde40cf671760a58573e80fff3077118f0e71"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-26/part-0.parquet",
+          "rows": 120330,
+          "bytes": 2698853,
+          "sha256": "f1d8ad9a0c518c935516ea922a7bed066e8b914e65df6d4488ead8f77efba0fe"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-27/part-0.parquet",
+          "rows": 157500,
+          "bytes": 3427178,
+          "sha256": "3cac60eb47260b540e4420ec9263b1bbeda5c471f50ca225da515a0c2c7e6819"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-28/part-0.parquet",
+          "rows": 157500,
+          "bytes": 3449636,
+          "sha256": "5159170a7228bea0f53baff469851bcd7c88a9400801f63d45cbcecac62b0e82"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-08-31/part-0.parquet",
+          "rows": 115500,
+          "bytes": 2616893,
+          "sha256": "ed18325bb15f977f0501bd0021a180a521957615ac3924f8d640f1bfdc1b2bc9"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-01/part-0.parquet",
+          "rows": 152880,
+          "bytes": 3757753,
+          "sha256": "923d1dcfbce08176b7b0d76611be77178e8b19151b80202e09fc511d3b3b1416"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-03/part-0.parquet",
+          "rows": 59512,
+          "bytes": 1438040,
+          "sha256": "442901fa9fc675e2b905dfe0f239a9349eaa667ea5e2993ff12b990b97e11711"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-04/part-0.parquet",
+          "rows": 62814,
+          "bytes": 1583185,
+          "sha256": "8cbd266fc2a887df5944bdab1cb3f2897c1f7fc42e6da2b6be0343f9f355c6d3"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-08/part-0.parquet",
+          "rows": 89056,
+          "bytes": 2209870,
+          "sha256": "3be0c5aeca7bc4067e6a8c1523e730297f72adde23d961b73273fe606c463683"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-09/part-0.parquet",
+          "rows": 130500,
+          "bytes": 3310368,
+          "sha256": "71c30244aff184476b96c57d409ecf76ff88c282092a26e73e97f7465634be43"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-10/part-0.parquet",
+          "rows": 123578,
+          "bytes": 2974298,
+          "sha256": "413c183a96b74279230894497c89e43e3e4192a8be5835fd9861816ebaa26923"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-11/part-0.parquet",
+          "rows": 136500,
+          "bytes": 3616482,
+          "sha256": "15cdc6be749b06c661585310adc9db2df0e62c7da43fb18de5b28652be1eb2a3"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-15/part-0.parquet",
+          "rows": 135240,
+          "bytes": 3484875,
+          "sha256": "3086eff02c8dd3da8ecf22b2fb20a7b145708d1a916f02f9eb69eca1d658d6e7"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-16/part-0.parquet",
+          "rows": 144000,
+          "bytes": 3510003,
+          "sha256": "ce7f8855ea4251279ed4304e8b8c790c0f1d58061ed2ef05df4314b361c50bb8"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-17/part-0.parquet",
+          "rows": 144000,
+          "bytes": 3474213,
+          "sha256": "d0c51fc36165784d4e9c8b83ce4217a61e55d1a81e1ae64c4fb6269a5ce5178a"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-18/part-0.parquet",
+          "rows": 143808,
+          "bytes": 3346474,
+          "sha256": "0ad6a47604f92ce5967109777fa0391694d85b7c7bad1f67a33a9a1f5fe9b20e"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-21/part-0.parquet",
+          "rows": 131712,
+          "bytes": 3048094,
+          "sha256": "66952ee83a004335f80a6e76d460bfbc4edaed11ab10fb6f41a951d803070de7"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-22/part-0.parquet",
+          "rows": 144000,
+          "bytes": 3563400,
+          "sha256": "eb46bfc58392f12a02c9e1f8d5b0eb305f2ca977fe272eb1623b14b004a80398"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-23/part-0.parquet",
+          "rows": 192000,
+          "bytes": 4047665,
+          "sha256": "1a5519147e11b2a05a850c1b8ae4395d8a8b11679e8ffe5d73d9eafb33ddd8d0"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-24/part-0.parquet",
+          "rows": 191488,
+          "bytes": 4288616,
+          "sha256": "45eecbf4d873d84fd6a74472aafc7271c04e92ddb22b8c3da58d43909089578b"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-25/part-0.parquet",
+          "rows": 207000,
+          "bytes": 4562557,
+          "sha256": "9103d2d2c7f03b94db8e6892155ea597c76cd23795c3673baa213acb0e8001ec"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-28/part-0.parquet",
+          "rows": 190164,
+          "bytes": 4471234,
+          "sha256": "cfb98a59d136da9edba3856cb57b7f1bb75ef24012b9199a7d79eb6acaa6a262"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-29/part-0.parquet",
+          "rows": 216000,
+          "bytes": 4941317,
+          "sha256": "c84d3ed1f8c37e6b01b36d9879aea8bbd75d24b5041ef676981fe5981620f1f3"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-09-30/part-0.parquet",
+          "rows": 160500,
+          "bytes": 3810971,
+          "sha256": "d10174596f7fafe3efb2abd14bf67ad0bd16df10b5b7f897c98715c2a6f3459e"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-01/part-0.parquet",
+          "rows": 156006,
+          "bytes": 3776049,
+          "sha256": "ab9c07fd2a273094efe62ef476228adcfc794999c1a5ea6165e47a9699530a78"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-05/part-0.parquet",
+          "rows": 156832,
+          "bytes": 3521619,
+          "sha256": "47becdb7b0b4c2c105ad27e6f497ea3a1c1baf81a473ad883f94a02ddc419cbd"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-06/part-0.parquet",
+          "rows": 157992,
+          "bytes": 3752190,
+          "sha256": "d1ee982edcddde45e775cacce7c41d207e4f8b85b66d4032537f00ecf3e44c7b"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-07/part-0.parquet",
+          "rows": 145584,
+          "bytes": 3409684,
+          "sha256": "d7dd17d07e41dd1db617c77812b2b0de3bb11dea9726402d4567becf59afc5de"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-08/part-0.parquet",
+          "rows": 146232,
+          "bytes": 3426278,
+          "sha256": "e4b2c4e33a56fec2486f7fa5f59ab64d24bc6feb37df9a24bb66b63d6f654340"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-09/part-0.parquet",
+          "rows": 146016,
+          "bytes": 3503813,
+          "sha256": "d3052f7098e9d0c0eadc260fefa79f7073290490aa28a54721962adda82dea3c"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-12/part-0.parquet",
+          "rows": 146232,
+          "bytes": 3470139,
+          "sha256": "216d9fe749f12edb6d1ace25a55161513aa01dc24f2c126a227b9dcbd6e498f4"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-13/part-0.parquet",
+          "rows": 116424,
+          "bytes": 2854164,
+          "sha256": "65a96853bfc23e014e1331ca35155f98a000983434139a2907ffc1c8d56308b5"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-14/part-0.parquet",
+          "rows": 137904,
+          "bytes": 3473697,
+          "sha256": "93e4ab254aa89b5ee33c7e28fc212ce4fb8cecc7b1c5665c4b533417fb9da2aa"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-15/part-0.parquet",
+          "rows": 115648,
+          "bytes": 3087546,
+          "sha256": "3c85a006e03f1fc0c5e6db488882f9547fc9621a995ac5c4ebc09d0f0efac885"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-16/part-0.parquet",
+          "rows": 141232,
+          "bytes": 3538002,
+          "sha256": "bf85b991305864e2dfa0c2f0fededffdb6f8b950d4547c3a9648404bd2741dcc"
+        },
+        {
+          "path": "option_snapshot_rows/trade_date=2026-10-19/part-0.parquet",
+          "rows": 131872,
+          "bytes": 3502608,
+          "sha256": "2d9e8540829ed6e35bd66f70987a9339d40d63043689e2f8ff8ece99468baf20"
+        }
+      ]
+    }
+  },
+  "aggregate_totals": {
+    "total_files": 252,
+    "total_rows": 17528006,
+    "total_bytes": 399732446,
+    "total_mb": 381.21
+  }
+}
