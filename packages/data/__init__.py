@@ -14,6 +14,10 @@
    - DatasetManifest: Value object recording dataset versions, file lists, row counts, and checksums.
    - IndiaVixCandle: Canonical data class for India VIX index candles adhering to QUANTVIEW_DATA_SPEC §4.10.
    - parse_india_vix_candle: Function converting raw candle arrays into validated IndiaVixCandle instances.
+   - RateBudgetManager: Thread-safe REST rate limiter prioritizing live market snapshots over backfill.
+   - BudgetConfig: Configuration dataclass for REST quota thresholds and timing.
+   - RequestPriority: Priority level enum (HIGH for live snapshots, LOW for backfill).
+   - BudgetExhaustedError: Exception raised when budget request times out.
 
 4. Final output of the file:
    - Exported data contracts, dataset manifests, and validated market data domain models.
@@ -24,6 +28,22 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 from packages.domain import UtcEpochSec
+from packages.data.budget import (
+    RateBudgetManager,
+    BudgetConfig,
+    RequestPriority,
+    BudgetExhaustedError,
+)
+
+__all__ = [
+    "DatasetManifest",
+    "IndiaVixCandle",
+    "parse_india_vix_candle",
+    "RateBudgetManager",
+    "BudgetConfig",
+    "RequestPriority",
+    "BudgetExhaustedError",
+]
 
 
 class DatasetManifest:

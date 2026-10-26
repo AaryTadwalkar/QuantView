@@ -1,20 +1,13 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
-## Current State of the Union (2026-10-24)
-- **Phase 5 & Stage 1 Gate G1 Closure (100% COMPLETE - ALL PASS):**
-  - **Stage 1 (Historical Data Foundation) Officially Closed:** All 12 milestones (`M3-01` to `M3-12`) passed with zero defects. Formal Gate G1 audit report: [`reports/gate_g1_audit_report.md`](file:///c:/Algo/quantview/reports/gate_g1_audit_report.md); evidence: [`reports/gate_g1_validation_results.json`](file:///c:/Algo/quantview/reports/gate_g1_validation_results.json).
-  - **Active Production Lake (`Data/lake/` - Manifest Version 3 Live):**
-    * 784 Parquet files, 38,753,287 records, 620.00 MB active, partitioned, and verified bit-for-bit.
-    * 7 Canonical Datasets: `option_candles` (20.33M), `underlying_candles` (437K), `india_vix` (167K), `option_snapshot_captures` (82K), `option_snapshot_rows` (17.45M), `derived_candles` (287K across 3m, 5m, 15m, 30m, 1h, 4h), `data_eligibility` (1,161 sessions).
-    * Manifest Version 3 active: [`Data/lake/manifest_active.json`](file:///c:/Algo/quantview/Data/lake/manifest_active.json); Manifest v2 archived: `manifest_v2_archive.json`.
-  - **8 DuckDB Analytical Views Active in `Data/lake/quantview.duckdb`:**
-    * `v_candles_underlying`, `v_candles_options`, `v_candles_vix`, `v_snapshots_captures`, `v_snapshots_rows`, `v_snapshots_reconstructed_chain`, `v_candles_derived`, `v_data_eligibility`. All queries $\le 50\text{ms}$.
-  - **Tasks M3-10, M3-11, M3-12 Satisfied:**
-    * `M3-10`: Parquet profile & DuckDB benchmarks verified (`ops/evidence/M3-10.md`).
-    * `M3-11`: Exploratory strategy feasibility spike verified on 5m trend & 0-DTE straddle (`ops/evidence/M3-11.md`).
-    * `M3-12`: Supporting datasets audited (`ops/evidence/M3-12.md`).
-- **Automated Verification:** 56/56 unit tests PASS in 3.16s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects).
-- **Next Step:** Stage 2 — Live Market Stream & Collector Integration (`M2-01` to `M2-11`, Gate G0).
+## Current State of the Union (2026-10-26)
+- **Stage 2 In Progress — Tasks M2-01, M2-02, M2-06 Completed & Tested (100% PASS):**
+  - **Task M2-01 (REST Raw-First Snapshot Collector):** `RawSnapshotWriter`, `UpstoxSnapshotAdapter`, and `SnapshotCollectorService` implemented. Guarantees raw byte gzip + fsync durability and companion manifest before parsing. 100% raw preservation on decoder parse errors. Evidence: [`ops/evidence/M2-01.md`](file:///c:/Algo/quantview/ops/evidence/M2-01.md).
+  - **Task M2-02 (Snapshot REST Rate-Limit Budget & Priority):** `RateBudgetManager` in `packages/data/budget.py`. Configurable quotas (3 req/sec, 150 req/min), high-priority snapshot reservation, market-hours backfill pausing, 429 adaptive cooldown. Evidence: [`ops/evidence/M2-02.md`](file:///c:/Algo/quantview/ops/evidence/M2-02.md).
+  - **Task M2-06 (Pre-Market Token Check & Dead-Man Heartbeat):** `TokenManager` (native JWT parsing, 08:45 AM check, `WAITING_FOR_TOKEN` transition), `HeartbeatMonitor` (atomic fsync pulses in `Data/raw/telemetry/`, lag $\le 60\text{s}$ alerts), and CLI tool `tools/ops/check_token_readiness.py`. Evidence: [`ops/evidence/M2-06.md`](file:///c:/Algo/quantview/ops/evidence/M2-06.md).
+- **Active Lake & Historical Foundation (Stage 1 Closed):** 784 Parquet files, Manifest v3 active, 8 DuckDB views active ($\le 50\text{ms}$).
+- **Automated Verification:** 88/88 automated unit tests PASS in 2.20s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects). Package boundaries 100% clean.
+- **Next Step:** Task M2-03 (WebSocket raw segment writer) and Task M2-04 (V3 Protobuf decoder scaffold).
 
 ## Canonical Architectural Contracts & Modes
 - **Operating Modes:** `RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`.

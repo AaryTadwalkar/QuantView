@@ -135,3 +135,21 @@
   - **Audit Deliverables:** [`reports/gate_g1_audit_report.md`](file:///c:/Algo/quantview/reports/gate_g1_audit_report.md) and [`reports/gate_g1_validation_results.json`](file:///c:/Algo/quantview/reports/gate_g1_validation_results.json).
   - **Automated Verification:** 56/56 automated unit tests PASS in 3.16s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects).
   - Next: Stage 2 — Live Market Stream & Collector Integration (`M2-01` to `M2-11`, Gate G0).
+- **[2026-10-26] Stage 2 — Live Market Stream & Collector Integration (Tasks M2-01, M2-02, M2-06 COMPLETE - ALL PASS):**
+  - **Task M2-01 (REST Raw-First Snapshot Collector):**
+    * Implemented `services/collector_snapshot/raw_writer.py` (`RawSnapshotWriter`, `RawCaptureRecord`) guaranteeing raw gzip write, hardware `fsync()`, and self-describing manifest before parsing.
+    * Implemented `services/collector_snapshot/adapter.py` (`UpstoxSnapshotAdapter`) with exponential backoff + jitter on 429/5xx, fail-closed on 401/403, and token redaction.
+    * Implemented `services/collector_snapshot/collector.py` (`SnapshotCollectorService`) with dynamic expiry resolution and fail-safe decoder isolation (100% raw byte retention on corrupt JSON).
+    * Delivered 12 unit tests in `tests/unit/test_collector_snapshot.py` and evidence report [`ops/evidence/M2-01.md`](file:///c:/Algo/quantview/ops/evidence/M2-01.md) (`Status = TESTED`).
+  - **Task M2-02 (Snapshot REST Rate-Limit Budget & Priority):**
+    * Implemented `packages/data/budget.py` (`RateBudgetManager`, `BudgetConfig`, `RequestPriority`) with thread-safe sliding window tracking (1s and 60s).
+    * Enforced market-hours detection (09:15-15:30 IST), snapshot capacity reservation, market-hours backfill pause/throttle interface, and adaptive 429 cooldown.
+    * Re-exported cleanly from `packages/data/__init__.py` without broker SDK leaks.
+    * Delivered 10 unit tests in `tests/unit/test_rate_budget.py` and evidence report [`ops/evidence/M2-02.md`](file:///c:/Algo/quantview/ops/evidence/M2-02.md) (`Status = TESTED`).
+  - **Task M2-06 (Pre-Market Token Check & Dead-Man Heartbeat):**
+    * Implemented `services/collector_snapshot/token_manager.py` (`TokenManager`) with native JWT expiry decoding, 08:45 AM pre-flight gate, `WAITING_FOR_TOKEN` state transition, and alert dispatching.
+    * Implemented `services/collector_snapshot/heartbeat.py` (`HeartbeatMonitor`, `HeartbeatEmitter`) with atomic fsync JSON telemetry under `Data/raw/telemetry/` and dead-man switch alerting for lag $> 60\text{s}$.
+    * Implemented standalone CLI tool `tools/ops/check_token_readiness.py` with exit codes 0 (valid) / 1 (waiting/expired).
+    * Delivered 10 unit tests in `tests/unit/test_token_and_heartbeat.py` and evidence report [`ops/evidence/M2-06.md`](file:///c:/Algo/quantview/ops/evidence/M2-06.md) (`Status = TESTED`).
+  - **Automated Verification:** 88/88 automated unit tests PASS in 2.20s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks). All package boundaries intact. Active Lake remains 100% immutable.
+  - Next: Tasks M2-03 (WebSocket raw segment writer) and M2-04 (Protobuf decoder scaffold).
