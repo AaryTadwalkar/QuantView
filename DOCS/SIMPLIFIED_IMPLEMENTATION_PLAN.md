@@ -20,25 +20,30 @@
 
 ## 2. Where Are We Today? (Current Status)
 
-We have successfully completed **Stage 0** and have entered **Stage 1**:
+We have successfully completed **Stage 0**, **Stage 1**, and **Stage 2**, and have entered **Stage 3**:
 
 ```
-[ Stage 0: Setup & Safety ] ───► [ Stage 1: Historical Data ] ───► [ Stage 2: Strategy Engine ] ───► ...
-        ✅ COMPLETED                   ⏳ IN PROGRESS (Current)                (Next Up)
-  • Repository layout (19 dirs)        • Expired option candle tooling
-  • Automated CI & linters             • 2025-01-02 Pilot Verified (41,496 bars)
-  • M0 data audit & backups            • 95 authoritative expiries from Upstox API
-  • Upstox token authentication        • Bulk 2025-2026 backfill ready
+[ Stage 0: Setup & Safety ] ───► [ Stage 1: Historical Lake ] ───► [ Stage 2: Live Collectors ] ───► [ Stage 3: Strategy Engine & Ledger ]
+        ✅ COMPLETED                      ✅ COMPLETED                       ✅ COMPLETED                     ⏳ IN PROGRESS (Current Focus)
+  • Repository layout (19 dirs)        • Full Lake Parquet (784 files)    • Live WebSocket Client (V3)       • Domain Primitives & Exact Money
+  • Automated CI & linters             • 446 sessions, 20.33M bars        • Raw-first segment writer         • Golden Test Oracle (9 scenarios)
+  • M0 data audit & backups            • 8 DuckDB analytical views        • REST snapshot collector          • Effective-dated fee schedules
+  • Upstox token authentication        • Multi-timeframe derived bars     • Single-owner kernel lease        • Event-sourced ledger & projections
+  • 127/127 tests PASS (4.75s)         • Gate G1 Certified (0 defects)    • Gate G0 Certified (0 defects)    • Gate G2a Deterministic Backtests
 ```
 
 * **M0 Data Safety & Inventory:** Complete. Existing 82,000+ live PC B snapshots and historical index candles are fully audited and backed up.
-* **M1 Scaffolding & CI:** Complete. All packages (`packages/data`, `services/`, `apps/web`) and CI pipelines pass with 35/35 automated unit tests.
-* **Phase 1 Pilot Ingestion (`2025-01-02`):** Fully executed and audited.
-  * Dispatched 119 requests for 120 candidate contracts ($\pm 1,500$ points around Spot Open 23,783.00).
-  * Staged **41,496 continuous 1-minute option candles** with 0 nulls, 0 duplicate rows, and 0 API errors.
-  * Staged CSV is chronologically sorted ascending from `09:15:00` to `15:29:00`.
-* **Authoritative Expiry Calendar:** Direct query to `GET /v2/expired-instruments/expiries` established the true vendor schedule of **95 expiries** (Jan 2025 – Oct 2026), capturing the historical regulatory shift from Thursday to Tuesday on September 2, 2025.
-* **Immediate Next Action:** Execute the automated bulk historical options backfill from **January 1, 2025 through October 2026** across all 95 expiries, stage them into daily CSVs, and publish them to canonical Parquet lake storage.
+* **M1 Scaffolding & CI:** Complete. All packages (`packages/data`, `services/`, `apps/web`) and CI pipelines pass with 127/127 automated unit tests.
+* **Stage 1 Historical Data Foundation (`Gate G1`):** Complete & Certified PASS (`reports/stage1_closure/gate_g1_audit_report.md`).
+  * 784 Parquet files (38.75M rows, 620 MB) active under `manifest_active.json` v3.
+  * 20,332,421 option bars (2025–2026) + 437,008 underlying 1m bars (2022–2026) queryable via `Data/lake/quantview.duckdb`.
+  * Multi-timeframe derived candles (3m, 5m, 15m, 30m, 1h, 4h) and data eligibility matrix (1,161 sessions).
+* **Stage 2 Live Market Streaming (`Gate G0`):** Complete & Certified PASS (`reports/stage2_closure/gate_g0_audit_report.md`).
+  * All 11 tasks `M2-01` through `M2-11` verified.
+  * Live WebSocket raw segment writer (`QVWS` framing, batched fsync, crash recovery) and V3 Protobuf quote decoder.
+  * Single-owner kernel lease (`SingleOwnerLease`), REST snapshot collector, 08:45 pre-market gate, heartbeat telemetry.
+  * Live session capture on 2026-10-26 (134,003 ticks, 86 snapshots, 100% cryptographic reconciliation).
+* **Immediate Current Focus (Stage 3 — `Gate G2a`):** Build the deterministic single-leg long CE/PE backtesting engine, point-in-time contract selector, versioned effective-dated fee schedule, and event-sourced integer-paise financial ledger.
 
 ---
 
@@ -60,7 +65,8 @@ flowchart TD
     S8 --> S9["Stage 9: Live Broker Execution (Phase 9 / Gate 05)"]
 
     style S0 fill:#2e7d32,color:#fff,stroke:#1b5e20
-    style S1 fill:#f57f17,color:#fff,stroke:#e65100
+    style S1 fill:#2e7d32,color:#fff,stroke:#1b5e20
+    style S2 fill:#2e7d32,color:#fff,stroke:#1b5e20
     style S3 fill:#1565c0,color:#fff,stroke:#0d47a1
 ```
 
@@ -83,9 +89,9 @@ flowchart TD
 
 ---
 
-### Stage 1: Historical Market Data Foundation (Current Work Focus)
+### Stage 1: Historical Market Data Foundation
 * **Milestone / Gate:** `M3` $\to$ **Gate `G1`**
-* **Status:** **IN PROGRESS (Phase 1 Pilot Cleared; Bulk Import Ready)**
+* **Status:** **COMPLETED & CERTIFIED PASS (Gate G1)**
 * **What this stage is in simple words:**
   Downloading and organizing high-resolution 1-minute historical data for both the NIFTY index and all NIFTY option strikes from January 1, 2025 to the present day. Converting messy API responses into clean, high-speed analytical files.
 * **What we build in this stage:**
@@ -102,7 +108,7 @@ flowchart TD
 
 ### Stage 2: Live Market Data Collection & Streaming
 * **Milestone / Gate:** `M2` $\to$ **Gate `G0`**
-* **Status:** **PENDING STAGE 1**
+* **Status:** **COMPLETED & CERTIFIED PASS (Gate G0)**
 * **What this stage is in simple words:**
   Connecting QuantView directly to the live Upstox WebSocket market feed during trading hours (09:15 to 15:30) to capture live price ticks, quotes, and market depth without interrupting the existing PC B snapshot collector.
 * **What we build in this stage:**
@@ -118,7 +124,7 @@ flowchart TD
 
 ### Stage 3: Single-Leg Backtesting Engine & Integer-Paise Ledger
 * **Milestone / Gate:** `M4a` $\to$ **Gate `G2a`**
-* **Status:** **PENDING STAGE 1**
+* **Status:** **IN PROGRESS (Current Work Focus - Gate G2a)**
 * **What this stage is in simple words:**
   Building the core simulation engine. It runs a strategy through historical 1-minute bars minute by minute. If the strategy says "Buy ATM Call", the engine checks the actual historical option price, simulates a realistic fill with slippage and taxes, and tracks the profit/loss down to the exact paisa.
 * **What we build in this stage:**

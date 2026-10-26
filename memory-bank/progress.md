@@ -195,3 +195,41 @@
     * `tools/qv_check.py lint DOCS` PASS (0 defects).
     * `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
     * **Stage 2 (M2-01 to M2-11) is 100% COMPLETE.** Stage 3 planning scheduled for next session.
+- **[2026-10-27] Stage 3 Completion & Gate G2a Certification (100% Complete & Verified):**
+  - **Phase 3A (`M4-01` Complete & Verified):**
+    * Implemented `packages/domain/money.py`: `Paise = NewType("Paise", int)`, `to_paise()`, `from_rupees()`, strict `PriceUnquantizableError` (`PRICE_NOT_QUANTIZABLE`). Zero binary float in monetary paths.
+    * Implemented `packages/domain/quantizer.py`: `TickQuantizer` adverse tick rounding (BUY rounds up, SELL rounds down) using pure integer arithmetic.
+    * Implemented `packages/domain/timestamps.py`: `UtcEpochSec` with aware `Asia/Kolkata` projection and session boundary detection (09:15-15:30 IST).
+    * Implemented `packages/domain/contracts.py`: Immutable `ContractIdentifier(NamedTuple)` and canonical enums.
+    * 19/19 unit tests passing in `tests/unit/test_domain_exact_money.py`; delivered [`ops/evidence/M4-01.md`](file:///c:/Algo/quantview/ops/evidence/M4-01.md).
+  - **Phase 3B (`M4-13` & `M4-02` Complete & Verified):**
+    * Hand-calculated and froze 9 canonical scenarios in [`tests/fixtures/golden_scenarios.py`](file:///c:/Algo/quantview/tests/fixtures/golden_scenarios.py). Fundamental ledger balance equation verified on every scenario: $\text{Cash} + \text{Long Market Value} == \text{Capital} + \text{Gross Realized} + \text{Unrealized} - \text{Total Fees}$.
+    * Automated oracle verification: 7/7 tests passing in `tests/unit/test_engine_golden_scenarios.py`; delivered [`ops/evidence/M4-13.md`](file:///c:/Algo/quantview/ops/evidence/M4-13.md).
+  - **Phase 3C (`M4-06` & `M4-04` Complete & Verified):**
+    * Implemented `packages/ledger/fees.py`: Versioned fee schedule engine (`UPSTOX_2025_OCT`, `UPSTOX_2026_MAR`, `UPSTOX_2026_APR`), Union Budget 2026 STT (0.15%), NSE FA73061 turnover charge (0.03553%), and `ROUND_HALF_UP` statutory rounding. 10/10 tests passing in `tests/unit/test_fee_schedule.py`, 100% agreement with all 17 golden fills; delivered [`ops/evidence/M4-06.md`](file:///c:/Algo/quantview/ops/evidence/M4-06.md).
+    * Implemented `packages/engine/selector.py`: Point-in-Time Contract Selector eliminating hardcoded grids. ATM, ITM_k, OTM_k, EXACT strike policies, OptionType moneyness, zero silent substitution, DuckDB data lake integration (`DuckDbContractMaster`). 8/8 tests passing in `tests/unit/test_contract_selector.py`; delivered [`ops/evidence/M4-04.md`](file:///c:/Algo/quantview/ops/evidence/M4-04.md).
+  - **Phase 3D (`M4-07` & `M4-11` Complete & Verified):**
+    * Implemented `packages/ledger/events.py`, `ledger.py`, `projections.py`: 15 canonical event types, rebuildable projections verifying balance equation without double-counting fees, and `LedgerWriter` Parquet round-trip persistence preserving initial capital in PyArrow metadata. 7/7 tests pass in `tests/unit/test_financial_ledger.py`; delivered [`ops/evidence/M4-07.md`](file:///c:/Algo/quantview/ops/evidence/M4-07.md).
+    * Implemented PostgreSQL / SQLite triggers and relational store `packages/db/` (`001_create_ledger_events.sql`, `ledger_repo.py`). Tested UPDATE/DELETE trigger aborts and unique idempotency constraints. 5/5 tests pass in `tests/integration/test_postgres_ledger.py`; delivered [`ops/evidence/M4-11.md`](file:///c:/Algo/quantview/ops/evidence/M4-11.md).
+  - **Phase 3E (`M4-03`, `M4-05`, `M4-22` Complete & Verified):**
+    * Implemented `packages/engine/clock.py`: SimulationClock generating 375 standard minutes (09:15-15:30 IST) with multi-timeframe close detection. 4/4 tests pass in `tests/unit/test_calendar_minute_loop.py`; delivered [`ops/evidence/M4-03.md`](file:///c:/Algo/quantview/ops/evidence/M4-03.md).
+    * Implemented `packages/engine/execution.py`, `orders.py`, `positions.py`: IntrabarFillEngine with 4-step sequence (`ENGINE §4`), `STOP_FIRST` ambiguity resolution, zero-volume flat bar exclusion, stale-data force-exit (3x slippage penalty), causal 15:25 force-flat, final-bar 15:29 rejection (`NO_NEXT_BAR`), and pre-scheduled exit (`EOD_CLOSE_FILL`). 7/7 tests pass in `tests/unit/test_fill_engine_intrabar.py`; delivered [`ops/evidence/M4-05.md`](file:///c:/Algo/quantview/ops/evidence/M4-05.md) and [`ops/evidence/M4-22.md`](file:///c:/Algo/quantview/ops/evidence/M4-22.md).
+  - **Phase 3F (`M4-20`, `M4-12` Complete & Verified):**
+    * Implemented `packages/risk/`: RiskRules Pydantic schema and RiskPolicyEvaluator checking RK-01 (kill switch), RK-02 (trading window), RK-06 (freeze quantity 1,800), RK-03 (daily loss), RK-04 (max drawdown), RK-05 (max trade capital). 6/6 tests pass in `tests/unit/test_risk_evaluator.py`; delivered [`ops/evidence/M4-20.md`](file:///c:/Algo/quantview/ops/evidence/M4-20.md).
+    * Implemented `packages/strategies/`: StrategyRegistry with deterministic SHA-256 source code hashing and parameter validation. 4/4 tests pass in `tests/unit/test_strategy_registry.py`; delivered [`ops/evidence/M4-12.md`](file:///c:/Algo/quantview/ops/evidence/M4-12.md).
+  - **Phase 3G (`M4-18`, `M4-08` Complete & Verified):**
+    * Implemented `packages/engine/config.py`: 39-field EngineRunConfig schema strictly enforcing Invariant 14 (positive capital required with no default) and SHA-256 config hash. 6/6 tests pass in `tests/unit/test_run_config.py`; delivered [`ops/evidence/M4-18.md`](file:///c:/Algo/quantview/ops/evidence/M4-18.md).
+    * Implemented `tools/run_backtest.py`, `packages/engine/runner.py`, `manifest.py`: BacktestRunner CLI with --validate, --override, --output-dir, writing all 5 provenance artifacts (`manifest.json`, `metrics.json`, `ledger.parquet`, `trades.json`, `equity.json`). 5/5 tests pass in `tests/unit/test_backtest_runner.py`; delivered [`ops/evidence/M4-08.md`](file:///c:/Algo/quantview/ops/evidence/M4-08.md).
+  - **Phase 3H (`M4-15` Complete & Verified):**
+    * Implemented `packages/engine/metrics.py`: 22+ performance metrics and Bailey & López de Prado (2014) Deflated Sharpe Ratio (DSR) with daily frequency consistency and trial validity gating ($N < 2$ emits null with reason). 5/5 tests pass in `tests/unit/test_backtest_metrics_dsr.py`; delivered [`ops/evidence/M4-15.md`](file:///c:/Algo/quantview/ops/evidence/M4-15.md).
+  - **Phase 3I (`M4-09`, `M4-10`, `M4-21` Complete & Verified):**
+    * Implemented `packages/strategies/smoke.py`: `LongCETrendFollowing` and `LongPEMeanReversion`.
+    * Implemented `tests/integration/test_backtest_reproducibility.py`: Real DuckDB lake execution across 446 sessions, slippage sensitivity grid (0x..3x), capital feasibility sweep (₹10k..₹200k), 5-year synthetic benchmark (1,250 sessions in 0.28s), and 3-rerun byte-identical determinism (SHA-256 match). Delivered [`ops/evidence/M4-09.md`](file:///c:/Algo/quantview/ops/evidence/M4-09.md) and [`ops/evidence/M4-10.md`](file:///c:/Algo/quantview/ops/evidence/M4-10.md).
+    * Authored early margin and settlement research spike: [`reports/margin-settlement-evidence.md`](file:///c:/Algo/quantview/reports/margin-settlement-evidence.md) (`M4-21`).
+  - **Gate G2a Formal Certification:**
+    * Published formal Gate G2a audit report: [`reports/stage3_closure/gate_g2a_audit_report.md`](file:///c:/Algo/quantview/reports/stage3_closure/gate_g2a_audit_report.md).
+    * **87/87 tests pass under `pytest -m gate_g2a` in 6.29s.**
+    * **222/222 automated tests pass across full repository in 8.99s.**
+    * `tools/qv_check.py lint DOCS` PASS (0 defects).
+    * `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
+    * **GATE G2a IS OFFICIALLY CERTIFIED PASS.** Ready for Stage 4 (Gate G2b).

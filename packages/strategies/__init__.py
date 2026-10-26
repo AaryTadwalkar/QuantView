@@ -119,3 +119,29 @@ class Strategy(Protocol):
     def on_stop(self) -> None:
         """Called upon session completion to finalize internal state."""
         ...
+
+
+from packages.strategies.registry import (
+    StrategyRegistry,
+    StrategyRegistryEntry,
+    get_default_strategy_registry,
+)
+from packages.strategies.smoke import (
+    LongCETrendFollowing,
+    LongCETrendFollowingParams,
+    LongPEMeanReversion,
+    LongPEMeanReversionParams,
+)
+
+__all__ = [
+    "SignalAction",
+    "StrategySignal",
+    "Strategy",
+    "StrategyRegistry",
+    "StrategyRegistryEntry",
+    "get_default_strategy_registry",
+    "LongCETrendFollowing",
+    "LongCETrendFollowingParams",
+    "LongPEMeanReversion",
+    "LongPEMeanReversionParams",
+]
