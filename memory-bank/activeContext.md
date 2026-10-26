@@ -1,29 +1,31 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
-## Current State of the Union (2026-10-26 — Market Session Close & Post-Market Audit PASS)
-- **POST-MARKET SESSION CLOSURE & RECONCILIATION VERIFIED PASS:**
-  - Market closed cleanly at 15:35 Asia/Kolkata. All collector processes safely stopped.
-  - Executed automated forensic session reconciliation (`reconcile_session_directory('2026-10-26')`): Status = `PASS`, 0 unmatched segments, 0 orphan files, 0 checksum errors.
-  - Final session partial cleanly recovered and rotated to `.bin.gz` with cryptographic companion manifest.
-- **RECORDED MARKET DATA TOTALS FOR 2026-10-26:**
-  - **Live WebSocket Ticks**: 5 finalized compressed segments containing **134,003 decoded quotes** across Nifty 50 and active ATM $\pm 5$ option strikes with complete depth, volume, OI, and Option Greeks.
-  - **Full Option Chain Snapshots**: **86 complete option chain snapshots** (144 strikes each = 24,768 CE/PE rows) durably persisted in `Data/raw/upstox_rest/snapshots/trade_date=2026-10-26/`.
-- **OPERATIONAL TOOLING STATUS:**
-  - `tools/ops/dump_ws_segment.py`: Chronological sorting, full contract metadata enrichment (`trading_symbol`, `strike_price`, `option_type`, `expiry`), underlying Nifty 50 spot tracking (`underlying_spot_ltp`), all Option Greeks, market depth, and day/1m candle OHLC.
-  - `tools/ops/dump_snapshot.py`: Decompresses raw snapshots into terminal ladders or canonical Version 3 CSV.
-  - `tools/ops/run_collector_ws.py` & `tools/ops/run_collector_snapshot.py`: Built-in auto-shutdown at 15:35 IST active and verified.
+## Current State of the Union (2026-10-26 — Stage 2 Closed & Gate G0 Certified PASS)
+- **STAGE 2 IS 100% COMPLETE & GATE G0 CERTIFIED PASS:**
+  - All 11 Stage 2 milestones (`M2-01` through `M2-11`) are fully implemented, verified, and audited with zero defects.
+  - Formal Gate G0 closure reports published:
+    * [`reports/stage2_closure/gate_g0_audit_report.md`](file:///c:/Algo/quantview/reports/stage2_closure/gate_g0_audit_report.md)
+    * [`reports/stage2_closure/stage2_collector_audit.md`](file:///c:/Algo/quantview/reports/stage2_closure/stage2_collector_audit.md)
+  - Complete evidence reports delivered in [`ops/evidence/`](file:///c:/Algo/quantview/ops/evidence/) (`M2-01.md` through `M2-11.md`).
+- **DELIVERABLES COMPLETED & AUDITED:**
+  - `M2-01` to `M2-06`: Live WebSocket streaming, V3 Protobuf decoder, ATM discovery, single-owner lease, REST snapshot collection, 08:45 pre-market gate, dead-man heartbeat telemetry. Tested live on 2026-10-26 (134,003 ticks, 86 snapshots).
+  - `M2-07`: `services/backfill/service.py` (`ExpiredOptionBackfillService`, `BackfillCheckpointManager`) with rate budgeting and atomic checkpoints.
+  - `M2-08`: `ops/session-day-runbook.md` with complete 08:45-16:00 SOP, systemd units, and failure playbooks.
+  - `M2-09`: `tests/integration/test_collector_fault_injection.py` verifying fail-closed state across disk full, clock skew, duplicate lease, crash recovery, and token expiry.
+  - `M2-10`: `tools/lake/measure_feed_volume.py` and `reports/feed-volume.md` measuring 6.86:1 compression ratio, 7 ticks/sec, ~34.8 MB/session, and 512 GB SSD hardware headroom (> 2.5 yrs retention).
+  - `M2-11`: `ops/host_provisioning_runbook.md` and `tools/ops/sync_production_to_research.py` with unidirectional read-only pull and SHA-256 verification (no write-back path).
 - **TEST SUITE & CODE QUALITY VERIFIED:**
-  - 118/118 automated unit tests PASS (3.43s).
+  - **127/127 automated unit and integration tests PASS** in 9.86s.
   - `tools/qv_check.py lint DOCS` PASS (0 defects).
   - `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
-- **Next Step:** Stage 2 Task M2-07 (Post-market reconciliation and ingestion into historical lake).
+- **NEXT PHASE:** Stage 3 (Data Audit & Canonical Lake Foundation) will be planned and initiated in the next session.
 
 ## Canonical Architectural Contracts & Modes
 - **Operating Modes:** `RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`.
 - **Allocation Modes:** `ISOLATED`, `PORTFOLIO` (`ADR-038`).
 - **Causal Availability Model:** `available_at = bar_end` under `HISTORICAL_ASSUMED_AVAILABILITY` for backtests; `available_at = finalized_at = bar_end + grace_period` in live streams. Invariant: `feature.available_at <= decision_time`.
 - **Risk Catalogue (`RK-01–RK-26`):** `RK-06` (hard freeze limit) vs `RK-26` (advisory lot ceiling).
-- **Release Gates:** Phase 7 `GATE-04` ($\ge 10$ paper sessions) vs Phase 9 `GATE-05` ($\ge 30$ paper sessions, $\le 1\text{ paise}$ fee reconciliation, live capital authorization).
+- **Release Gates:** Gate G0 (Collectors: PASS), Gate G1 (Data Foundation: PASS), Phase 7 `GATE-04` ($\ge 10$ paper sessions) vs Phase 9 `GATE-05` ($\ge 30$ paper sessions, $\le 1\text{ paise}$ fee reconciliation, live capital authorization).
 
 ## 4-Tier Document Hierarchy (`ADR-007`, `SOURCE_OF_TRUTH_INDEX.md`)
 1. **Tier 1 (Authority):** `ADR_REGISTER.md` (`ADR-001–ADR-041`, where `status == OWNER_APPROVED`).

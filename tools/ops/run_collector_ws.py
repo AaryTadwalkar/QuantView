@@ -7,15 +7,19 @@
 2. Overall design:
    Coordinates safe command-line startup:
      - Pre-flight Check: Calls TokenManager to assert active valid JWT token before network work.
+     - Graceful Market Hours Handling:
+       * Weekend check: Informs operator and exits cleanly.
+       * Pre-market check (< 09:15 IST): Waits patiently in responsive countdown sleep without crashing.
+       * Post-market check (>= 15:35 IST): Informs operator that session ended and exits cleanly.
      - Single Owner Enforcement: Acquires kernel file lock; terminates if another collector runs.
-     - Subscription Setup: Configures SubscriptionManager with instruments and requested feed mode.
-     - Dynamic ATM Discovery: Resolves ATM ± K strike options for active weekly/monthly expiry.
+     - Dynamic ATM Discovery: Resolves ATM ± K strike options for active weekly/monthly expiry at market open.
      - Live Streaming: Runs asyncio loop streaming binary WebSocket frames to disk with batched fsync.
      - Market-Close Auto-Shutdown: Monitors Asia/Kolkata session timing (15:35 IST) to terminate cleanly.
      - Signal Handling: Traps SIGINT/SIGTERM to ensure clean buffer flush, segment rotation, and lock release.
 
 3. Elements in the file:
    - setup_logging(): Configures stdout logging format.
+   - wait_for_market_open(): Responsive pre-market sleep until 09:15:00 IST.
    - resolve_atm_option_keys(): Discovers ATM ± K option strikes for the active expiry.
    - market_close_watchdog(): Asyncio monitor stopping client at market close.
    - main(): CLI parser and asyncio entrypoint function.
@@ -32,6 +36,7 @@ import os
 from pathlib import Path
 import signal
 import sys
+import time
 from typing import Any, Dict, List, Optional, Tuple
 import uuid
 import zoneinfo
@@ -74,6 +79,59 @@ def setup_logging(verbose: bool = False) -> None:
         format="%(asctime)s [%(levelname)s] [%(name)s] %(message)s",
         datefmt="%Y-%m-%dT%H:%M:%S%z",
     )
+
+
+def wait_for_market_open(market_open_time: dt_time) -> bool:
+    """
+    1. The use of function:
+       Checks if NSE market is open; if pre-market (< 09:15 IST), waits patiently in loop.
+
+    2. How does the specific function work:
+       - Evaluates current time in Asia/Kolkata timezone.
+       - If current time is earlier than market_open_time, prints countdown message and sleeps in 5s increments.
+       - Returns True once market open boundary is reached, or False if interrupted by user.
+
+    3. Concepts used in the function:
+       Pre-market scheduling, responsive polling, graceful non-crash operator UX.
+
+    4. Places where this function is imported and used:
+       Called in main() before opening WebSocket connections.
+
+    5. Final output of the function, before and after:
+       Before: Early start. After: Execution synchronized with exchange open time.
+    """
+    now_ist = datetime.now(KOLKATA_TZ)
+    if now_ist.time() >= market_open_time:
+        return True
+
+    target_today = now_ist.replace(hour=market_open_time.hour, minute=market_open_time.minute, second=market_open_time.second, microsecond=0)
+    delta_secs = max(0, int((target_today - now_ist).total_seconds()))
+    hours = delta_secs // 3600
+    mins = (delta_secs % 3600) // 60
+    print(f"\n[PRE-MARKET WAIT] Current time is {now_ist.strftime('%H:%M:%S')} IST.")
+    print(f"NSE market opens at {market_open_time.strftime('%H:%M')} IST (in {hours}h {mins}m).")
+    print("Waiting patiently for market open... (Press Ctrl+C to cancel)\n")
+
+    try:
+        last_logged = -1
+        while True:
+            now = datetime.now(KOLKATA_TZ)
+            if now.time() >= market_open_time:
+                print(f"\n[MARKET OPEN] Current time is {now.strftime('%H:%M:%S')} IST. Market session is now LIVE!")
+                return True
+
+            secs_left = max(0, int((target_today - now).total_seconds()))
+            if secs_left <= 0:
+                print(f"\n[MARKET OPEN] Current time is {now.strftime('%H:%M:%S')} IST. Market session is now LIVE!")
+                return True
+
+            if secs_left != last_logged and (secs_left % 60 == 0 or secs_left <= 10):
+                print(f"[PRE-MARKET] Time until market open: {secs_left // 60}m {secs_left % 60}s ({now.strftime('%H:%M:%S')} IST)")
+                last_logged = secs_left
+            time.sleep(min(5.0, max(1.0, float(secs_left))))
+    except KeyboardInterrupt:
+        print("\nPre-market wait cancelled by operator.")
+        return False
 
 
 def resolve_atm_option_keys(
@@ -205,8 +263,9 @@ def main() -> None:
        Main CLI entrypoint executing live Upstox WebSocket data collection.
 
     2. How does the specific function work:
-       - Parses command-line arguments (--token, --mode, --instruments, --raw-root, --market-close-time).
+       - Parses command-line arguments (--token, --mode, --instruments, --raw-root, --market-open-time, --market-close-time).
        - Validates token readiness via TokenManager.
+       - Performs market hours check (weekend check, pre-market wait until 09:15, post-market exit).
        - Initializes UpstoxWebSocketClient with SingleOwnerLease, SubscriptionManager, and RawSegmentWriter.
        - Launches market_close_watchdog to trigger clean stop at 15:35 IST.
        - Runs asyncio loop until interrupted by user (Ctrl+C) or market close.
@@ -231,7 +290,9 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="Capture exactly one live data frame to verify pipeline and exit")
     parser.add_argument("--quiet", action="store_true", help="Disable real-time tick printing to console")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose debug logging")
+    parser.add_argument("--market-open-time", type=str, default="09:15", help="Market open time in Asia/Kolkata (HH:MM, default: 09:15)")
     parser.add_argument("--market-close-time", type=str, default="15:35", help="Market close cutoff time in Asia/Kolkata (HH:MM, default: 15:35)")
+    parser.add_argument("--no-market-hours-check", action="store_true", help="Bypass market hours check (for manual testing/debug)")
     parser.add_argument("--no-market-close-stop", action="store_true", help="Disable automatic clean shutdown at market close")
 
     args = parser.parse_args()
@@ -253,12 +314,45 @@ def main() -> None:
         sys.exit(1)
 
     print(f"Token Readiness: PASS (Expires: {readiness.expires_at_utc})")
-
-    # After readiness check, extract the actual resolved token from TokenManager (which loaded .env).
-    # This ensures the WebSocket client receives the real token string even when CLI --token was omitted.
     resolved_token = token_mgr.token or token
 
-    # Step 2: Initialize components
+    # Step 2: Market hours evaluation
+    try:
+        parts_open = [int(p) for p in args.market_open_time.split(":")]
+        open_time = dt_time(hour=parts_open[0], minute=parts_open[1])
+    except Exception:
+        open_time = dt_time(hour=9, minute=15)
+
+    try:
+        parts_close = [int(p) for p in args.market_close_time.split(":")]
+        close_time = dt_time(hour=parts_close[0], minute=parts_close[1])
+    except Exception:
+        close_time = dt_time(hour=15, minute=35)
+
+    now_ist = datetime.now(KOLKATA_TZ)
+
+    if not args.no_market_hours_check and not args.dry_run:
+        # Weekend check
+        if now_ist.weekday() >= 5:
+            day_name = "Saturday" if now_ist.weekday() == 5 else "Sunday"
+            print(f"\n[MARKET CLOSED] Today is {day_name}. Indian equity derivatives market (NSE) is closed on weekends.")
+            print("Use --no-market-hours-check to bypass this check for testing. Exiting cleanly.")
+            return
+
+        # Post-market check
+        if now_ist.time() >= close_time:
+            print(f"\n[MARKET CLOSED] Current time {now_ist.strftime('%H:%M:%S')} IST is past market close ({args.market_close_time} IST).")
+            print("Today's session is already completed. Exiting cleanly without opening WebSocket connection.")
+            print("Use --no-market-hours-check to force execution. Exiting.")
+            return
+
+        # Pre-market wait check
+        if now_ist.time() < open_time:
+            can_proceed = wait_for_market_open(open_time)
+            if not can_proceed:
+                return
+
+    # Step 3: Initialize components
     raw_root = Path(args.raw_root) if args.raw_root else None
     conn_id = str(uuid.uuid4())
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")

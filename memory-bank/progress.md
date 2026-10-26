@@ -171,5 +171,27 @@
     * Enhanced `tools/ops/dump_ws_segment.py` with chronological timestamp sorting, full contract metadata enrichment (`trading_symbol`, `strike_price`, `option_type`, `expiry`), underlying Nifty 50 spot tracking (`underlying_spot_ltp`), all Option Greeks, market depth, and day/1m candle OHLC. Verified across 70,904 live quotes.
     * Added market-close auto-shutdown protections at 15:35 Asia/Kolkata across `tools/ops/run_collector_ws.py`, `tools/ops/run_collector_snapshot.py`, and deployed standalone background watchdog `tools/ops/market_close_watchdog.py`.
     * Completed full market session recording (2026-10-26): 134,003 live WebSocket ticks across 5 compressed segments (.bin.gz) and 86 full option chain snapshots (.json.gz). Forensic audit `reconcile_session_directory` confirmed 100% integrity (0 mismatches, 0 orphan files, 0 checksum errors).
-  - **Automated Verification:** 118/118 automated unit tests PASS in 3.43s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks). All package boundaries intact. Active Lake remains 100% immutable.
-  - Next: Live continuous session recording capture and Tasks M2-07 through M2-11.
+  - **Task M2-07 (Checkpointed Expired-Data Backfill):**
+    * Implemented `services/backfill/service.py` (`ExpiredOptionBackfillService`, `BackfillCheckpointManager`, `BackfillCheckpoint`). Enforces rate budget priorities (yielding on low capacity), idempotent skip of completed items, and atomic `.tmp` state saves.
+    * Delivered 4 unit tests in `tests/unit/test_backfill_service.py` and evidence report [`ops/evidence/M2-07.md`](file:///c:/Algo/quantview/ops/evidence/M2-07.md) (`Status = VERIFIED`).
+  - **Task M2-08 (Session-Day Runbook and Scheduled Jobs):**
+    * Authored comprehensive operations runbook [`ops/session-day-runbook.md`](file:///c:/Algo/quantview/ops/session-day-runbook.md) covering 08:45 pre-market gate, 09:14 stream launch, 09:15 snapshot loop, 15:35 auto-close, 15:36 reconciliation, and 16:00 backup.
+    * Defined systemd service and timer units for Linux hosts and emergency remediation playbooks.
+    * Delivered evidence report [`ops/evidence/M2-08.md`](file:///c:/Algo/quantview/ops/evidence/M2-08.md) (`Status = VERIFIED`).
+  - **Task M2-09 (Collector Fault-Injection Suite):**
+    * Implemented 5 fault injection tests in `tests/integration/test_collector_fault_injection.py`: disk-full fail-closed, clock jump monotonic sequencing, duplicate collector lease collision, process crash `.partial` recovery and quarantine, and token expiry gating.
+    * Delivered evidence report [`ops/evidence/M2-09.md`](file:///c:/Algo/quantview/ops/evidence/M2-09.md) (`Status = VERIFIED`).
+  - **Task M2-10 (Measure Live-Feed Volume and Storage Growth):**
+    * Implemented `tools/lake/measure_feed_volume.py` and published [`reports/feed-volume.md`](file:///c:/Algo/quantview/reports/feed-volume.md).
+    * Empirically measured: 6.86:1 compression ratio (85.4% space savings), 7 ticks/sec p50 rate, ~34.8 MB daily storage (~8.5 GB/year), confirming a 512 GB NVMe SSD provides > 2.5 years of retention.
+    * Delivered evidence report [`ops/evidence/M2-10.md`](file:///c:/Algo/quantview/ops/evidence/M2-10.md) (`Status = VERIFIED`).
+  - **Task M2-11 (Provision Production Linux Host and Read-Only Sync):**
+    * Delivered [`ops/host_provisioning_runbook.md`](file:///c:/Algo/quantview/ops/host_provisioning_runbook.md) and [`tools/ops/sync_production_to_research.py`](file:///c:/Algo/quantview/tools/ops/sync_production_to_research.py).
+    * Enforced unidirectional pull with SHA-256 manifest verification and zero write-back capability.
+    * Delivered evidence report [`ops/evidence/M2-11.md`](file:///c:/Algo/quantview/ops/evidence/M2-11.md) (`Status = VERIFIED`).
+  - **Gate G0 Clearance & Stage 2 Completion:**
+    * Published formal Gate G0 audit report [`reports/stage2_closure/gate_g0_audit_report.md`](file:///c:/Algo/quantview/reports/stage2_closure/gate_g0_audit_report.md) and technical audit [`reports/stage2_closure/stage2_collector_audit.md`](file:///c:/Algo/quantview/reports/stage2_closure/stage2_collector_audit.md).
+    * **127/127 automated unit and integration tests PASS in 9.86s.**
+    * `tools/qv_check.py lint DOCS` PASS (0 defects).
+    * `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
+    * **Stage 2 (M2-01 to M2-11) is 100% COMPLETE.** Stage 3 planning scheduled for next session.

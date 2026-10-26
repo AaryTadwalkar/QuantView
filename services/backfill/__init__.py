@@ -1,17 +1,25 @@
 """
 1. What this file does:
-   Defines the service boundary for historical data backfill orchestration.
+   Exposes the historical backfill service package for QuantView.
 
 2. Overall design:
-   The backfill service coordinates bounded, checkpointed downloads of underlying index candles
-   and expired option contracts/candles under explicit rate-limit budgets, writing raw gzipped
-   payloads to Data/raw/ before handoff to worker_data for staging.
+   Re-exports BackfillCheckpoint, BackfillCheckpointManager, and ExpiredOptionBackfillService.
 
 3. Elements in the file:
-   - Service metadata and lifecycle contract.
+   - __all__: Exported symbols.
 
 4. Final output of the file:
-   - Package interface for services.backfill.
+   - Clean package interface for services.backfill.
 """
 
-SERVICE_NAME = "backfill"
+from services.backfill.service import (
+    BackfillCheckpoint,
+    BackfillCheckpointManager,
+    ExpiredOptionBackfillService,
+)
+
+__all__ = [
+    "BackfillCheckpoint",
+    "BackfillCheckpointManager",
+    "ExpiredOptionBackfillService",
+]
