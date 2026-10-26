@@ -27,6 +27,7 @@ import os
 from pathlib import Path
 import signal
 import sys
+from typing import Any, Dict, List, Optional, Tuple
 import uuid
 
 # Standard QuantView repository bootstrap
@@ -67,6 +68,86 @@ def setup_logging(verbose: bool = False) -> None:
     )
 
 
+def resolve_atm_option_keys(
+    token: str,
+    underlying_key: str = "NSE_INDEX|Nifty 50",
+    atm_count: int = 2,
+    expiry_date: Optional[str] = None,
+) -> list:
+    """
+    1. The use of function:
+       Discovers ATM ± K strike option instrument keys for the active expiry.
+
+    2. How does the specific function work:
+       - Queries spot quote to identify current underlying price.
+       - Queries active option contracts from Upstox.
+       - Discovers nearest expiry date (or uses explicit expiry).
+       - Selects ATM strike and K strikes above and below ATM for both CE and PE.
+       - Returns list of (instrument_key, trading_symbol) tuples.
+
+    3. Concepts used in the function:
+       Dynamic option chain resolution, ATM discovery.
+
+    4. Places where this function is imported and used:
+       Called in main() when --atm-count is specified.
+
+    5. Final output of the function, before and after:
+       Before: Underlying only. After: List of tradable option instrument keys.
+    """
+    import requests
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+
+    # 1. Spot price
+    spot = 22650.0
+    try:
+        r_spot = requests.get(f"https://api.upstox.com/v2/market-quote/quotes?instrument_key={underlying_key}", headers=headers, timeout=5.0)
+        if r_spot.status_code == 200:
+            spot_data = r_spot.json().get("data", {})
+            for v in spot_data.values():
+                if "last_price" in v:
+                    spot = float(v["last_price"])
+                    break
+    except Exception:
+        pass
+
+    # 2. Contracts
+    contracts_url = f"https://api.upstox.com/v2/option/contract?instrument_key={underlying_key}"
+    if expiry_date:
+        contracts_url += f"&expiry_date={expiry_date}"
+    r_contracts = requests.get(contracts_url, headers=headers, timeout=8.0)
+    if r_contracts.status_code != 200:
+        return []
+
+    contracts = r_contracts.json().get("data", [])
+    if not contracts:
+        return []
+
+    expiries = sorted(list({c.get("expiry") for c in contracts if c.get("expiry")}))
+    active_expiry = expiry_date or (expiries[0] if expiries else None)
+    if not active_expiry:
+        return []
+
+    expiry_contracts = [c for c in contracts if c.get("expiry") == active_expiry]
+    distinct_strikes = sorted(list({float(c.get("strike_price")) for c in expiry_contracts if c.get("strike_price") is not None}))
+    if not distinct_strikes:
+        return []
+
+    atm_strike = min(distinct_strikes, key=lambda s: abs(s - spot))
+    atm_idx = distinct_strikes.index(atm_strike)
+    selected_strikes = set(distinct_strikes[max(0, atm_idx - atm_count) : min(len(distinct_strikes), atm_idx + atm_count + 1)])
+
+    selected = []
+    for c in expiry_contracts:
+        st = float(c.get("strike_price", 0))
+        if st in selected_strikes:
+            k = c.get("instrument_key")
+            sym = c.get("trading_symbol", k)
+            if k:
+                selected.append((k, sym))
+
+    return selected
+
+
 def main() -> None:
     """
     1. The use of function:
@@ -94,7 +175,9 @@ def main() -> None:
     parser.add_argument("--raw-root", type=str, default="", help="Root directory for raw ticks (default: Data/raw/upstox_ws)")
     parser.add_argument("--max-frames", type=int, default=None, help="Stop after capturing N frames (optional)")
     parser.add_argument("--timeout-sec", type=float, default=None, help="Stop after N seconds (optional)")
+    parser.add_argument("--atm-count", type=int, default=0, help="Automatically subscribe to ATM ± K option strikes (CE and PE) for active expiry")
     parser.add_argument("--dry-run", action="store_true", help="Capture exactly one live data frame to verify pipeline and exit")
+    parser.add_argument("--quiet", action="store_true", help="Disable real-time tick printing to console")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose debug logging")
 
     args = parser.parse_args()
@@ -136,6 +219,15 @@ def main() -> None:
     feed_mode = FeedMode(args.mode)
     for key in args.instruments:
         sub_mgr.add_subscription("cli_operator", key, feed_mode)
+
+    if args.atm_count > 0:
+        print(f"\nResolving ATM ± {args.atm_count} option contracts for active expiry...")
+        opt_keys = resolve_atm_option_keys(resolved_token, underlying_key=args.instruments[0], atm_count=args.atm_count)
+        if opt_keys:
+            print(f"Discovered {len(opt_keys)} tradable option contracts:")
+            for k, sym in opt_keys:
+                print(f"  + {sym:<30} ({k})")
+                sub_mgr.add_subscription("atm_selector", k, FeedMode.FULL)
 
     client = UpstoxWebSocketClient(
         token=resolved_token,
@@ -180,6 +272,25 @@ def main() -> None:
             client.stop()
 
         client.add_quote_listener(_on_dry_run_quote)
+    elif not args.quiet:
+        print("\n--- Live Market Ticks Streaming (Press Ctrl+C to stop) ---")
+
+        def _on_live_quote(quotes: list[WsQuote]):
+            for q in quotes:
+                recv_time_str = q.ts_recv[11:19] if len(q.ts_recv) >= 19 else q.ts_recv
+                extra_info = []
+                if q.oi > 0:
+                    extra_info.append(f"OI: {q.oi:,.0f}")
+                if q.volume_traded_today > 0:
+                    extra_info.append(f"Vol: {q.volume_traded_today:,}")
+                if q.bid_px_1 or q.ask_px_1:
+                    extra_info.append(f"Bid/Ask: {q.bid_px_1 or 0:.2f}/{q.ask_px_1 or 0:.2f}")
+                extra_str = f" | {' | '.join(extra_info)}" if extra_info else ""
+                print(
+                    f"[{recv_time_str} UTC] {q.instrument_key:<20} | LTP: INR {q.ltp:>10,.2f} | CP: INR {q.cp:>10,.2f}{extra_str} | #{q.collector_sequence_number}"
+                )
+
+        client.add_quote_listener(_on_live_quote)
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)

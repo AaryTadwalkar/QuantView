@@ -1,17 +1,20 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
 ## Current State of the Union (2026-10-26 — Live WS Dry-Run & Snapshot Verification PASS)
-- **LIVE WEBSOCKET DRY-RUN VERIFIED PASS:**
-  - Upstox V3 auth endpoint updated to `https://api.upstox.com/v3/feed/market-data-feed/authorize`.
-  - Discovered and integrated official Upstox V3 Protobuf schema (`MarketDataFeedV3.proto`) with full support for `IndexFullFeed`, `MarketFullFeed`, `FirstLevelWithGreeks`, and `LTPC`.
-  - Executed live dry run: connected, acquired `SingleOwnerLease`, streamed live Nifty 50 tick (LTP: 22,648.30, CP: 22,600.00), durably persisted `.bin.gz` segment + companion manifest, decoded quotes, and cleanly released lock. Result: `DRY-RUN RESULT: PASS`.
+- **LIVE WEBSOCKET STREAMING & ATM OPTION DYNAMICS VERIFIED:**
+  - Tested live option streaming with `run_collector_ws.py --instruments "NSE_INDEX|Nifty 50" --atm-count 5`.
+  - Discovered and subscribed to active ATM `22700` and $\pm 5$ strikes (`22450` through `22950`, both CE and PE = 22 option contracts + 1 index = 23 instruments).
+  - Streamed 20,444 live ticks: verified exact real-time LTP, bid/ask spreads, volume, OI, and Greeks (IV, Delta, Theta, Vega) across all 22 contracts.
+  - Cross-verified against raw binary segment files on disk (`Data/raw/upstox_ws/ticks/`): 100% bit-for-bit match across 16,905 raw binary frames.
 - **LIVE OPTION CHAIN SNAPSHOT VERIFIED PASS:**
   - Verified `SnapshotCollectorService` and created CLI runner `tools/ops/run_collector_snapshot.py`.
   - Captured live full option chain (144 strikes, CE & PE with LTP, volume, OI, bid/ask depth, and full Option Greeks: IV, Delta, Theta, Gamma, Vega, POP).
   - Durably persisted raw gzip (17,025 bytes) and companion manifest to `Data/raw/upstox_rest/snapshots/`.
 - **OPERATIONAL TOOLS DELIVERED:**
-  - `tools/ops/dump_ws_segment.py`: Inspects and exports binary WebSocket segment files (.bin.gz) into terminal tables or CSV.
+  - `tools/ops/dump_ws_segment.py`: Inspects and exports binary WebSocket segment files (.bin.gz) into terminal tables or CSV, including exact day OHLC and live 1-minute intraday candle bars (`candle_1m_open`, `candle_1m_high`, `candle_1m_low`, `candle_1m_close`).
+  - `tools/ops/dump_snapshot.py`: Inspects and exports raw option chain `.json.gz` snapshots into readable terminal ladders (ATM strikes) or canonical Version 3 CSV files with all 24 schema fields (all 144 strikes, CE & PE with exact IV, Delta, Theta, Gamma, Vega, and POP).
   - `tools/ops/run_collector_snapshot.py`: Captures on-demand or periodic live full option chain snapshots.
+  - `tools/ops/run_collector_ws.py`: Real-time streaming WebSocket collector with terminal printouts and single-owner kernel locking.
 - **Stage 2 In Progress — Tasks M2-01 through M2-06 100% Tested & Verified:**
   - 118/118 automated unit tests PASS in 3.46s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects). Active Lake remains immutable.
 - **Next Step:** Live continuous collection during market session and Tasks M2-07 through M2-11.

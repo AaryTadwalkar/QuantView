@@ -109,6 +109,15 @@ def dump_segment_to_csv(quotes: List[WsQuote], output_csv: Path) -> int:
         "ts_recv",
         "ts_event",
         "ltp",
+        "day_open",
+        "day_high",
+        "day_low",
+        "day_close",
+        "candle_1m_open",
+        "candle_1m_high",
+        "candle_1m_low",
+        "candle_1m_close",
+        "candle_1m_vol",
         "ltq",
         "cp",
         "atp",
@@ -130,6 +139,19 @@ def dump_segment_to_csv(quotes: List[WsQuote], output_csv: Path) -> int:
         for q in quotes:
             row = q.to_dict()
             row["quality_flags"] = ";".join(q.quality_flags)
+            for ohlc_item in q.vendor_ohlc:
+                intv = ohlc_item.get("interval")
+                if intv == "1d":
+                    row["day_open"] = ohlc_item.get("open")
+                    row["day_high"] = ohlc_item.get("high")
+                    row["day_low"] = ohlc_item.get("low")
+                    row["day_close"] = ohlc_item.get("close")
+                elif intv in ("I1", "1m"):
+                    row["candle_1m_open"] = ohlc_item.get("open")
+                    row["candle_1m_high"] = ohlc_item.get("high")
+                    row["candle_1m_low"] = ohlc_item.get("low")
+                    row["candle_1m_close"] = ohlc_item.get("close")
+                    row["candle_1m_vol"] = ohlc_item.get("volume", 0)
             writer.writerow(row)
     return len(quotes)
 
