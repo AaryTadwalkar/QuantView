@@ -5,28 +5,30 @@
    and persists raw gzip payloads + self-describing manifests per QUANTVIEW_DATA_SPEC §4.3 and Task M2-01.
 
 2. Overall design:
-   - Validates Upstox token readiness using TokenManager.
-   - Instantiates UpstoxSnapshotAdapter and SnapshotCollectorService.
+   - Validates Upstox token readiness using TokenManager before network interactions.
+   - Instantiates UpstoxSnapshotAdapter and SnapshotCollectorService with RateBudgetManager.
    - Resolves active expiry dynamically (e.g. nearest weekly/monthly NIFTY expiry).
    - Fetches full option chain response, verifies raw byte durability, writes manifest, and extracts summary.
-   - Supports --single (one snapshot) or --loop (periodic capture every N seconds during market hours).
+   - Supports --single (one snapshot) or --loop (periodic capture every N seconds).
+   - Features automatic clean shutdown at market close (15:35 Asia/Kolkata) to prevent idle polling after hours.
 
 3. Elements in the file:
    - run_single_capture(): Executes a single full option chain snapshot and prints summary.
-   - main(): CLI entrypoint parsing arguments (--underlying, --expiry, --loop, --interval-sec).
+   - main(): CLI entrypoint parsing arguments (--underlying, --expiry, --loop, --interval-sec, --market-close-time).
 
 4. Final output of the file:
    - Live captured option chain raw gzip payloads stored in Data/raw/upstox_rest/snapshots/.
 """
 
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, time as dt_time, timezone
 import json
 import logging
 from pathlib import Path
 import sys
 import time
 from typing import Optional
+import zoneinfo
 
 # Standard QuantView repository bootstrap
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -40,6 +42,7 @@ from services.collector_snapshot.raw_writer import RawSnapshotWriter
 from services.collector_snapshot.token_manager import TokenManager
 
 logger = logging.getLogger("quantview.collector_snapshot.cli")
+KOLKATA_TZ = zoneinfo.ZoneInfo("Asia/Kolkata")
 
 
 def run_single_capture(
@@ -89,27 +92,30 @@ def run_single_capture(
 def main() -> None:
     """
     1. The use of function:
-       CLI entrypoint for executing live option chain snapshots.
+       CLI entrypoint for executing live option chain snapshots with market-close boundary protection.
 
     2. How does the specific function work:
-       - Parses command-line arguments (--underlying, --expiry, --loop, --interval-sec).
-       - Validates token readiness.
+       - Parses command-line arguments (--underlying, --expiry, --loop, --interval-sec, --market-close-time).
+       - Validates token readiness via TokenManager.
        - Executes single capture or periodic streaming loop.
+       - Monitors Asia/Kolkata time and cleanly breaks the capture loop at market close (default 15:35 IST).
 
     3. Concepts used in the function:
-       CLI interface, loop scheduling, graceful termination.
+       CLI interface, loop scheduling, market session boundary enforcement, graceful termination.
 
     4. Places where this function is imported and used:
        Executed via `python tools/ops/run_collector_snapshot.py`.
 
     5. Final output of the function, before and after:
-       Before: Idle. After: Raw snapshots persisted to Data/raw/upstox_rest/snapshots/.
+       Before: Idle. After: Raw snapshots persisted to Data/raw/upstox_rest/snapshots/ and clean shutdown at close.
     """
     parser = argparse.ArgumentParser(description="QuantView Live Option Chain Snapshot Collector")
     parser.add_argument("--underlying", type=str, default="NSE_INDEX|Nifty 50", help="Underlying key (default: NSE_INDEX|Nifty 50)")
     parser.add_argument("--expiry", type=str, default=None, help="Option expiry date YYYY-MM-DD (optional, auto-detected if omitted)")
     parser.add_argument("--loop", action="store_true", help="Run continuous periodic capture loop")
     parser.add_argument("--interval-sec", type=float, default=60.0, help="Interval in seconds between captures in loop mode (default: 60)")
+    parser.add_argument("--market-close-time", type=str, default="15:35", help="Market close cutoff time in Asia/Kolkata (HH:MM, default: 15:35)")
+    parser.add_argument("--no-market-close-stop", action="store_true", help="Disable automatic clean shutdown at market close")
     args = parser.parse_args()
 
     # Step 1: Pre-flight token readiness check
@@ -137,11 +143,41 @@ def main() -> None:
     if not args.loop:
         run_single_capture(collector, args.underlying, args.expiry)
     else:
-        print(f"Starting continuous snapshot loop for {args.underlying} every {args.interval_sec}s. Press Ctrl+C to stop.")
+        try:
+            parts = [int(p) for p in args.market_close_time.split(":")]
+            close_time = dt_time(hour=parts[0], minute=parts[1])
+        except Exception:
+            close_time = dt_time(hour=15, minute=35)
+
+        print(f"Starting continuous snapshot loop for {args.underlying} every {args.interval_sec}s.")
+        if not args.no_market_close_stop:
+            print(f"Auto-shutdown at market close active: Clean stop at {args.market_close_time} IST.")
+        print("Press Ctrl+C to stop.")
+
         try:
             while True:
+                now_ist = datetime.now(KOLKATA_TZ)
+                if not args.no_market_close_stop and now_ist.time() >= close_time:
+                    print(f"\n[MARKET CLOSE] Current time {now_ist.strftime('%H:%M:%S')} IST reached market close ({args.market_close_time} IST).")
+                    print("Option chain capture complete. Cleanly stopping snapshot collector.")
+                    break
+
                 run_single_capture(collector, args.underlying, args.expiry)
-                time.sleep(args.interval_sec)
+
+                # Responsive sleep: wake up every 1s to promptly detect market close or user interrupt
+                sleep_remaining = args.interval_sec
+                while sleep_remaining > 0:
+                    step = min(1.0, sleep_remaining)
+                    time.sleep(step)
+                    sleep_remaining -= step
+                    if not args.no_market_close_stop and datetime.now(KOLKATA_TZ).time() >= close_time:
+                        break
+
+                if not args.no_market_close_stop and datetime.now(KOLKATA_TZ).time() >= close_time:
+                    now_closed = datetime.now(KOLKATA_TZ)
+                    print(f"\n[MARKET CLOSE] Current time {now_closed.strftime('%H:%M:%S')} IST reached market close ({args.market_close_time} IST).")
+                    print("Option chain capture complete. Cleanly stopping snapshot collector.")
+                    break
         except KeyboardInterrupt:
             print("\nSnapshot loop stopped by operator.")
 

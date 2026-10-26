@@ -1,23 +1,22 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
-## Current State of the Union (2026-10-26 — Live WS Dry-Run & Snapshot Verification PASS)
-- **LIVE WEBSOCKET STREAMING & ATM OPTION DYNAMICS VERIFIED:**
-  - Tested live option streaming with `run_collector_ws.py --instruments "NSE_INDEX|Nifty 50" --atm-count 5`.
-  - Discovered and subscribed to active ATM `22700` and $\pm 5$ strikes (`22450` through `22950`, both CE and PE = 22 option contracts + 1 index = 23 instruments).
-  - Streamed 20,444 live ticks: verified exact real-time LTP, bid/ask spreads, volume, OI, and Greeks (IV, Delta, Theta, Vega) across all 22 contracts.
-  - Cross-verified against raw binary segment files on disk (`Data/raw/upstox_ws/ticks/`): 100% bit-for-bit match across 16,905 raw binary frames.
-- **LIVE OPTION CHAIN SNAPSHOT VERIFIED PASS:**
-  - Verified `SnapshotCollectorService` and created CLI runner `tools/ops/run_collector_snapshot.py`.
-  - Captured live full option chain (144 strikes, CE & PE with LTP, volume, OI, bid/ask depth, and full Option Greeks: IV, Delta, Theta, Gamma, Vega, POP).
-  - Durably persisted raw gzip (17,025 bytes) and companion manifest to `Data/raw/upstox_rest/snapshots/`.
-- **OPERATIONAL TOOLS DELIVERED:**
-  - `tools/ops/dump_ws_segment.py`: Inspects and exports binary WebSocket segment files (.bin.gz) into terminal tables or CSV, including exact day OHLC and live 1-minute intraday candle bars (`candle_1m_open`, `candle_1m_high`, `candle_1m_low`, `candle_1m_close`).
-  - `tools/ops/dump_snapshot.py`: Inspects and exports raw option chain `.json.gz` snapshots into readable terminal ladders (ATM strikes) or canonical Version 3 CSV files with all 24 schema fields (all 144 strikes, CE & PE with exact IV, Delta, Theta, Gamma, Vega, and POP).
-  - `tools/ops/run_collector_snapshot.py`: Captures on-demand or periodic live full option chain snapshots.
-  - `tools/ops/run_collector_ws.py`: Real-time streaming WebSocket collector with terminal printouts and single-owner kernel locking.
-- **Stage 2 In Progress — Tasks M2-01 through M2-06 100% Tested & Verified:**
-  - 118/118 automated unit tests PASS in 3.46s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects). Active Lake remains immutable.
-- **Next Step:** Live continuous collection during market session and Tasks M2-07 through M2-11.
+## Current State of the Union (2026-10-26 — Market Session Close & Post-Market Audit PASS)
+- **POST-MARKET SESSION CLOSURE & RECONCILIATION VERIFIED PASS:**
+  - Market closed cleanly at 15:35 Asia/Kolkata. All collector processes safely stopped.
+  - Executed automated forensic session reconciliation (`reconcile_session_directory('2026-10-26')`): Status = `PASS`, 0 unmatched segments, 0 orphan files, 0 checksum errors.
+  - Final session partial cleanly recovered and rotated to `.bin.gz` with cryptographic companion manifest.
+- **RECORDED MARKET DATA TOTALS FOR 2026-10-26:**
+  - **Live WebSocket Ticks**: 5 finalized compressed segments containing **134,003 decoded quotes** across Nifty 50 and active ATM $\pm 5$ option strikes with complete depth, volume, OI, and Option Greeks.
+  - **Full Option Chain Snapshots**: **86 complete option chain snapshots** (144 strikes each = 24,768 CE/PE rows) durably persisted in `Data/raw/upstox_rest/snapshots/trade_date=2026-10-26/`.
+- **OPERATIONAL TOOLING STATUS:**
+  - `tools/ops/dump_ws_segment.py`: Chronological sorting, full contract metadata enrichment (`trading_symbol`, `strike_price`, `option_type`, `expiry`), underlying Nifty 50 spot tracking (`underlying_spot_ltp`), all Option Greeks, market depth, and day/1m candle OHLC.
+  - `tools/ops/dump_snapshot.py`: Decompresses raw snapshots into terminal ladders or canonical Version 3 CSV.
+  - `tools/ops/run_collector_ws.py` & `tools/ops/run_collector_snapshot.py`: Built-in auto-shutdown at 15:35 IST active and verified.
+- **TEST SUITE & CODE QUALITY VERIFIED:**
+  - 118/118 automated unit tests PASS (3.43s).
+  - `tools/qv_check.py lint DOCS` PASS (0 defects).
+  - `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
+- **Next Step:** Stage 2 Task M2-07 (Post-market reconciliation and ingestion into historical lake).
 
 ## Canonical Architectural Contracts & Modes
 - **Operating Modes:** `RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`.

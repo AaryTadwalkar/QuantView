@@ -9,10 +9,15 @@
      - Pre-flight Check: Calls TokenManager to assert active valid JWT token before network work.
      - Single Owner Enforcement: Acquires kernel file lock; terminates if another collector runs.
      - Subscription Setup: Configures SubscriptionManager with instruments and requested feed mode.
+     - Dynamic ATM Discovery: Resolves ATM ± K strike options for active weekly/monthly expiry.
      - Live Streaming: Runs asyncio loop streaming binary WebSocket frames to disk with batched fsync.
-     - Signal Handling: Traps SIGINT/SIGTERM to ensure clean buffer flush and lock file release.
+     - Market-Close Auto-Shutdown: Monitors Asia/Kolkata session timing (15:35 IST) to terminate cleanly.
+     - Signal Handling: Traps SIGINT/SIGTERM to ensure clean buffer flush, segment rotation, and lock release.
 
 3. Elements in the file:
+   - setup_logging(): Configures stdout logging format.
+   - resolve_atm_option_keys(): Discovers ATM ± K option strikes for the active expiry.
+   - market_close_watchdog(): Asyncio monitor stopping client at market close.
    - main(): CLI parser and asyncio entrypoint function.
 
 4. Final output of the file:
@@ -21,7 +26,7 @@
 
 import argparse
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, time as dt_time, timezone
 import logging
 import os
 from pathlib import Path
@@ -29,6 +34,7 @@ import signal
 import sys
 from typing import Any, Dict, List, Optional, Tuple
 import uuid
+import zoneinfo
 
 # Standard QuantView repository bootstrap
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -41,6 +47,8 @@ from services.collector_ws.decoder import WsQuote, WsQuoteDecoder
 from services.collector_ws.lease import DuplicateCollectorInstanceError, SingleOwnerLease
 from services.collector_ws.raw_segment_writer import RawSegmentWriter
 from services.collector_ws.subscription import FeedMode, SubscriptionConfig, SubscriptionManager
+
+KOLKATA_TZ = zoneinfo.ZoneInfo("Asia/Kolkata")
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -148,19 +156,63 @@ def resolve_atm_option_keys(
     return selected
 
 
+async def market_close_watchdog(
+    client: UpstoxWebSocketClient,
+    close_time_str: str,
+    enabled: bool,
+) -> None:
+    """
+    1. The use of function:
+       Asynchronous watchdog monitoring market session timing and requesting clean stop at close.
+
+    2. How does the specific function work:
+       - Parses target close time (e.g. 15:35 IST).
+       - Periodically checks current time in Asia/Kolkata timezone every 2 seconds.
+       - When IST time reaches or exceeds close time, calls client.stop() to flush buffers,
+         rotate segment, and release single-owner lease.
+
+    3. Concepts used in the function:
+       Asyncio watchdog, market session boundary enforcement, graceful termination.
+
+    4. Places where this function is imported and used:
+       Spawned as an asyncio task in main() during connect_and_run().
+
+    5. Final output of the function, before and after:
+       Before: Running collector. After: Triggered clean stop at 15:35 IST.
+    """
+    if not enabled:
+        return
+
+    try:
+        parts = [int(p) for p in close_time_str.split(":")]
+        target_close_time = dt_time(hour=parts[0], minute=parts[1])
+    except Exception:
+        target_close_time = dt_time(hour=15, minute=35)
+
+    while not client._stop_event.is_set():
+        now_ist = datetime.now(KOLKATA_TZ)
+        if now_ist.time() >= target_close_time:
+            print(f"\n[MARKET CLOSE] Current time {now_ist.strftime('%H:%M:%S')} IST reached market close ({close_time_str} IST).")
+            print("Initiating clean collector shutdown, rotating segment, and releasing exclusive lock...")
+            client.stop()
+            break
+        await asyncio.sleep(2.0)
+
+
 def main() -> None:
     """
     1. The use of function:
        Main CLI entrypoint executing live Upstox WebSocket data collection.
 
     2. How does the specific function work:
-       - Parses command-line arguments (--token, --mode, --instruments, --raw-root).
+       - Parses command-line arguments (--token, --mode, --instruments, --raw-root, --market-close-time).
        - Validates token readiness via TokenManager.
        - Initializes UpstoxWebSocketClient with SingleOwnerLease, SubscriptionManager, and RawSegmentWriter.
-       - Runs asyncio loop until interrupted by user (Ctrl+C).
+       - Launches market_close_watchdog to trigger clean stop at 15:35 IST.
+       - Runs asyncio loop until interrupted by user (Ctrl+C) or market close.
 
     3. Concepts used in the function:
-       Command-line interface, process lifecycle management, signal handling.
+       Command-line interface, process lifecycle management, signal handling, market close boundaries.
 
     4. Places where this function is imported and used:
        Executed directly from terminal via `python tools/ops/run_collector_ws.py`.
@@ -179,6 +231,8 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="Capture exactly one live data frame to verify pipeline and exit")
     parser.add_argument("--quiet", action="store_true", help="Disable real-time tick printing to console")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose debug logging")
+    parser.add_argument("--market-close-time", type=str, default="15:35", help="Market close cutoff time in Asia/Kolkata (HH:MM, default: 15:35)")
+    parser.add_argument("--no-market-close-stop", action="store_true", help="Disable automatic clean shutdown at market close")
 
     args = parser.parse_args()
     setup_logging(args.verbose)
@@ -306,20 +360,32 @@ def main() -> None:
         except Exception:
             pass
 
+    auto_stop_enabled = not args.no_market_close_stop and not args.dry_run
+
+    async def _run_stream_with_watchdog():
+        watchdog_task = asyncio.create_task(
+            market_close_watchdog(client, args.market_close_time, auto_stop_enabled)
+        )
+        try:
+            await client.connect_and_run(
+                max_frames=max_frames,
+                timeout_sec=timeout_sec,
+            )
+        finally:
+            watchdog_task.cancel()
+
     try:
         print(f"Starting collector_ws with PID {os.getpid()}...")
         print(f"Subscribed instruments: {args.instruments} (mode: {feed_mode.value})")
         print("Raw ticks destination: Data/raw/upstox_ws/ticks/trade_date=YYYY-MM-DD/")
         print("Heartbeat pulse: Data/raw/telemetry/heartbeat_collector_ws.json")
+        if auto_stop_enabled:
+            print(f"Auto-shutdown at market close active: Clean stop at {args.market_close_time} IST.")
         if not args.dry_run:
             print("Press Ctrl+C to safely terminate.")
 
-        loop.run_until_complete(
-            client.connect_and_run(
-                max_frames=max_frames,
-                timeout_sec=timeout_sec,
-            )
-        )
+        loop.run_until_complete(_run_stream_with_watchdog())
+
         if args.dry_run:
             if dry_run_quote_received or writer.total_frames_written >= 1:
                 print("DRY-RUN RESULT: PASS (Live market frame captured, persisted, and decoded).")
