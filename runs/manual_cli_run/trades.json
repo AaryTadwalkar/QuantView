@@ -1,0 +1,13 @@
+[
+  {
+    "symbol": "NIFTY25JAN24000CE",
+    "entry_time": "15:25",
+    "entry_price_paise": 15425,
+    "exit_price_paise": 16490,
+    "quantity": 50,
+    "gross_pnl_paise": 53250,
+    "fee_paise": 3527,
+    "net_pnl_paise": 49723,
+    "reason": "EOD_CLOSE_FILL"
+  }
+]

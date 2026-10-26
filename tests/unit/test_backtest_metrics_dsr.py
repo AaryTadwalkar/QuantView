@@ -119,7 +119,7 @@ class TestBacktestMetricsDSR(unittest.TestCase):
         returns = [0.01, -0.005, 0.008, 0.002, -0.003, 0.015, -0.002, 0.004]
         res = compute_deflated_sharpe_ratio(daily_returns=returns, trial_sharpes=[0.15, 0.15, 0.15])
         self.assertIsNone(res.dsr)
-        self.assertIn("INSUFFICIENT_TRIAL_HISTORY", res.null_reason)
+        self.assertEqual(res.null_reason, "ZERO_OR_UNDEFINED_TRIAL_DISPERSION (sigma_trials <= 0)")
 
     def test_dsr_valid_calculation_and_metadata(self):
         """

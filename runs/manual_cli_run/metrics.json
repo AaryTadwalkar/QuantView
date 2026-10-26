@@ -1,0 +1,42 @@
+{
+  "initial_capital_paise": 20000000,
+  "final_equity_paise": 20047020,
+  "total_pnl_paise": 49723,
+  "total_return_pct": 0.2351,
+  "annualized_return_pct": 0.8006,
+  "gross_realized_pnl_paise": 53250,
+  "total_fees_paise": 3527,
+  "net_realized_pnl_paise": 49723,
+  "total_trades": 1,
+  "winning_trades": 1,
+  "losing_trades": 0,
+  "win_rate_pct": 100.0,
+  "profit_factor": 999.0,
+  "expectancy_paise": 49723.0,
+  "max_drawdown_paise": 3027,
+  "max_drawdown_pct": 0.0151,
+  "max_drawdown_duration_bars": 23,
+  "max_consecutive_losses": 0,
+  "daily_sharpe": 0.9166,
+  "annualized_sharpe": 14.5506,
+  "sortino_ratio": 1.5183,
+  "calmar_ratio": 53.0303,
+  "annualized_volatility_pct": 0.055,
+  "time_of_day_pnl_paise": {
+    "morning_09_15_11_30": 0,
+    "midday_11_30_13_30": 0,
+    "afternoon_13_30_15_30": 49723
+  },
+  "deflated_sharpe": {
+    "dsr": null,
+    "null_reason": "INSUFFICIENT_TRIAL_HISTORY (N < 2)",
+    "T": 74,
+    "skewness": 0.0,
+    "kurtosis": 3.0,
+    "N": 1,
+    "sigma_trials": 0.0,
+    "sr_daily": 0.0,
+    "sr_expected_max": 0.0,
+    "var_sr": 0.0
+  }
+}

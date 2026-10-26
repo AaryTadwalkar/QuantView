@@ -177,13 +177,19 @@ def compute_deflated_sharpe_ratio(
         sigma_trials = math.sqrt(var_trial)
         if sigma_trials <= 1e-12:
             return DeflatedSharpeResult(
-                null_reason="INSUFFICIENT_TRIAL_HISTORY (undefined or zero dispersion)",
+                null_reason="ZERO_OR_UNDEFINED_TRIAL_DISPERSION (sigma_trials <= 0)",
                 T=T,
                 N=n_trials,
                 sigma_trials=0.0,
             )
-    elif n_trials is not None and n_trials >= 2 and sigma_trials is not None and sigma_trials > 0.0:
-        pass
+    elif n_trials is not None and n_trials >= 2:
+        if sigma_trials is None or sigma_trials <= 1e-12:
+            return DeflatedSharpeResult(
+                null_reason="ZERO_OR_UNDEFINED_TRIAL_DISPERSION (sigma_trials <= 0)",
+                T=T,
+                N=n_trials,
+                sigma_trials=0.0,
+            )
     else:
         return DeflatedSharpeResult(
             null_reason="INSUFFICIENT_TRIAL_HISTORY (N < 2)",

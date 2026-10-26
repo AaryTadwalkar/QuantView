@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0.0",
+  "run_id": "manual_cli_run",
+  "created_at_utc": "2026-10-26T19:21:54.814364+00:00",
+  "config_hash": "28d797dcdc0eb905c7f24db193ba49df2fe121c6b7981e533f412dea1eddda67",
+  "strategy_id": "LongCETrendFollowing",
+  "strategy_code_hash": "53ba7b1b4bd54667",
+  "dataset_manifest_hash": "local_lake_active",
+  "fee_schedule_version": "UPSTOX_2025_OCT",
+  "risk_policy_hash": "9f1a69344d47f010dd76ceba63b73426b7fc229ea27c0c899ba912ccc8f1c15d",
+  "engine_version": "v2.0",
+  "environment": {
+    "python_version": "3.11.9",
+    "platform": "Windows-10-10.0.26300-SP0",
+    "architecture": "AMD64"
+  },
+  "status": "COMPLETED",
+  "error_message": null
+}
