@@ -67,7 +67,11 @@ class SourceSemanticsAuditor:
     ):
         """Initializes SourceSemanticsAuditor with lake root and report path."""
         self.lake_root = lake_root or Path("Data/lake")
-        self.report_path = report_path or Path("reports/source-semantics.md")
+        self.report_path = report_path or (
+            Path("reports/data_semantics_and_eligibility/source-semantics.md")
+            if (PROJECT_ROOT / "reports" / "data_semantics_and_eligibility").exists()
+            else Path("reports/source-semantics.md")
+        )
         self.duckdb_path = self.lake_root / "quantview.duckdb"
 
     def audit_option_candles(self, con: duckdb.DuckDBPyConnection) -> Dict:

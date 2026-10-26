@@ -540,7 +540,12 @@ def main() -> None:
        Before: Command invoked. After: Complete publication executed and JSON summary printed to stdout.
     """
     parser = argparse.ArgumentParser(description="QuantView Phase 5 Data Lake Publication & Stage 1 Completion")
-    parser.add_argument("--staging-root", type=str, default="staging/lake_preparation_phase4")
+    default_staging = (
+        "Data/staging/lake_preparation_phase4"
+        if Path("Data/staging/lake_preparation_phase4").exists()
+        else "staging/lake_preparation_phase4"
+    )
+    parser.add_argument("--staging-root", type=str, default=default_staging)
     parser.add_argument("--lake-root", type=str, default="Data/lake")
     parser.add_argument("--duckdb-path", type=str, default="Data/lake/quantview.duckdb")
     args = parser.parse_args()

@@ -1,6 +1,6 @@
 {
   "report_name": "QuantView Phase 4 Validation Results (M3-07, M3-08, M3-09)",
-  "generated_at_utc": "2026-10-24T13:08:27.876959+00:00",
+  "generated_at_utc": "2026-10-24T18:36:09.069227+00:00",
   "overall_status": "PASS",
   "gates": {
     "gate_1_derived_candles_integrity": {
@@ -38,17 +38,17 @@
     },
     "gate_2_vendor_comparison_fidelity": {
       "status": "PASS",
-      "report_path": "reports/derived_intervals_vendor_comparison.md",
+      "report_path": "reports/data_semantics_and_eligibility/derived_intervals_vendor_comparison.md",
       "high_fidelity_matches_verified": true
     },
     "gate_3_source_semantics_register": {
       "status": "PASS",
-      "report_path": "reports/source-semantics.md",
+      "report_path": "reports/data_semantics_and_eligibility/source-semantics.md",
       "all_semantic_domains_covered": true
     },
     "gate_4_data_eligibility_dataset": {
       "status": "PASS",
-      "parquet_file": "staging/lake_preparation_phase4/data_eligibility/part-0.parquet",
+      "parquet_file": "Data/staging/lake_preparation_phase4/data_eligibility/part-0.parquet",
       "schema_exact_match": true,
       "evaluated_sessions": 1161
     },
@@ -60,9 +60,9 @@
     },
     "gate_6_active_lake_baseline_immutability": {
       "status": "PASS",
-      "total_lake_files_checked": 435,
+      "total_lake_files_checked": 784,
       "sha256_mismatches": 0,
-      "active_manifest_version": 2
+      "active_manifest_version": 3
     }
   }
 }

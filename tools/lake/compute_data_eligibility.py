@@ -85,8 +85,16 @@ class DataEligibilityEngine:
     ):
         """Initializes DataEligibilityEngine with directory paths."""
         self.lake_root = lake_root or Path("Data/lake")
-        self.staging_root = staging_root or Path("staging/lake_preparation_phase4")
-        self.report_path = report_path or Path("reports/data_eligibility_report.md")
+        self.staging_root = staging_root or (
+            Path("Data/staging/lake_preparation_phase4")
+            if (PROJECT_ROOT / "Data" / "staging" / "lake_preparation_phase4").exists()
+            else Path("staging/lake_preparation_phase4")
+        )
+        self.report_path = report_path or (
+            Path("reports/data_semantics_and_eligibility/data_eligibility_report.md")
+            if (PROJECT_ROOT / "reports" / "data_semantics_and_eligibility").exists()
+            else Path("reports/data_eligibility_report.md")
+        )
 
         manifest_path = self.lake_root / "manifest_active.json"
         if manifest_path.exists():

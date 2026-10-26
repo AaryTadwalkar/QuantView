@@ -1,12 +1,12 @@
 {
   "report_name": "QuantView Gate G1 Acceptance Verification (Stage 1 Completion)",
-  "generated_at_utc": "2026-10-24T16:58:23.560345+00:00",
+  "generated_at_utc": "2026-10-24T18:35:28.973152+00:00",
   "overall_verdict": "PASS",
   "gate_evaluation": {
     "gate_id": "G1",
     "gate_name": "Data Foundation Gate",
     "verdict": "PASS",
-    "evaluated_at_utc": "2026-10-24T16:58:23.559341+00:00",
+    "evaluated_at_utc": "2026-10-24T18:35:28.972151+00:00",
     "active_manifest_version": 3,
     "total_lake_files": 784,
     "total_lake_rows": 38753287,
@@ -137,12 +137,12 @@
       }
     },
     "benchmarks": {
-      "v_candles_underlying_slice_ms": 22.96,
-      "v_candles_derived_5m_slice_ms": 53.92,
-      "v_candles_options_contract_ms": 14.64,
-      "v_snapshots_captures_slice_ms": 14.44,
-      "v_snapshots_rows_greeks_ms": 14.93,
-      "v_data_eligibility_grouping_ms": 1.87
+      "v_candles_underlying_slice_ms": 38.49,
+      "v_candles_derived_5m_slice_ms": 49.84,
+      "v_candles_options_contract_ms": 15.38,
+      "v_snapshots_captures_slice_ms": 13.03,
+      "v_snapshots_rows_greeks_ms": 13.86,
+      "v_data_eligibility_grouping_ms": 4.59
     }
   },
   "m3_11_strategy_spike": {

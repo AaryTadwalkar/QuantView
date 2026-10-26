@@ -470,7 +470,9 @@ def write_evidence_and_reports(
     """
     ops_dir = PROJECT_ROOT / "ops" / "evidence"
     ops_dir.mkdir(parents=True, exist_ok=True)
-    reports_dir = PROJECT_ROOT / "reports"
+    reports_dir = PROJECT_ROOT / "reports" / "stage1_closure"
+    if not reports_dir.exists():
+        reports_dir = PROJECT_ROOT / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
 
     def fmt_rows(name: str) -> str:
@@ -718,7 +720,10 @@ def main() -> None:
         "m3_12_supporting_datasets": m3_12_res,
     }
 
-    out_json = PROJECT_ROOT / "reports" / "gate_g1_validation_results.json"
+    reports_dir = PROJECT_ROOT / "reports" / "stage1_closure"
+    if not reports_dir.exists():
+        reports_dir = PROJECT_ROOT / "reports"
+    out_json = reports_dir / "gate_g1_validation_results.json"
     with open(out_json, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 

@@ -250,7 +250,11 @@ class IndiaVixPreparer:
             },
         }
 
-        report_path = Path("reports/india_vix_session_coverage_report.json")
+        report_path = (
+            PROJECT_ROOT / "reports" / "data_semantics_and_eligibility" / "india_vix_session_coverage_report.json"
+            if (PROJECT_ROOT / "reports" / "data_semantics_and_eligibility").exists()
+            else Path("reports/india_vix_session_coverage_report.json")
+        )
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2)
         print(f"\nReconciliation report written to {report_path}", flush=True)

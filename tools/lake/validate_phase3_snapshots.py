@@ -108,10 +108,18 @@ class Phase3SnapshotValidator:
         report_path: Optional[Path] = None,
     ):
         """Initializes Phase3SnapshotValidator with directories and report path."""
-        self.staging_root = staging_root or Path("staging/lake_preparation_phase3")
+        self.staging_root = staging_root or (
+            Path("Data/staging/lake_preparation_phase3")
+            if Path("Data/staging/lake_preparation_phase3").exists()
+            else Path("staging/lake_preparation_phase3")
+        )
         self.lake_root = lake_root or Path("Data/lake")
         self.source_dir = source_dir or Path("Data/live/option_chain/nifty")
-        self.report_path = report_path or Path("reports/phase3_snapshot_validation_results.json")
+        self.report_path = report_path or (
+            Path("reports/phase_validations/phase3_snapshot_validation_results.json")
+            if (PROJECT_ROOT / "reports" / "phase_validations").exists()
+            else Path("reports/phase3_snapshot_validation_results.json")
+        )
 
     def check_inventory_and_quarantine(self) -> Dict:
         """Validates 82,283 files inventory against 82,274 valid + 9 quarantined."""

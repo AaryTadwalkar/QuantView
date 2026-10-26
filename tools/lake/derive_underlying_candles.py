@@ -111,7 +111,11 @@ class CandleDeriver:
     ):
         """Initializes CandleDeriver with lake, staging, and vendor paths."""
         self.lake_root = lake_root or Path("Data/lake")
-        self.staging_root = staging_root or Path("staging/lake_preparation_phase4")
+        self.staging_root = staging_root or (
+            Path("Data/staging/lake_preparation_phase4")
+            if (PROJECT_ROOT / "Data" / "staging" / "lake_preparation_phase4").exists()
+            else Path("staging/lake_preparation_phase4")
+        )
         self.vendor_root = vendor_root or Path("Data/historical/candles/index/nifty")
 
         manifest_path = self.lake_root / "manifest_active.json"
@@ -356,7 +360,11 @@ class CandleDeriver:
         total_mb = round(sum(d["total_bytes"] for d in derivation_results) / (1024 * 1024), 2)
 
         # Generate reports/derived_intervals_vendor_comparison.md
-        report_path = Path("reports/derived_intervals_vendor_comparison.md")
+        report_path = (
+            PROJECT_ROOT / "reports" / "data_semantics_and_eligibility" / "derived_intervals_vendor_comparison.md"
+            if (PROJECT_ROOT / "reports" / "data_semantics_and_eligibility").exists()
+            else Path("reports/derived_intervals_vendor_comparison.md")
+        )
         report_path.parent.mkdir(parents=True, exist_ok=True)
 
         staging_posix = str(self.staging_root).replace("\\", "/")
