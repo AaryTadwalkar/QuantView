@@ -42,6 +42,7 @@ import zlib
 
 import requests
 import websockets
+import websockets.exceptions  # Explicit import required; `import websockets` alone does not populate websockets.exceptions attribute in v14+
 
 from services.collector_snapshot.heartbeat import HeartbeatMonitor
 from services.collector_ws.decoder import WsQuote, WsQuoteDecoder
@@ -75,7 +76,7 @@ class WebSocketClientConfig:
     4. Key design and overall design of the class:
        Centralizes operational parameters without hardcoding network or timing constants.
     """
-    auth_endpoint: str = "https://api.upstox.com/v2/feed/market-data-feed/authorize"
+    auth_endpoint: str = "https://api.upstox.com/v3/feed/market-data-feed/authorize"
     ws_url: Optional[str] = None
     ping_interval: float = 20.0
     ping_timeout: float = 10.0
@@ -221,7 +222,8 @@ class UpstoxWebSocketClient:
                     f"WebSocket auth endpoint failed with HTTP {resp.status_code}: {resp.text}"
                 )
             data = resp.json()
-            redirect_uri = data.get("data", {}).get("authorizedRedirectUri")
+            payload_data = data.get("data", {})
+            redirect_uri = payload_data.get("authorizedRedirectUri") or payload_data.get("authorized_redirect_uri")
             if not redirect_uri:
                 raise RuntimeError(f"Missing authorizedRedirectUri in auth response: {data}")
             return redirect_uri

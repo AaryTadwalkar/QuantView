@@ -1,0 +1,2 @@
+message_id,collector_sequence_number,instrument_key,feed_mode,feed_type,ts_recv,ts_event,ltp,ltq,cp,atp,volume_traded_today,oi,bid_px_1,bid_qty_1,ask_px_1,ask_qty_1,iv_observed,delta_observed,theta_observed,quality_flags
+a92d684a1b838bc0e3c5fe9469c501a83b22ffa4826927e96503f796799a56bf,2,NSE_INDEX|Nifty 50,full,initial_feed,2026-10-26T08:29:11.999852+00:00,2026-10-26T08:29:50+00:00,22648.3,0,22600.0,0.0,0,0.0,,,,,,,,SCAFFOLDED_DECODER_UNVERIFIED_FIXTURE;ZERO_DEPTH

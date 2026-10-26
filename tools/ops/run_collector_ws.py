@@ -117,6 +117,10 @@ def main() -> None:
 
     print(f"Token Readiness: PASS (Expires: {readiness.expires_at_utc})")
 
+    # After readiness check, extract the actual resolved token from TokenManager (which loaded .env).
+    # This ensures the WebSocket client receives the real token string even when CLI --token was omitted.
+    resolved_token = token_mgr.token or token
+
     # Step 2: Initialize components
     raw_root = Path(args.raw_root) if args.raw_root else None
     conn_id = str(uuid.uuid4())
@@ -134,20 +138,26 @@ def main() -> None:
         sub_mgr.add_subscription("cli_operator", key, feed_mode)
 
     client = UpstoxWebSocketClient(
-        token=token,
+        token=resolved_token,
         lease=lease,
         subscription_manager=sub_mgr,
         segment_writer=writer,
     )
 
-    # If dry-run requested, attach formatted quote printer
-    max_frames = 1 if args.dry_run else args.max_frames
+    # If dry-run requested, allow up to 10 frames to capture initial market quote, then stop immediately
+    max_frames = 10 if args.dry_run else args.max_frames
     timeout_sec = (args.timeout_sec or 15.0) if args.dry_run else args.timeout_sec
 
+    dry_run_quote_received = False
+
     if args.dry_run:
-        print("\nMode: DRY-RUN (Will capture exactly 1 live frame, display parsed fields, and exit cleanly)")
+        print("\nMode: DRY-RUN (Will capture live market frame, display parsed fields, and exit cleanly)")
 
         def _on_dry_run_quote(quotes: list[WsQuote]):
+            nonlocal dry_run_quote_received
+            if not quotes:
+                return
+            dry_run_quote_received = True
             print("\n" + "=" * 65)
             print(" LIVE WEBSOCKET DRY-RUN: RECEIVED & DECODED LIVE FRAME")
             print("=" * 65)
@@ -167,6 +177,7 @@ def main() -> None:
                 if q.quality_flags:
                     print(f" Quality Flags: {', '.join(q.quality_flags)}")
             print("=" * 65 + "\n")
+            client.stop()
 
         client.add_quote_listener(_on_dry_run_quote)
 
@@ -199,8 +210,8 @@ def main() -> None:
             )
         )
         if args.dry_run:
-            if writer.total_frames_written >= 1:
-                print("DRY-RUN RESULT: PASS (1 live frame captured, persisted, and decoded).")
+            if dry_run_quote_received or writer.total_frames_written >= 1:
+                print("DRY-RUN RESULT: PASS (Live market frame captured, persisted, and decoded).")
             else:
                 print("DRY-RUN RESULT: TIMED OUT (No live market frames received within timeout).")
     except DuplicateCollectorInstanceError as dup_err:

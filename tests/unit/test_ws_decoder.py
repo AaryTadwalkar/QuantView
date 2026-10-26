@@ -149,20 +149,19 @@ class TestWsQuoteDecoder(unittest.TestCase):
         feed_resp.type = pb.Type.initial_feed
         feed_resp.currentTs = 1730000000000
 
-        full = pb.FullFeed()
-        full.ltpc.CopyFrom(pb.LTPC(ltp=152.75, ltt=1730000000000, ltq=75, cp=140.0))
+        mff = pb.MarketFullFeed()
+        mff.ltpc.CopyFrom(pb.LTPC(ltp=152.75, ltt=1730000000000, ltq=75, cp=140.0))
 
         # Depth
         quotes_list = [
-            pb.Quote(bp=152.5, bq=300, bno=5, ap=152.8, aq=450, ano=6),
-            pb.Quote(bp=152.0, bq=600, bno=8, ap=153.0, aq=750, ano=9),
+            pb.Quote(bidP=152.5, bidQ=300, askP=152.8, askQ=450),
+            pb.Quote(bidP=152.0, bidQ=600, askP=153.0, askQ=750),
         ]
-        full.marketLevel.bidAskQuote.extend(quotes_list)
+        mff.marketLevel.bidAskQuote.extend(quotes_list)
 
         # Greeks
-        full.optionGreeks.CopyFrom(
+        mff.optionGreeks.CopyFrom(
             pb.OptionGreeks(
-                iv=15.4,
                 delta=0.54,
                 gamma=0.002,
                 theta=-9.5,
@@ -170,26 +169,19 @@ class TestWsQuoteDecoder(unittest.TestCase):
                 rho=0.045,
             )
         )
-
-        # Extended details
-        full.extendedFeedDetails.CopyFrom(
-            pb.ExtendedFeedDetails(
-                atp=151,
-                cp=140,
-                vtt=250000,
-                oi=1250000,
-                changeOi=45000,
-                lastTradedPrice=152.75,
-                totalBuyQty=15000,
-                totalSellQty=18000,
-            )
-        )
+        mff.iv = 15.4
+        mff.atp = 151.0
+        mff.vtt = 250000
+        mff.oi = 1250000
+        mff.tbq = 15000
+        mff.tsq = 18000
 
         # OHLC
-        full.marketOHLC.ohlc.extend([
-            pb.OHLC(interval="1d", open=142.0, high=160.0, low=138.0, close=152.75, volume=250000, ts=1730000000),
+        mff.marketOHLC.ohlc.extend([
+            pb.OHLC(interval="1d", open=142.0, high=160.0, low=138.0, close=152.75, vol=250000, ts=1730000000),
         ])
 
+        full = pb.FullFeed(marketFF=mff)
         feed_item = pb.Feed(fullFeed=full)
         contract_key = "NSE_FO|NIFTY26OCT25000CE"
         feed_resp.feeds[contract_key].CopyFrom(feed_item)
@@ -254,8 +246,9 @@ class TestWsQuoteDecoder(unittest.TestCase):
            Before: Untagged empty depth. After: Tagged with ZERO_DEPTH flag.
         """
         feed_resp = pb.FeedResponse()
-        full = pb.FullFeed()
-        full.ltpc.CopyFrom(pb.LTPC(ltp=100.0, ltt=1730000000000, ltq=25, cp=95.0))
+        mff = pb.MarketFullFeed()
+        mff.ltpc.CopyFrom(pb.LTPC(ltp=100.0, ltt=1730000000000, ltq=25, cp=95.0))
+        full = pb.FullFeed(marketFF=mff)
         # No marketLevel added
         feed_resp.feeds["NSE_FO|SAMPLE"].CopyFrom(pb.Feed(fullFeed=full))
 
@@ -275,7 +268,7 @@ class TestWsQuoteDecoder(unittest.TestCase):
            Verifies that an index instrument reporting OI tags NON_OPTION_OI in quality_flags.
 
         2. How does the specific function work:
-           - Constructs a FullFeed for an index ('NSE_INDEX|Nifty 50') with extendedFeedDetails.oi > 0.
+           - Constructs a FullFeed for an index ('NSE_INDEX|Nifty 50') with oi > 0.
            - Decodes frame and asserts 'NON_OPTION_OI' is included in quality_flags.
 
         3. Concepts used in the function:
@@ -288,9 +281,10 @@ class TestWsQuoteDecoder(unittest.TestCase):
            Before: Untagged index OI. After: Tagged with NON_OPTION_OI flag.
         """
         feed_resp = pb.FeedResponse()
-        full = pb.FullFeed()
-        full.ltpc.CopyFrom(pb.LTPC(ltp=25000.0, ltt=1730000000000, ltq=50, cp=24900.0))
-        full.extendedFeedDetails.CopyFrom(pb.ExtendedFeedDetails(oi=50000))
+        mff = pb.MarketFullFeed()
+        mff.ltpc.CopyFrom(pb.LTPC(ltp=25000.0, ltt=1730000000000, ltq=50, cp=24900.0))
+        mff.oi = 50000.0
+        full = pb.FullFeed(marketFF=mff)
         feed_resp.feeds["NSE_INDEX|Nifty 50"].CopyFrom(pb.Feed(fullFeed=full))
 
         quotes = self.decoder.decode_frame(
@@ -302,6 +296,44 @@ class TestWsQuoteDecoder(unittest.TestCase):
 
         self.assertEqual(len(quotes), 1)
         self.assertIn("NON_OPTION_OI", quotes[0].quality_flags)
+
+    def test_decode_index_full_feed(self) -> None:
+        """
+        1. The use of function:
+           Verifies that an index feed (IndexFullFeed) correctly unpacks LTPC and OHLC bars.
+
+        2. How does the specific function work:
+           - Constructs an IndexFullFeed for 'NSE_INDEX|Nifty 50'.
+           - Decodes frame and validates LTP, CP, and OHLC data.
+
+        3. Concepts used in the function:
+           Index feed parsing, contract validation.
+
+        4. Places where this function is imported and used:
+           Run by unittest runner.
+
+        5. Final output of the function, before and after:
+           Before: Protobuf bytes. After: Validated canonical WsQuote instance for index.
+        """
+        feed_resp = pb.FeedResponse()
+        iff = pb.IndexFullFeed()
+        iff.ltpc.CopyFrom(pb.LTPC(ltp=22660.05, ltt=1793003106000, ltq=0, cp=22600.0))
+        iff.marketOHLC.ohlc.extend([
+            pb.OHLC(interval="1d", open=22524.4, high=22706.15, low=22387.35, close=22660.05, vol=0, ts=1792953000000)
+        ])
+        full = pb.FullFeed(indexFF=iff)
+        feed_resp.feeds["NSE_INDEX|Nifty 50"].CopyFrom(pb.Feed(fullFeed=full))
+
+        quotes = self.decoder.decode_frame(
+            raw_payload=feed_resp.SerializeToString(),
+            collector_sequence=5,
+            arrival_ts_us=1793003106000000,
+            payload_checksum=555,
+        )
+        self.assertEqual(len(quotes), 1)
+        self.assertAlmostEqual(quotes[0].ltp, 22660.05)
+        self.assertAlmostEqual(quotes[0].cp, 22600.0)
+        self.assertEqual(len(quotes[0].vendor_ohlc), 1)
 
     def test_corrupted_payload_fail_safe(self) -> None:
         """

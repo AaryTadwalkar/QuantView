@@ -219,6 +219,7 @@ class WsQuoteDecoder:
         feed_type_map = {
             pb.Type.initial_feed: "initial_feed",
             pb.Type.live_feed: "live_feed",
+            pb.Type.market_info: "market_info",
         }
         feed_type_str = feed_type_map.get(feed_type_enum, "live_feed")
 
@@ -286,13 +287,14 @@ class WsQuoteDecoder:
         """
         flags = list(base_flags)
         has_full = feed_item.HasField("fullFeed")
+        has_first_level = feed_item.HasField("firstLevelWithGreeks")
         has_ltpc = feed_item.HasField("ltpc")
 
-        if not has_full and not has_ltpc:
+        if not has_full and not has_first_level and not has_ltpc:
             return None
 
         # Defaults
-        feed_mode = "full" if has_full else "ltpc"
+        feed_mode = "full" if (has_full or has_first_level) else "ltpc"
         ltp = 0.0
         ltq = 0
         ltt = 0
@@ -328,57 +330,100 @@ class WsQuoteDecoder:
             if ltt > 0:
                 ts_event_iso = datetime.fromtimestamp(ltt / 1000.0, tz=timezone.utc).isoformat()
 
-        if has_full:
-            full = feed_item.fullFeed
-            # LTPC fields inside fullFeed
-            if full.HasField("ltpc"):
-                ltpc_msg = full.ltpc
+        if has_first_level:
+            fl = feed_item.firstLevelWithGreeks
+            if fl.HasField("ltpc"):
+                ltpc_msg = fl.ltpc
                 ltp = float(ltpc_msg.ltp)
                 ltq = int(ltpc_msg.ltq)
                 ltt = int(ltpc_msg.ltt)
                 cp = float(ltpc_msg.cp)
                 if ltt > 0:
                     ts_event_iso = datetime.fromtimestamp(ltt / 1000.0, tz=timezone.utc).isoformat()
-
-            # Extended details
-            if full.HasField("extendedFeedDetails"):
-                ext = full.extendedFeedDetails
-                atp = float(ext.atp)
-                if ext.cp > 0:
-                    cp = float(ext.cp)
-                vtt = int(ext.vtt)
-                oi = float(ext.oi)
-                total_buy_qty = int(ext.totalBuyQty)
-                total_sell_qty = int(ext.totalSellQty)
-
-            # Market depth
-            if full.HasField("marketLevel"):
-                for quote_item in full.marketLevel.bidAskQuote:
-                    bids.append((float(quote_item.bp), int(quote_item.bq)))
-                    asks.append((float(quote_item.ap), int(quote_item.aq)))
-
-            # Option Greeks
-            if full.HasField("optionGreeks"):
-                greeks = full.optionGreeks
-                iv_obs = float(greeks.iv)
+            if fl.HasField("firstDepth"):
+                bids.append((float(fl.firstDepth.bidP), int(fl.firstDepth.bidQ)))
+                asks.append((float(fl.firstDepth.askP), int(fl.firstDepth.askQ)))
+            if fl.HasField("optionGreeks"):
+                greeks = fl.optionGreeks
                 delta_obs = float(greeks.delta)
                 gamma_obs = float(greeks.gamma)
                 theta_obs = float(greeks.theta)
                 vega_obs = float(greeks.vega)
                 rho_obs = float(greeks.rho)
+            vtt = int(fl.vtt)
+            oi = float(fl.oi)
+            if fl.iv > 0:
+                iv_obs = float(fl.iv)
 
-            # Market OHLC
-            if full.HasField("marketOHLC"):
-                for ohlc_item in full.marketOHLC.ohlc:
-                    vendor_ohlc_list.append({
-                        "interval": str(ohlc_item.interval),
-                        "open": float(ohlc_item.open),
-                        "high": float(ohlc_item.high),
-                        "low": float(ohlc_item.low),
-                        "close": float(ohlc_item.close),
-                        "volume": int(ohlc_item.volume),
-                        "ts": int(ohlc_item.ts),
-                    })
+        if has_full:
+            full = feed_item.fullFeed
+            # 1. MarketFullFeed branch (equities, options, futures)
+            if full.HasField("marketFF"):
+                mff = full.marketFF
+                if mff.HasField("ltpc"):
+                    ltpc_msg = mff.ltpc
+                    ltp = float(ltpc_msg.ltp)
+                    ltq = int(ltpc_msg.ltq)
+                    ltt = int(ltpc_msg.ltt)
+                    cp = float(ltpc_msg.cp)
+                    if ltt > 0:
+                        ts_event_iso = datetime.fromtimestamp(ltt / 1000.0, tz=timezone.utc).isoformat()
+                atp = float(mff.atp)
+                vtt = int(mff.vtt)
+                oi = float(mff.oi)
+                if mff.iv > 0:
+                    iv_obs = float(mff.iv)
+                total_buy_qty = int(mff.tbq)
+                total_sell_qty = int(mff.tsq)
+
+                if mff.HasField("marketLevel"):
+                    for quote_item in mff.marketLevel.bidAskQuote:
+                        bids.append((float(quote_item.bidP), int(quote_item.bidQ)))
+                        asks.append((float(quote_item.askP), int(quote_item.askQ)))
+
+                if mff.HasField("optionGreeks"):
+                    greeks = mff.optionGreeks
+                    delta_obs = float(greeks.delta)
+                    gamma_obs = float(greeks.gamma)
+                    theta_obs = float(greeks.theta)
+                    vega_obs = float(greeks.vega)
+                    rho_obs = float(greeks.rho)
+
+                if mff.HasField("marketOHLC"):
+                    for ohlc_item in mff.marketOHLC.ohlc:
+                        vendor_ohlc_list.append({
+                            "interval": str(ohlc_item.interval),
+                            "open": float(ohlc_item.open),
+                            "high": float(ohlc_item.high),
+                            "low": float(ohlc_item.low),
+                            "close": float(ohlc_item.close),
+                            "volume": int(ohlc_item.vol),
+                            "ts": int(ohlc_item.ts),
+                        })
+
+            # 2. IndexFullFeed branch (Nifty 50, Bank Nifty, FinNifty, etc.)
+            elif full.HasField("indexFF"):
+                iff = full.indexFF
+                if iff.HasField("ltpc"):
+                    ltpc_msg = iff.ltpc
+                    ltp = float(ltpc_msg.ltp)
+                    ltq = int(ltpc_msg.ltq)
+                    ltt = int(ltpc_msg.ltt)
+                    cp = float(ltpc_msg.cp)
+                    if ltt > 0:
+                        ts_event_iso = datetime.fromtimestamp(ltt / 1000.0, tz=timezone.utc).isoformat()
+
+                if iff.HasField("marketOHLC"):
+                    for ohlc_item in iff.marketOHLC.ohlc:
+                        vendor_ohlc_list.append({
+                            "interval": str(ohlc_item.interval),
+                            "open": float(ohlc_item.open),
+                            "high": float(ohlc_item.high),
+                            "low": float(ohlc_item.low),
+                            "close": float(ohlc_item.close),
+                            "volume": int(ohlc_item.vol),
+                            "ts": int(ohlc_item.ts),
+                        })
 
         # Quality flag evaluations per QUANTVIEW_DATA_SPEC §4.5
         # 1. ZERO_DEPTH: if full feed has no bid or ask quotes or zero quantities

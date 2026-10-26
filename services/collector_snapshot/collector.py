@@ -141,7 +141,16 @@ class SnapshotCollectorService:
             try:
                 with open(expiries_json, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                all_expiries = sorted(data.get("expiries", []))
+                raw_exp = data.get("expiries", [])
+                all_expiries = []
+                for item in raw_exp:
+                    if isinstance(item, dict):
+                        val = item.get("expiry_date")
+                        if val:
+                            all_expiries.append(val)
+                    elif isinstance(item, str):
+                        all_expiries.append(item)
+                all_expiries = sorted(all_expiries)
                 for exp in all_expiries:
                     if exp >= today_str:
                         return exp
@@ -235,7 +244,9 @@ class SnapshotCollectorService:
             has_greeks = False
             if isinstance(data_body, list) and data_body:
                 first_row = data_body[0]
-                if any(k in first_row for k in ["delta", "iv", "gamma", "theta", "vega"]):
+                call_greeks = first_row.get("call_options", {}).get("option_greeks", {})
+                put_greeks = first_row.get("put_options", {}).get("option_greeks", {})
+                if call_greeks or put_greeks or any(k in first_row for k in ["delta", "iv", "gamma", "theta", "vega"]):
                     has_greeks = True
             field_mask = "11111111" if has_greeks else "11110000"
 
