@@ -926,7 +926,12 @@ class TestRequestAccountingAndSafety(unittest.TestCase):
            Before: Unverified probe loop. After: Verified fail-fast halt on blocking error.
         """
         token = "token_fail_fast"
-        discoverer = ExpiryContractDiscoverer(token=token, max_budget=5, raw_root=self.raw_root)
+        discoverer = ExpiryContractDiscoverer(
+            token=token,
+            max_budget=5,
+            raw_root=self.raw_root,
+            reports_dir=Path(self.raw_root) / "reports"
+        )
         mock_resp = MagicMock()
         mock_resp.content = b'{"status":"error","message":"Invalid token"}'
         mock_resp.text = '{"status":"error","message":"Invalid token"}'

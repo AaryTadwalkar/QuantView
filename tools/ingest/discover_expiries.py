@@ -136,14 +136,14 @@ class ExpiryContractDiscoverer:
        BEFORE any JSON parsing. Headers containing tokens are completely stripped from manifests.
     """
 
-    def __init__(self, token: str, max_budget: int = 7, raw_root: Optional[Path] = None):
+    def __init__(self, token: str, max_budget: int = 7, raw_root: Optional[Path] = None, reports_dir: Optional[Path] = None):
         """
         1. The use of function:
            Initializes the discoverer with credentials, budget, and raw storage destination.
 
         2. How does the specific function work:
            Sets base_url, instrument key, initializes RequestAccountingSession, sets headers
-           without logging token, and sets raw root directory.
+           without logging token, and sets raw root and reports directories.
 
         3. Concepts used in the function:
            Dependency injection, secret handling isolation, path resolution.
@@ -162,6 +162,7 @@ class ExpiryContractDiscoverer:
             "Accept": "application/json",
         })
         self.raw_root = raw_root or Path("Data/raw/upstox_rest/expired_api/endpoint=option_contract")
+        self.reports_dir = reports_dir or Path("reports")
 
     def query_and_archive(self, expiry_date: str) -> Dict:
         """
@@ -313,7 +314,7 @@ class ExpiryContractDiscoverer:
             time.sleep(1.0)  # Conservative 1.0s inter-request pace
 
         # Write machine-readable index of tested expiries
-        reports_dir = Path("reports")
+        reports_dir = self.reports_dir
         reports_dir.mkdir(parents=True, exist_ok=True)
         index_file = reports_dir / "expired_contracts_index.json"
 

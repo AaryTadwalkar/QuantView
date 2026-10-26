@@ -135,7 +135,7 @@
   - **Audit Deliverables:** [`reports/gate_g1_audit_report.md`](file:///c:/Algo/quantview/reports/gate_g1_audit_report.md) and [`reports/gate_g1_validation_results.json`](file:///c:/Algo/quantview/reports/gate_g1_validation_results.json).
   - **Automated Verification:** 56/56 automated unit tests PASS in 3.16s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects).
   - Next: Stage 2 — Live Market Stream & Collector Integration (`M2-01` to `M2-11`, Gate G0).
-- **[2026-10-26] Stage 2 — Live Market Stream & Collector Integration (Tasks M2-01, M2-02, M2-06 COMPLETE - ALL PASS):**
+- **[2026-10-26] Stage 2 — Live Market Stream & Collector Integration (Tasks M2-01, M2-02, M2-03, M2-06 COMPLETE - ALL PASS):**
   - **Task M2-01 (REST Raw-First Snapshot Collector):**
     * Implemented `services/collector_snapshot/raw_writer.py` (`RawSnapshotWriter`, `RawCaptureRecord`) guaranteeing raw gzip write, hardware `fsync()`, and self-describing manifest before parsing.
     * Implemented `services/collector_snapshot/adapter.py` (`UpstoxSnapshotAdapter`) with exponential backoff + jitter on 429/5xx, fail-closed on 401/403, and token redaction.
@@ -146,10 +146,26 @@
     * Enforced market-hours detection (09:15-15:30 IST), snapshot capacity reservation, market-hours backfill pause/throttle interface, and adaptive 429 cooldown.
     * Re-exported cleanly from `packages/data/__init__.py` without broker SDK leaks.
     * Delivered 10 unit tests in `tests/unit/test_rate_budget.py` and evidence report [`ops/evidence/M2-02.md`](file:///c:/Algo/quantview/ops/evidence/M2-02.md) (`Status = TESTED`).
+  - **Task M2-03 (WebSocket Raw Segment Writer):**
+    * Implemented `services/collector_ws/framing.py` (`pack_frame`, `unpack_frames_from_bytes`, `ParsedFrame`): 28-byte binary framing envelope (`QVWS` magic, monotonic uint64 seq, microsecond arrival timestamp, uint32 payload length, uint32 CRC32 checksum).
+    * Implemented `services/collector_ws/raw_segment_writer.py` (`RawSegmentWriter`, `SegmentManifest`): streaming to `.bin.partial` files with batched fsync (loss window $\le 1\text{ s}$), rotation to `.bin.gz`, and companion manifests with uncompressed and compressed SHA-256 digests.
+    * Implemented automated crash recovery (`recover_session_partials`): parses incomplete `.partial` files, recovers 100% of complete frames, and safely quarantines corrupt trailing fragments with explicit diagnostic reports.
+    * Implemented forensic session reconciliation (`reconcile_session_directory`).
+    * Delivered 9 unit tests in `tests/unit/test_collector_ws.py` and evidence report [`ops/evidence/M2-03.md`](file:///c:/Algo/quantview/ops/evidence/M2-03.md) (`Status = TESTED`).
   - **Task M2-06 (Pre-Market Token Check & Dead-Man Heartbeat):**
     * Implemented `services/collector_snapshot/token_manager.py` (`TokenManager`) with native JWT expiry decoding, 08:45 AM pre-flight gate, `WAITING_FOR_TOKEN` state transition, and alert dispatching.
     * Implemented `services/collector_snapshot/heartbeat.py` (`HeartbeatMonitor`, `HeartbeatEmitter`) with atomic fsync JSON telemetry under `Data/raw/telemetry/` and dead-man switch alerting for lag $> 60\text{s}$.
     * Implemented standalone CLI tool `tools/ops/check_token_readiness.py` with exit codes 0 (valid) / 1 (waiting/expired).
     * Delivered 10 unit tests in `tests/unit/test_token_and_heartbeat.py` and evidence report [`ops/evidence/M2-06.md`](file:///c:/Algo/quantview/ops/evidence/M2-06.md) (`Status = TESTED`).
-  - **Automated Verification:** 88/88 automated unit tests PASS in 2.20s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks). All package boundaries intact. Active Lake remains 100% immutable.
-  - Next: Tasks M2-03 (WebSocket raw segment writer) and M2-04 (Protobuf decoder scaffold).
+  - **Task M2-04 (SubscriptionManager and Single-Owner Lease):**
+    * Implemented `services/collector_ws/lease.py` (`SingleOwnerLease`, `LeaseMetadata`, `DuplicateCollectorInstanceError`): kernel-level mutual exclusion (`msvcrt.locking` on Windows, `fcntl.flock` on POSIX) targeting `Data/raw/upstox_ws/.collector_ws.lock` with atomic companion metadata. Guarantees duplicate instances fail closed before opening any network sockets.
+    * Implemented `services/collector_ws/subscription.py` (`SubscriptionManager`, `FeedMode`, `SubscriptionConfig`, `SubscriptionRejection`): multi-source set union across active deployments and chart windows, feed mode hierarchy resolution (`full_d30` > `full` > `ltpc`), capacity quota gating (max 500 keys), structured rejection logging, and Upstox V3 JSON wire commands (`method: "sub"`).
+    * Delivered 9 unit tests in `tests/unit/test_subscription_and_lease.py` and evidence report [`ops/evidence/M2-04.md`](file:///c:/Algo/quantview/ops/evidence/M2-04.md) (`Status = TESTED`).
+  - **Task M2-05 (WebSocket Decoder and Client Connection Lifecycle):**
+    * Compiled Upstox official V3 Protobuf definitions into `services/collector_ws/proto/MarketDataFeedV3_pb2.py`.
+    * Implemented `services/collector_ws/decoder.py` (`WsQuote`, `WsQuoteDecoder`): unmarshals binary `FeedResponse` into canonical `ws_quotes` schema per `DATA SPEC §4.5`, maps 5-level depth books, Option Greeks, and vendor OHLC series. Tags `ZERO_DEPTH`, `NON_OPTION_OI`, and `SCAFFOLDED_DECODER_UNVERIFIED_FIXTURE` quality flags.
+    * Implemented `services/collector_ws/client.py` (`UpstoxWebSocketClient`, `WebSocketClientConfig`): end-to-end async streaming loop with pre-flight lease acquisition, authorized redirect URI resolution, raw-first segment write before decoding, periodic atomic heartbeats, observer notification, and exponential backoff with jitter on disconnect.
+    * Implemented dedicated operator CLI runner [`tools/ops/run_collector_ws.py`](file:///c:/Algo/quantview/tools/ops/run_collector_ws.py).
+    * Delivered 6 decoder tests in `tests/unit/test_ws_decoder.py`, 5 client lifecycle tests in `tests/unit/test_collector_ws_client.py`, and evidence report [`ops/evidence/M2-05.md`](file:///c:/Algo/quantview/ops/evidence/M2-05.md) (`Status = TESTED`).
+  - **Automated Verification:** 117/117 automated unit tests PASS in 3.04s. `tools/qv_check.py lint DOCS` PASS (0 defects). `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks). All package boundaries intact. Active Lake remains 100% immutable.
+  - Next: Live session recording capture (2 representative sessions for decoder certification) and Tasks M2-07 through M2-11.

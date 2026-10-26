@@ -132,7 +132,10 @@ class TokenManager:
            Before: Uninitialized. After: Configured TokenManager instance.
         """
         self.alert_handler = alert_handler
-        self.token = token or self._discover_token(env_file_path)
+        if token is not None:
+            self.token = token
+        else:
+            self.token = self._discover_token(env_file_path)
 
     def _discover_token(self, env_file_path: Optional[Path] = None) -> str:
         """
