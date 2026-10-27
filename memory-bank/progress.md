@@ -288,3 +288,57 @@
     * Linters: `tools/qv_check.py lint DOCS` PASS (0 defects); `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks); `tests/unit/test_package_boundaries.py` 7/7 PASS.
     * Published evidence reports: [`ops/evidence/M5-03.md`](file:///c:/Algo/quantview/ops/evidence/M5-03.md), [`ops/evidence/M5-08.md`](file:///c:/Algo/quantview/ops/evidence/M5-08.md), [`ops/evidence/M5-11.md`](file:///c:/Algo/quantview/ops/evidence/M5-11.md).
     * **Phase 5B Stop Condition Met:** Stopped prior to Phase 5C (Market Structure Engine BOS/CHoCH).
+- **[2026-10-27] Stage 5 — Gate G3 Phase 5C: Deterministic BOS / CHoCH Market Structure Engine (COMPLETE - ALL PASS):**
+  - **Task M5-06 Satisfied:**
+    * Implemented `packages/features/structure/bos_choch.py` and `packages/features/structure/__init__.py`: Deterministic swing pivot detection with configurable windows ($W_L=5, W_R=5$).
+    * Causal availability gating: Pivot at bar $i$ is causally invisible until bar $t = i + W_R$ closes (`confirmed_at = ts_close(i + W_R)`).
+    * Asymmetric tie-breaking: Strict left inequality ($>$) and non-strict right inequality ($\ge$) guarantees earliest bar selection on flat plateaus.
+    * One-time level consumption: Broken levels are consumed (`is_consumed=True`) and removed from active level tracking.
+    * Break criteria: Default strict `CLOSE_THROUGH` and optional intrabar `TOUCH`. TOUCH double-break resolution with `AMBIGUOUS_DOUBLE_BREAK` flag.
+    * Canonical transition matrix: Verified 6-state matrix (`NEUTRAL`, `BULLISH`, `BEARISH`), correctly implementing reversal from BEARISH to `BULLISH` (`BULLISH_CHOCH`) on break of swing high per `ENGINE §21.2`.
+  - **Automated Verification:**
+    * Delivered 11 unit tests in `tests/unit/test_market_structure.py` under `@pytest.mark.gate_g3` (11/11 PASS in 0.17s).
+    * Total Gate G3 marker tests: **58/58 PASS in 1.14s**.
+    * Full repository regression suite: **313/313 tests PASS in 14.61s** (0 regressions).
+    * Linters: `tools/qv_check.py lint DOCS` PASS (0 defects); `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks); `tests/unit/test_package_boundaries.py` 7/7 PASS.
+    * Published evidence report [`ops/evidence/M5-06.md`](file:///c:/Algo/quantview/ops/evidence/M5-06.md).
+    * **Phase 5C Stop Condition Met:** Stopped prior to Phase 5D (Market Calendar & Trading Sessions).
+- **[2026-10-27] Stage 5 — Gate G3 Phase 5D: Market Calendar, Session Progress & High-Water Features (COMPLETE - ALL PASS):**
+  - **Task M5-07 Component Satisfied:**
+    * Implemented `packages/features/calendar/session.py`: `SessionProgress`, point-in-time NSE regular trading hours (09:15-15:30 IST), minutes since open, countdown to 15:00 entry cutoff (RK-19), countdown to 15:25 force-flat (RK-20), session progress fraction, DOW, and DTE.
+    * Implemented `packages/features/calendar/high_water.py`: `SessionHighWater`, rolling session high/low with daily 09:15 IST reset.
+    * Delivered 6 unit tests in `tests/unit/test_calendar_features.py` under `@pytest.mark.gate_g3` (6/6 PASS in 0.15s).
+- **[2026-10-27] Stage 5 — Gate G3 Phase 5E: Lazy Reconstructed Option Chain (COMPLETE - ALL PASS):**
+  - **Task M5-04 Satisfied:**
+    * Implemented `packages/features/chain/lazy_chain.py` and canonical DuckDB lazy view `v_snapshots_reconstructed_chain` (`SQL_CREATE_VIEW_RECONSTRUCTED_CHAIN`).
+    * Zero-copy, lazy point-in-time queries strictly enforcing `available_at <= as_of_minute` (zero future rows).
+    * Fail-closed missing contract reporting (`is_available=False`, `MISSING_STRIKE`), prohibiting silent substitution or interpolation.
+    * ATM strike rounding (tie-broken to lower strike) and liquid ATM +/- N strike band extraction.
+    * Delivered 6 unit tests in `tests/unit/test_lazy_chain.py` under `@pytest.mark.gate_g3` (6/6 PASS in 0.25s).
+    * Published evidence report [`ops/evidence/M5-04.md`](file:///c:/Algo/quantview/ops/evidence/M5-04.md).
+- **[2026-10-27] Stage 5 — Gate G3 Phase 5F: Liquid ATM Band Black-76 Model Greeks, Skew & Derived Features (COMPLETE - ALL PASS):**
+  - **Tasks M5-05 & M5-12 Satisfied:**
+    * Implemented `packages/features/volatility/black76.py`: Closed-form European index pricer, analytical Delta, Gamma, Vega, and daily Theta. Put-Call Parity verified to $< 10^{-10}$.
+    * Implemented `packages/features/volatility/greeks_solver.py`: Bounded Brent IV solver with non-arbitrage bounds guard (`ARBITRAGE_BOUND_VIOLATION`), liquid ATM +/- 5 band evaluation, and strict `model_*` prefix segregation per DATA §4.7.
+    * Implemented `packages/features/volatility/skew.py`: 25-delta Risk Reversal skew and 25-delta Butterfly smile curvature.
+    * Implemented `packages/features/chain/derived.py`: Total and near-ATM Put-Call Ratio (PCR by OI/Volume) with zero-call division guard (`DIV_BY_ZERO`), OI Rate of Change (OI ROC), ATM Straddle premium with Brenner-Subrahmanyam synthetic IV, and Delta-band aggregate OI distribution (Deep OTM, OTM, ATM, ITM).
+    * Delivered 12 unit tests across `tests/unit/test_black76_greeks.py` (7/7 PASS) and `tests/unit/test_chain_derived_features.py` (5/5 PASS) under `@pytest.mark.gate_g3`.
+    * Total Gate G3 marker tests: **82/82 PASS in 1.26s**.
+    * Full repository regression suite: **337/337 tests PASS in 14.09s** (0 regressions).
+    * Linters: `tools/qv_check.py lint DOCS` PASS (0 defects); `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks); `tests/unit/test_package_boundaries.py` 7/7 PASS.
+    * Published evidence reports: [`ops/evidence/M5-05.md`](file:///c:/Algo/quantview/ops/evidence/M5-05.md) and [`ops/evidence/M5-12.md`](file:///c:/Algo/quantview/ops/evidence/M5-12.md).
+- **[2026-10-27] Stage 5 — Gate G3 Phases 5G, 5H, 5I: Order Flow, Transforms, Models, Runner & Gate Closure (COMPLETE - ALL PASS):**
+  - **Tasks M5-02, M5-07, M5-09, M5-10, M5-12 Component Satisfied:**
+    * Implemented `packages/features/orderflow/`: Top-of-Book Depth Imbalance proxy with fail-closed zero-depth guard (None rather than 0.0), and Candle Bar Volume Delta proxy with explicit honest lineage tags (`tests/unit/test_orderflow_proxies.py`, 5/5 PASS).
+    * Implemented `packages/features/transforms/`: Heikin Ashi display transform with versioned seed and Renko brick generation with 2-brick reversal and confirmation timestamps. Strictly enforced non-tradable invariant (`is_display_transform_only=True`, `NonTradableTransformError`) per `ENGINE §22` (`tests/unit/test_transforms_and_models.py`, 3/3 PASS, [`ops/evidence/M5-09.md`](file:///c:/Algo/quantview/ops/evidence/M5-09.md)).
+    * Implemented `packages/features/models/`: `FrozenModelContract` Pydantic model (`frozen=True`) and `ModelInferenceInterface` with absolute anti-training barrier (`NoInferenceTrainingAllowedError`) for R1 research baselines (`tests/unit/test_transforms_and_models.py`, 2/2 PASS, [`ops/evidence/M5-10.md`](file:///c:/Algo/quantview/ops/evidence/M5-10.md)).
+    * Implemented `packages/features/runner/`: `IsolatedFeatureRunner` sandboxed process runner per ADR-012 with timeouts, memory supervision, crash containment, and fail-closed trade entry blocking (`tests/unit/test_subprocess_runner.py`, 5/5 PASS, [`ops/evidence/M5-07.md`](file:///c:/Algo/quantview/ops/evidence/M5-07.md)).
+    * Benchmarked 8-indicator suite across 10,000 bars in **0.0414s** (**241,321 bars/sec**). Total recomputation across 446 sessions requires $\approx 0.69$s. Persistent disk caching is empirically unjustified and intentionally left unimplemented per `M5-02` (`tests/integration/test_feature_benchmark.py`, 1/1 PASS, [`ops/evidence/M5-02.md`](file:///c:/Algo/quantview/ops/evidence/M5-02.md)).
+  - **Gate G3 Formal Certification:**
+    * Published formal Gate G3 audit report: [`reports/stage5_closure/gate_g3_audit_report.md`](file:///c:/Algo/quantview/reports/stage5_closure/gate_g3_audit_report.md).
+    * **98/98 tests pass under `pytest -m gate_g3` in 3.82s.**
+    * **353/353 automated tests pass across full repository in 11.63s.**
+    * `tools/qv_check.py lint DOCS` PASS (0 defects).
+    * `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
+    * `tests/unit/test_package_boundaries.py` 7/7 PASS.
+    * **GATE G3 IS OFFICIALLY CERTIFIED PASS AND CLOSED.** Ready for Stage 6 (Gate G4).
