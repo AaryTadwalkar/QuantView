@@ -1,18 +1,23 @@
 """
 1. What this file does:
-   Defines the Strategy(Protocol) contract and signal interfaces for QuantView.
+   Defines the Strategy(Protocol) contract, signal interfaces, and strategy implementations for QuantView (Tasks M4-09, M4-19).
 
 2. Overall design:
    Strategies are decoupled, deterministic state machines. They consume causal feature
    snapshots and emit trading intents. Strategies NEVER import broker SDKs or query raw
-   data files directly.
+   data files directly:
+     - Single-leg baseline strategies (LongCETrendFollowing, LongPEMeanReversion).
+     - Multi-leg strategy implementations (BullCallSpreadStrategy, BearPutSpreadStrategy, LongStraddleStrategy, ShortStrangleTheoreticalStrategy).
 
 3. Elements in the file:
-   - StrategySignal: Intent emitted by strategy (BUY, SELL, HOLD, EXIT).
-   - Strategy: Typing Protocol defining the lifecycle methods: on_start, on_bar, on_stop.
+   - SignalAction: Intent emitted by single-leg strategy (ENTER_LONG, ENTER_SHORT, EXIT, HOLD).
+   - StrategySignal: Single-leg trade signal container.
+   - Strategy: Typing Protocol defining canonical lifecycle hooks: on_start, on_bar, on_stop.
+   - Re-exports from packages.strategies.multileg: MultiLegSignalAction, MultiLegStrategySignal,
+     BullCallSpreadStrategy, BearPutSpreadStrategy, LongStraddleStrategy, ShortStrangleTheoreticalStrategy.
 
 4. Final output of the file:
-   - Exported strategy protocol and signal definitions.
+   - Exported strategy protocol, signal definitions, and registered strategy classes.
 """
 
 from enum import Enum
@@ -68,22 +73,6 @@ class StrategySignal:
         target_contract: Optional[ContractIdentifier] = None,
         reason: str = "",
     ):
-        """
-        1. The use of function:
-           Initializes a StrategySignal instance.
-
-        2. How does the specific function work:
-           Stores signal properties.
-
-        3. Concepts used in the function:
-           Signal provenance encapsulation.
-
-        4. Places where this function is imported and used:
-           Constructed inside Strategy.on_bar() and consumed by simulation/live engine.
-
-        5. Final output of the function, before and after:
-           Before: Signal attributes. After: Initialized StrategySignal.
-        """
         self.action = action
         self.timestamp = timestamp
         self.target_contract = target_contract
@@ -132,6 +121,14 @@ from packages.strategies.smoke import (
     LongPEMeanReversion,
     LongPEMeanReversionParams,
 )
+from packages.strategies.multileg import (
+    MultiLegSignalAction,
+    MultiLegStrategySignal,
+    BullCallSpreadStrategy,
+    BearPutSpreadStrategy,
+    LongStraddleStrategy,
+    ShortStrangleTheoreticalStrategy,
+)
 
 __all__ = [
     "SignalAction",
@@ -144,4 +141,10 @@ __all__ = [
     "LongCETrendFollowingParams",
     "LongPEMeanReversion",
     "LongPEMeanReversionParams",
+    "MultiLegSignalAction",
+    "MultiLegStrategySignal",
+    "BullCallSpreadStrategy",
+    "BearPutSpreadStrategy",
+    "LongStraddleStrategy",
+    "ShortStrangleTheoreticalStrategy",
 ]

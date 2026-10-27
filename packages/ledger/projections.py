@@ -170,12 +170,24 @@ class LedgerProjectionEngine:
                 pos = open_pos[inst_key]
 
                 if side == OrderSide.BUY.value or side == "BUY":
-                    pos["qty"] += fill_qty
-                    pos["total_cost_paise"] += gross_fill
+                    if pos["qty"] < 0:
+                        # Short position being covered (BUY TO CLOSE)
+                        abs_qty = abs(pos["qty"])
+                        avg_credit_per_unit = pos["total_cost_paise"] // abs_qty
+                        closed_credit = avg_credit_per_unit * fill_qty
+                        realized = closed_credit - gross_fill
+                        gross_realized_pnl = Paise(gross_realized_pnl + realized)
+
+                        pos["qty"] += fill_qty
+                        pos["total_cost_paise"] = max(0, pos["total_cost_paise"] - closed_credit)
+                    else:
+                        # Long position opened or added to (BUY TO OPEN)
+                        pos["qty"] += fill_qty
+                        pos["total_cost_paise"] += gross_fill
 
                 elif side == OrderSide.SELL.value or side == "SELL":
                     if pos["qty"] > 0:
-                        # Realize PnL against existing average cost
+                        # Long position being closed (SELL TO CLOSE)
                         cost_per_unit = pos["total_cost_paise"] // pos["qty"]
                         closed_cost = cost_per_unit * fill_qty
                         realized = gross_fill - closed_cost
@@ -183,6 +195,10 @@ class LedgerProjectionEngine:
 
                         pos["qty"] -= fill_qty
                         pos["total_cost_paise"] = max(0, pos["total_cost_paise"] - closed_cost)
+                    else:
+                        # Short position opened (SELL TO OPEN)
+                        pos["qty"] -= fill_qty
+                        pos["total_cost_paise"] += gross_fill
 
         # Build position state records and mark-to-market
         positions: Dict[str, PositionState] = {}
@@ -206,6 +222,24 @@ class LedgerProjectionEngine:
                     unrealized_pnl_paise=unrealized,
                 )
                 total_market_val = Paise(total_market_val + mkt_val)
+                total_unrealized = Paise(total_unrealized + unrealized)
+
+            elif qty < 0:
+                abs_qty = abs(qty)
+                avg_credit = Paise(pdata["total_cost_paise"] // abs_qty)
+                mark_price = marks.get(inst_key, avg_credit)
+                liability = Paise(abs_qty * int(mark_price))
+                unrealized = Paise(pdata["total_cost_paise"] - liability)
+
+                positions[inst_key] = PositionState(
+                    instrument_key=inst_key,
+                    qty=qty,
+                    avg_cost_paise=avg_credit,
+                    current_price_paise=mark_price,
+                    market_value_paise=Paise(-int(liability)),
+                    unrealized_pnl_paise=unrealized,
+                )
+                total_market_val = Paise(total_market_val - liability)
                 total_unrealized = Paise(total_unrealized + unrealized)
 
         net_realized_pnl = Paise(gross_realized_pnl - total_fees)

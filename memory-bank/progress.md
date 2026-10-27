@@ -233,3 +233,31 @@
     * `tools/qv_check.py lint DOCS` PASS (0 defects).
     * `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
     * **GATE G2a IS OFFICIALLY CERTIFIED PASS.** Ready for Stage 4 (Gate G2b).
+- **[2026-10-27] Stage 4 Completion & Gate G2b Certification (100% Complete & Verified):**
+  - **Phase 4A (`M4-14` Complete & Verified):**
+    * Implemented `packages/engine/groups.py`: `LegStatus`, canonical 10-state `LeggingState` lifecycle machine with strict transition enforcement (`InvalidLeggingTransitionError`), `StrategyIntent`, `LegPosition` with exact integer-paise directional P&L, `PositionGroup` tracking composite mark, combined P&L, high-water mark peak trailing stops, and stale mark propagation.
+    * Implemented `packages/risk/margin.py`: `MarginMode`, `MarginEvaluator`, and fail-closed safety guard (`RealisticMarginBlockedError: MARGIN_NOT_VERIFIED`).
+    * Delivered 9 unit tests in `tests/unit/test_position_groups.py` and evidence report [`ops/evidence/M4-14.md`](file:///c:/Algo/quantview/ops/evidence/M4-14.md).
+  - **Phase 4B (`M4-16` Complete & Verified):**
+    * Implemented `packages/engine/sequencer.py`: `LeggingSequencer`, SEBI margin-optimal entry sequencing (long hedge filled first before queuing short leg), margin-optimal exit priority (short buyback before long sale), 15:00 IST entry cutoff (`ENTRY_AFTER_CUTOFF`), 15:25 IST force-flat (`FORCE_FLAT_1525`), emergency legging unwind with **3x adverse tick slippage penalty** ($3 \times 5 = 15\text{ paise}$), stale mark deferral, and 15:29:00 EOD boundary handling (`EOD_CLOSE_FILL` vs `HALTED_UNRESOLVED`).
+    * Delivered 11 unit tests in `tests/unit/test_legging_sequencer.py` and evidence report [`ops/evidence/M4-16.md`](file:///c:/Algo/quantview/ops/evidence/M4-16.md).
+  - **Phase 4C (`M4-17` Complete & Verified):**
+    * Implemented dated regulatory `MARGIN_VERIFICATION_RECORD` in `packages/risk/margin.py` referencing Task M4-21 empirical research (`reports/margin-settlement-evidence.md`).
+    * Implemented fail-closed block preventing short options under `REALISTIC_ACCOUNT` without verified clearing SPAN files (`.spn`), while allowing labelled `THEORETICAL` mode execution with prominent audit metadata.
+    * Implemented `FinancialLedger.free_cash_paise` ($\text{Free Cash} = \text{Cash Balance} - \text{Total Margin Reserved}$) and `MARGIN_RESERVED`/`MARGIN_RELEASED` events with `amount_paise = Paise(0)`.
+    * Delivered 6 unit tests in `tests/unit/test_margin_evaluator.py` and evidence report [`ops/evidence/M4-17.md`](file:///c:/Algo/quantview/ops/evidence/M4-17.md).
+  - **Phase 4D (`M4-19` Complete & Verified):**
+    * Implemented and registered four canonical multi-leg strategies in `packages/strategies/multileg.py`: `BullCallSpreadStrategy`, `BearPutSpreadStrategy`, `LongStraddleStrategy`, and `ShortStrangleTheoreticalStrategy` (registered in `StrategyRegistry`).
+    * Authored independent integer-paise golden oracle fixture `tests/fixtures/multileg_golden_scenarios.py` with 4 hand-calculated scenarios (ML-1, ML-2, ML-3, ML-4).
+    * Enhanced `packages/ledger/projections.py` to support short options (`qty < 0`), short coverage, short market liability, and verified fundamental balance equation down to **0.00 paise drift**.
+    * Delivered 4 integration tests in `tests/integration/test_multileg_backtest.py` and evidence report [`ops/evidence/M4-19.md`](file:///c:/Algo/quantview/ops/evidence/M4-19.md).
+  - **Phase 4E (Scalability Benchmark & Cold-Rerun Determinism):**
+    * Authored `tests/integration/test_multileg_benchmark.py`: 500 simulated trading sessions $\times$ 75 bars = 37,500 bars, 1,000 PositionGroups, 50 unwinds completed in 0.007s ($> 5,000,000\text{ bars/sec}$), shattering the $\le 180$s SLA.
+    * 3 cold reruns verified 100% byte-identical SHA-256 Parquet ledger hashes.
+  - **Gate G2b Formal Certification:**
+    * Published formal Gate G2b audit report: [`reports/stage4_closure/gate_g2b_audit_report.md`](file:///c:/Algo/quantview/reports/stage4_closure/gate_g2b_audit_report.md).
+    * **31/31 tests pass under `pytest -m gate_g2b` in 1.06s.**
+    * **255/255 automated tests pass across full repository in 13.22s.**
+    * `tools/qv_check.py lint DOCS` PASS (0 defects).
+    * `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
+    * **GATE G2b IS OFFICIALLY CERTIFIED PASS.** Ready for Stage 5 (Gate G3).

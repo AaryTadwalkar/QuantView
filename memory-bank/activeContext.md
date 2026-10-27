@@ -1,34 +1,22 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
-## Current State of the Union (2026-10-27 — Stage 2 Gate G0 Certified PASS & Stage 3 Gate G2a Certified PASS)
-- **STAGE 2 / GATE G0 FULLY CERTIFIED PASS & CLOSED:**
-  - **Live Market Production Ingestion:** Verified live on 2026-10-27. WebSocket collector streaming live quotes (> 102,000 decoded quotes, > 37 MB segment) for Nifty 50 + 22 option strikes (ATM ± 5).
-  - **Dynamic Expiry Discovery:** Hardened `UpstoxSnapshotAdapter` and `SnapshotCollectorService` to query `/v2/option/contract` dynamically, resolving today's active expiry (`2026-10-27`) without static JSON dependency.
-  - **Snapshot Ingestion Verified:** Successfully captured 144 strikes (288 CE/PE rows) at 60s intervals with 100% manifest and SHA-256 hash parity.
-  - **Process Lifecycle Management:** Snapshot collector cleanly terminated on PC A (leaving dedicated PC B running live option chain captures).
-  - **Audit Sign-Off:** Full audit report updated and certified at [`reports/stage2_closure/gate_g0_audit_report.md`](file:///c:/Algo/quantview/reports/stage2_closure/gate_g0_audit_report.md). 67/67 Stage 2 tests PASS; 224/224 full repo tests PASS.
-- **GATE G2a FULLY CERTIFIED PASS:** 89/89 Gate G2a tests PASS, 224/224 full repo tests PASS in 9.19s. Full audit report published at [`reports/stage3_closure/gate_g2a_audit_report.md`](file:///c:/Algo/quantview/reports/stage3_closure/gate_g2a_audit_report.md).
-- **REVIEWER AUDIT RECONCILIATIONS COMPLETED:**
-  - **Smoke Test Equity Parity:** Fixed round-trip fee accounting in `execution.py` (entry + exit fees tracked in `ActivePosition`). Cash balance, net P&L, and equity reconcile to the exact paisa (Rs 100,000 + 211.52 == Rs 100,211.52).
-  - **Synthetic Benchmark Arithmetic:** Reconciled bar count and timing: 1,250 sessions (12,500 bars) executed in 7.21s (1,734 bars/sec), well within the 300s SLA.
-  - **Dedicated E2E Test Fixture:** Implemented `DeterministicTestFixtureStrategy` and `tests/integration/test_end_to_end_test_fixture.py`. Verified signal causality, next-bar open fill, statutory fees, balance equation, and 100% byte-identical cold reruns.
-- **DELIVERED MILESTONES (M4-01 through M4-22):**
-  - **Phase 3A (`M4-01`):** Exact-money types (`Paise = NewType("Paise", int)`), adverse `TickQuantizer`, UTC epoch timestamps.
-  - **Phase 3B (`M4-13`, `M4-02`):** Pre-implementation golden oracle across 9 scenarios. Fundamental balance equation verified.
-  - **Phase 3C (`M4-06`, `M4-04`):** Effective-dated Indian fee engine (Budget 2026 STT 0.15%, NSE turnover 0.03553%) and PIT Contract Selector.
-  - **Phase 3D (`M4-07`, `M4-11`):** 15 canonical ledger events, rebuildable projections, Parquet persistence, and PostgreSQL trigger enforcement.
-  - **Phase 3E (`M4-03`, `M4-05`, `M4-22`):** SimulationClock (375 exchange minutes), IntrabarFillEngine (`STOP_FIRST`, 15:25 force-flat, `NO_NEXT_BAR` at 15:29).
-  - **Phase 3F (`M4-20`, `M4-12`):** Pre-trade RiskPolicyEvaluator (RK-01..06) and StrategyRegistry with SHA-256 source code hashing.
-  - **Phase 3G (`M4-18`, `M4-08`):** 39-field EngineRunConfig (mandatory capital > 0), CLI runner `tools/run_backtest.py`, and 5 provenance artifacts.
-  - **Phase 3H (`M4-15`):** 22+ performance metrics, Bailey & López de Prado (2014) DSR with trial validity gate ($N < 2$ emits null).
-  - **Phase 3I (`M4-09`, `M4-10`, `M4-21`):** Real-market benchmark on 446 DuckDB sessions, 5-yr synthetic scalability (1,250 sessions in 7.21s), 3-rerun byte-identical determinism, and non-blocking margin spike [`reports/margin-settlement-evidence.md`](file:///c:/Algo/quantview/reports/margin-settlement-evidence.md).
-- **DOCUMENTATION & REPO CONSISTENCY:**
+## Current State of the Union (2026-10-27 — Stage 4 / Gate G2b Fully Certified PASS)
+- **STAGE 2 / GATE G0 FULLY CERTIFIED PASS & CLOSED:** 67/67 tests PASS. Live streaming verified.
+- **STAGE 3 / GATE G2a FULLY CERTIFIED PASS & CLOSED:** 89/89 Gate G2a tests PASS. Reconciled to 0.00 paisa drift.
+- **STAGE 4 / GATE G2b FULLY CERTIFIED PASS & CLOSED:**
+  - **M4-14 (Position Groups & Declared Legs):** Canonical 10-state legging lifecycle, composite mark, combined P&L, high-water trailing stops, and stale mark propagation (`tests/unit/test_position_groups.py`).
+  - **M4-16 (Legging Sequencer & Unwind Engine):** Margin-optimal entry/exit sequencing, 15:00 entry cutoff, 15:25 force-flat, emergency unwind recovery with **3x adverse tick slippage penalty** ($3 \times 5 = 15\text{ paise}$), and EOD boundary handling (`tests/unit/test_legging_sequencer.py`).
+  - **M4-17 (Margin Evaluator & Realistic Mode Guard):** Fail-closed block preventing short options under `REALISTIC_ACCOUNT` (`MARGIN_NOT_VERIFIED`), `THEORETICAL` mode audit labelling, and ledger `free_cash_paise` reservation (`tests/unit/test_margin_evaluator.py`).
+  - **M4-19 (Multi-Leg Golden Scenarios & Integration):** 4 hand-calculated golden oracle scenarios (ML-1..ML-4) passing with 0.00 paisa drift, 3 cold reruns byte-identical SHA-256 Parquet ledger hashes (`tests/integration/test_multileg_backtest.py`), and 500-session scalability benchmark (37,500 bars in 0.007s, `tests/integration/test_multileg_benchmark.py`).
+  - **Formal Gate G2b Audit Report:** [`reports/stage4_closure/gate_g2b_audit_report.md`](file:///c:/Algo/quantview/reports/stage4_closure/gate_g2b_audit_report.md).
+  - **Test Suite Status:** **31/31 Gate G2b tests PASS in 1.06s** (`pytest -m gate_g2b`). Full regression suite: **255/255 PASS in 13.22s**.
+- **DOCUMENTATION & CONSISTENCY:**
   - `tools/qv_check.py lint DOCS` PASS (0 defects).
   - `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
-- **NEXT PHASE:** Stage 4 / Gate G2b (Multi-Leg Position Groups & Short Options Margin Guards).
+- **NEXT PHASE:** Stage 5 (Gate G3: Market Features, Order Flow Imbalance, Volatility Surface & Indicators).
 
 ## Canonical Architectural Contracts & Modes
 - **Operating Modes:** `RESEARCH`, `UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`, `MANUAL_PAPER`, `STRATEGY_PAPER`, `LIVE`.
-- **Accounting Standard:** Event-sourced integer-paise ledger with deterministic projections ($\text{Cash} + \text{Long MV} == \text{Initial} + \text{Gross} + \text{Unrealized} - \text{Fees}$).
+- **Accounting Standard:** Event-sourced integer-paise ledger with deterministic projections ($\text{Free Cash} = \text{Cash} - \text{Margin Reserved}$; $\text{Equity} = \text{Cash} + \text{Long MV} - \text{Short Liability}$).
 - **Causal Execution Model:** `feature.available_at <= decision_time`. Next-bar open fill. Final bar 15:29 rejection (`NO_NEXT_BAR`).
-- **Release Gates:** Gate G0 (Collectors: PASS), Gate G1 (Data Foundation: PASS), Gate G2a (Single-Leg Engine: PASS), Gate G2b (Multi-Leg Engine: READY TO START).
+- **Release Gates:** Gate G0 (PASS), Gate G1 (PASS), Gate G2a (PASS), Gate G2b (PASS), Gate G3 (Pending).

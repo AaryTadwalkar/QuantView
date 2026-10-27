@@ -132,6 +132,7 @@ class FinancialLedger:
         self._idempotency_keys: Set[str] = set()
         self.balance_paise: Paise = Paise(int(initial_cash_paise))
         self.initial_capital_paise: Paise = Paise(int(initial_cash_paise))
+        self.reserved_margin_paise: Paise = Paise(0)
 
     def record_event(
         self,
@@ -294,7 +295,7 @@ class FinancialLedger:
             "qty": qty,
             "price_paise": int(price_paise),
             "gross_value_paise": int(gross_value_paise),
-            "fill_id": fill_id or str(uuid.uuid4()),
+            "fill_id": fill_id or (f"fill_{correlation_id}" if correlation_id else str(uuid.uuid4())),
         }
 
         return self.record_event(
@@ -348,6 +349,124 @@ class FinancialLedger:
             amount_paise=fee_delta,
             event_time=event_time,
             correlation_id=correlation_id,
+            metadata=meta,
+        )
+
+    @property
+    def free_cash_paise(self) -> Paise:
+        """
+        1. The use of function:
+           Returns the unencumbered cash balance (buying power) available for new positions.
+
+        2. How does the specific function work:
+           Subtracts total reserved margin from the cash balance: Free Cash = Cash Balance - Margin Reserved.
+
+        3. Concepts used in the function:
+           Buying power reservation without double-counting against total account equity (ENGINE §8).
+
+        4. Places where this function is imported and used:
+           Used by MarginEvaluator, RiskPolicyEvaluator, and BacktestRunner.
+
+        5. Final output of the function, before and after:
+           Before: Cash and reserved margin. After: Unencumbered cash in integer Paise.
+        """
+        return Paise(int(self.balance_paise) - int(self.reserved_margin_paise))
+
+    def record_margin_reserved(
+        self,
+        margin_paise: Paise,
+        event_time: UtcEpochSec,
+        correlation_id: str = "",
+        contract_id: Optional[str] = None,
+        description: str = "",
+    ) -> FinancialEventRecord:
+        """
+        1. The use of function:
+           Records a MARGIN_RESERVED event blocking buying power for short option positions.
+
+        2. How does the specific function work:
+           - Validates margin_paise > 0.
+           - Increments self.reserved_margin_paise.
+           - Appends MARGIN_RESERVED event with amount_paise = Paise(0) (cash balance unchanged).
+           - Updates metadata with reserved margin and resulting free cash.
+
+        3. Concepts used in the function:
+           Collateral reservation without double-counting against account equity (ENGINE §8, DATA §2.1).
+
+        4. Places where this function is imported and used:
+           Used by MarginEvaluator and fill engine when short positions are entered.
+
+        5. Final output of the function, before and after:
+           Before: Unencumbered cash. After: Margin reserved, free cash reduced, cash balance unchanged.
+        """
+        if margin_paise <= 0:
+            raise ValueError(f"Margin reserved must be strictly positive, got {margin_paise}")
+
+        self.reserved_margin_paise = Paise(int(self.reserved_margin_paise) + int(margin_paise))
+
+        meta: Dict[str, Any] = {
+            "reserved_margin_paise": int(margin_paise),
+            "total_reserved_margin_paise": int(self.reserved_margin_paise),
+            "free_cash_paise": int(self.free_cash_paise),
+        }
+        if description:
+            meta["description"] = description
+
+        return self.record_event(
+            event_type=CanonicalLedgerEventType.MARGIN_RESERVED,
+            amount_paise=Paise(0),
+            event_time=event_time,
+            correlation_id=correlation_id,
+            contract_id=contract_id,
+            metadata=meta,
+        )
+
+    def record_margin_released(
+        self,
+        margin_paise: Paise,
+        event_time: UtcEpochSec,
+        correlation_id: str = "",
+        contract_id: Optional[str] = None,
+        description: str = "",
+    ) -> FinancialEventRecord:
+        """
+        1. The use of function:
+           Records a MARGIN_RELEASED event unlocking reserved buying power upon position closure.
+
+        2. How does the specific function work:
+           - Validates margin_paise > 0.
+           - Decrements self.reserved_margin_paise (floored at zero).
+           - Appends MARGIN_RELEASED event with amount_paise = Paise(0) (cash balance unchanged).
+           - Updates metadata with released margin and restored free cash.
+
+        3. Concepts used in the function:
+           Collateral unblocking without altering cash proceeds (ENGINE §8, DATA §2.1).
+
+        4. Places where this function is imported and used:
+           Used by MarginEvaluator and fill engine when short positions are closed.
+
+        5. Final output of the function, before and after:
+           Before: Encumbered margin. After: Margin released, free cash restored.
+        """
+        if margin_paise <= 0:
+            raise ValueError(f"Margin released must be strictly positive, got {margin_paise}")
+
+        self.reserved_margin_paise = Paise(max(0, int(self.reserved_margin_paise) - int(margin_paise)))
+
+        meta: Dict[str, Any] = {
+            "released_margin_paise": int(margin_paise),
+            "total_reserved_margin_paise": int(self.reserved_margin_paise),
+            "free_cash_paise": int(self.free_cash_paise),
+        }
+        if description:
+            meta["description"] = description
+
+        return self.record_event(
+            event_type=CanonicalLedgerEventType.MARGIN_RELEASED,
+            amount_paise=Paise(0),
+            event_time=event_time,
+            correlation_id=correlation_id,
+            contract_id=contract_id,
             metadata=meta,
         )
 
@@ -480,5 +599,12 @@ class LedgerWriter:
             ledger.events.append(rec)
             ledger._idempotency_keys.add(rec.idempotency_key)
             ledger.balance_paise = rec.balance_paise
+
+            if rec.event_type == CanonicalLedgerEventType.MARGIN_RESERVED:
+                res_amt = rec.metadata.get("reserved_margin_paise", 0)
+                ledger.reserved_margin_paise = Paise(int(ledger.reserved_margin_paise) + int(res_amt))
+            elif rec.event_type == CanonicalLedgerEventType.MARGIN_RELEASED:
+                rel_amt = rec.metadata.get("released_margin_paise", 0)
+                ledger.reserved_margin_paise = Paise(max(0, int(ledger.reserved_margin_paise) - int(rel_amt)))
 
         return ledger

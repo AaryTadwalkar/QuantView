@@ -1,28 +1,15 @@
 [
   {
-    "symbol": "NIFTY",
-    "entry_time": "09:20",
-    "entry_price_paise": 175,
-    "exit_price_paise": 135,
+    "symbol": "NIFTY25JAN24000CE",
+    "entry_time": "15:25",
+    "entry_price_paise": 15425,
+    "exit_price_paise": 16490,
     "quantity": 25,
-    "gross_pnl_paise": -1000,
-    "fee_paise": 4726,
-    "entry_fee_paise": 2362,
-    "exit_fee_paise": 2364,
-    "net_pnl_paise": -5726,
-    "reason": "NEXT_BAR_OPEN_EXIT"
-  },
-  {
-    "symbol": "NIFTY",
-    "entry_time": "09:20",
-    "entry_price_paise": 82645,
-    "exit_price_paise": 510,
-    "quantity": 25,
-    "gross_pnl_paise": -2053375,
-    "fee_paise": 5656,
-    "entry_fee_paise": 3278,
-    "exit_fee_paise": 2378,
-    "net_pnl_paise": -2059031,
+    "gross_pnl_paise": 26625,
+    "fee_paise": 5473,
+    "entry_fee_paise": 2531,
+    "exit_fee_paise": 2942,
+    "net_pnl_paise": 21152,
     "reason": "EOD_CLOSE_FILL"
   }
 ]
