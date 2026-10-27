@@ -261,3 +261,30 @@
     * `tools/qv_check.py lint DOCS` PASS (0 defects).
     * `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
     * **GATE G2b IS OFFICIALLY CERTIFIED PASS.** Ready for Stage 5 (Gate G3).
+- **[2026-10-27] Stage 5 — Gate G3 Phase 5A: Feature Registry, Schemas & Causality Harness (COMPLETE - ALL PASS):**
+  - **Plan Frozen:** Delivered and finalized [`stage5_implementation_plan.md`](file:///C:/Users/Aary/.gemini/antigravity/brain/06a15e89-b29d-4bcb-80a8-a97856ca6a27/stage5_implementation_plan.md) with comprehensive formula audit (RV, IV-RV Spread, NATR, Straddle-IV inverter, Black-76 ACT/365F Greeks, Supertrend state machine, BOS/CHoCH tie-breaking, depth imbalance null guard, candle delta proxy, and 3 causality protocols).
+  - **Task M5-01 Satisfied:**
+    * Implemented `packages/features/schemas.py`: Canonical enums (`SourceTier`, `MemoryClass`, `RepaintClass`, `FeatureStatus`), immutable `FeatureDefinition` (`frozen=True`), and deterministic SHA-256 parameter hashing (`compute_param_hash`, `feature_id = f"{name}_{version}_{param_hash[:8]}"`).
+    * Implemented `packages/features/registry.py`: Thread-safe `FeatureRegistry` singleton (`threading.RLock`), duplicate collision detection (`DuplicateFeatureRegistrationError`), `@register_feature` decorator, and `export_json_schema()` Draft 2020-12 export.
+    * Implemented 3 causality test protocols: `verify_prefix_invariance` ($F([0 \dots t])_t \equiv F([0 \dots T])_t$), `verify_future_perturbation`, and `verify_availability_enforcement` (`TemporalLeakageError`).
+    * Re-exported cleanly via `packages/features/__init__.py`.
+  - **Automated Verification:**
+    * Delivered 16 unit tests in `tests/unit/test_feature_registry.py` under `@pytest.mark.gate_g3` (16/16 PASS in 0.16s).
+    * **271/271 tests PASS across entire repository in 15.42s** (0 regressions).
+    * `tools/qv_check.py lint DOCS` PASS (0 defects).
+    * `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
+    * Published evidence report [`ops/evidence/M5-01.md`](file:///c:/Algo/quantview/ops/evidence/M5-01.md).
+    * **Phase 5A Stop Condition Met:** Stopped prior to Phase 5B (Technical Indicators).
+- **[2026-10-27] Stage 5 — Gate G3 Phase 5B: Technical Indicators & TradingView Oracle (COMPLETE - ALL PASS):**
+  - **Tasks M5-03, M5-08, M5-11 Satisfied:**
+    * Implemented `packages/features/statistical/indicators.py`: Moving averages (SMA, dual-seed EMA), oscillators (Wilder RSI, MACD), volatility measures (ATR, NATR, Bollinger Bands, Realized Volatility), directional indicators (Supertrend, ADX with +DI/-DI), and IV-RV Spread interface.
+    * Implemented `packages/features/statistical/vwap_guard.py`: Fail-closed Session VWAP quarantine (`SessionVWAPQuarantinedError`, `BLOCKED_QUARANTINED`). Prohibits fake volume, tick counts, or synthetic proxies on NIFTY cash index.
+    * Implemented `tests/fixtures/pine_indicator_oracle.py`: Hand-calculated numerical golden fixture and independent reference oracle reproducing TradingView Pine Script v5/v6 built-ins.
+    * Conducted mandatory EMA parity investigation: `seed_policy="PINE_SCRIPT"` matches TradingView within $< 10^{-12}$ on every single bar from bar 0; `seed_policy="SMA"` initial deviation decays exponentially to $< 10^{-4}$ after $5N$ warm-up bars.
+  - **Automated Verification:**
+    * Delivered 31 unit tests in `tests/unit/test_causal_indicators.py` under `@pytest.mark.gate_g3` (31/31 PASS in 0.22s).
+    * Total Gate G3 marker tests: **47/47 PASS in 6.90s**.
+    * Full repository regression suite: **302/302 tests PASS in 15.42s** (0 regressions).
+    * Linters: `tools/qv_check.py lint DOCS` PASS (0 defects); `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks); `tests/unit/test_package_boundaries.py` 7/7 PASS.
+    * Published evidence reports: [`ops/evidence/M5-03.md`](file:///c:/Algo/quantview/ops/evidence/M5-03.md), [`ops/evidence/M5-08.md`](file:///c:/Algo/quantview/ops/evidence/M5-08.md), [`ops/evidence/M5-11.md`](file:///c:/Algo/quantview/ops/evidence/M5-11.md).
+    * **Phase 5B Stop Condition Met:** Stopped prior to Phase 5C (Market Structure Engine BOS/CHoCH).

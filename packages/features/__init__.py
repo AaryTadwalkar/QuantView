@@ -1,60 +1,102 @@
 """
 1. What this file does:
-   Defines point-in-time technical indicator and feature extraction interfaces for QuantView.
+   Canonical top-level package export for QuantView point-in-time features, registry,
+   schemas, and causal verification contracts (Stage 5 / Task M5-01).
 
 2. Overall design:
-   Features transform market data series into quantitative signals without look-ahead bias.
-   The core invariant enforced at every step is:
+   Re-exports the core metadata models, deterministic parameter hashing utilities,
+   FeatureRegistry singleton, and anti-lookahead verification protocols.
+   The fundamental invariant enforced throughout this package is:
        feature.available_at <= decision_time
    Features never access future bars, unclosed candles, or future option chain snapshots.
 
 3. Elements in the file:
-   - FeatureDefinition: Metadata specifying feature name, parameters, and lookback window.
-   - BaseFeatureExtractor: Abstract base class for causal feature computation.
+   - SourceTier, MemoryClass, RepaintClass, FeatureStatus: Core temporal and data tier enums.
+   - FeatureDefinition: Immutable Pydantic model with deterministic SHA-256 parameter hashing.
+   - compute_param_hash: Utility producing content-addressable parameter hashes.
+   - FeatureRegistry, FeatureRegistration, register_feature: Thread-safe registry and decorator.
+   - TemporalLeakageError, DuplicateFeatureRegistrationError, FeatureNotFoundError: Registry exceptions.
+   - PrefixInvarianceViolationError, FuturePerturbationViolationError: Causality test exceptions.
+   - verify_prefix_invariance, verify_future_perturbation, verify_availability_enforcement: Causality test helpers.
 
 4. Final output of the file:
-   - Exported feature contracts and causal computation interfaces.
+   - Clean public API for packages.features.
 """
 
-from typing import Dict, Any, List
-from packages.domain import UtcEpochSec
-from packages.data import DatasetManifest
+from packages.features.schemas import (
+    FeatureDefinition,
+    FeatureStatus,
+    MemoryClass,
+    RepaintClass,
+    SourceTier,
+    canonical_json_dumps,
+    compute_param_hash,
+)
+from packages.features.registry import (
+    DuplicateFeatureRegistrationError,
+    FeatureNotFoundError,
+    FeatureRegistration,
+    FeatureRegistry,
+    FuturePerturbationViolationError,
+    PrefixInvarianceViolationError,
+    TemporalLeakageError,
+    register_feature,
+    verify_availability_enforcement,
+    verify_future_perturbation,
+    verify_prefix_invariance,
+)
+from packages.features.statistical import (
+    SessionVWAPGuard,
+    SessionVWAPQuarantinedError,
+    compute_adx,
+    compute_atr,
+    compute_bollinger_bands,
+    compute_ema,
+    compute_iv_rv_spread,
+    compute_macd,
+    compute_natr,
+    compute_realized_volatility,
+    compute_rsi,
+    compute_sma,
+    compute_supertrend,
+    compute_wilder_rma,
+    register_all_statistical_features,
+    register_quarantined_vwap,
+)
 
-
-class FeatureDefinition:
-    """
-    1. The use of class:
-       Encapsulates parameter specification and identification for a computable feature.
-
-    2. What the class contains:
-       - name: String identifier of the feature (e.g. 'EMA_20', 'ATM_IV').
-       - params: Dictionary of parameter arguments.
-       - lookback_window: Number of historical bars required for warm-up.
-
-    3. Technologies used and why:
-       Standard Python class for immutable configuration.
-
-    4. Key design and overall design of the class:
-       Provides content-addressable parameter hashing for partition caching.
-    """
-
-    def __init__(self, name: str, params: Dict[str, Any], lookback_window: int):
-        """
-        1. The use of function:
-           Initializes a FeatureDefinition instance.
-
-        2. How does the specific function work:
-           Stores feature name, copies params dictionary, and stores lookback window.
-
-        3. Concepts used in the function:
-           Parameter encapsulation, immutability.
-
-        4. Places where this function is imported and used:
-           Used by strategy definitions to declare required feature dependencies.
-
-        5. Final output of the function, before and after:
-           Before: Name, params, window. After: Configured FeatureDefinition.
-        """
-        self.name = name
-        self.params = dict(params)
-        self.lookback_window = lookback_window
+__all__ = [
+    "SourceTier",
+    "MemoryClass",
+    "RepaintClass",
+    "FeatureStatus",
+    "canonical_json_dumps",
+    "compute_param_hash",
+    "FeatureDefinition",
+    "FeatureRegistration",
+    "FeatureRegistry",
+    "register_feature",
+    "TemporalLeakageError",
+    "DuplicateFeatureRegistrationError",
+    "FeatureNotFoundError",
+    "PrefixInvarianceViolationError",
+    "FuturePerturbationViolationError",
+    "verify_prefix_invariance",
+    "verify_future_perturbation",
+    "verify_availability_enforcement",
+    "compute_sma",
+    "compute_ema",
+    "compute_wilder_rma",
+    "compute_rsi",
+    "compute_macd",
+    "compute_atr",
+    "compute_natr",
+    "compute_bollinger_bands",
+    "compute_supertrend",
+    "compute_adx",
+    "compute_realized_volatility",
+    "compute_iv_rv_spread",
+    "register_all_statistical_features",
+    "SessionVWAPQuarantinedError",
+    "SessionVWAPGuard",
+    "register_quarantined_vwap",
+]
