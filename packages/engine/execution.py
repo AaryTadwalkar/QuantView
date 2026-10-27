@@ -225,10 +225,12 @@ class IntrabarFillEngine:
                     entry_time=minute.bar_start_utc,
                     stop_loss_paise=order.stop_loss_paise,
                     take_profit_paise=order.take_profit_paise,
+                    entry_fees_paise=fees.total_fee_paise,
                 )
             elif order.side == OrderSide.SELL:
                 if self.active_position is not None:
                     gross_pnl = (int(quantized_fill) - int(self.active_position.entry_price_paise)) * order.qty
+                    total_trade_fees = int(self.active_position.entry_fees_paise) + int(fees.total_fee_paise)
                     self.trade_history.append({
                         "symbol": order.contract.instrument_key,
                         "entry_time": minute.ist_time_str,
@@ -236,8 +238,10 @@ class IntrabarFillEngine:
                         "exit_price_paise": int(quantized_fill),
                         "quantity": order.qty,
                         "gross_pnl_paise": gross_pnl,
-                        "fee_paise": int(fees.total_fee_paise),
-                        "net_pnl_paise": gross_pnl - int(fees.total_fee_paise),
+                        "fee_paise": total_trade_fees,
+                        "entry_fee_paise": int(self.active_position.entry_fees_paise),
+                        "exit_fee_paise": int(fees.total_fee_paise),
+                        "net_pnl_paise": gross_pnl - total_trade_fees,
                         "reason": "NEXT_BAR_OPEN_EXIT",
                     })
                 self.active_position = None
@@ -340,6 +344,7 @@ class IntrabarFillEngine:
         )
 
         gross_pnl = (int(fill_price) - int(pos.entry_price_paise)) * pos.qty
+        total_trade_fees = int(pos.entry_fees_paise) + int(fees.total_fee_paise)
         self.trade_history.append({
             "symbol": pos.contract.instrument_key,
             "entry_time": minute.ist_time_str,
@@ -347,8 +352,10 @@ class IntrabarFillEngine:
             "exit_price_paise": int(fill_price),
             "quantity": pos.qty,
             "gross_pnl_paise": gross_pnl,
-            "fee_paise": int(fees.total_fee_paise),
-            "net_pnl_paise": gross_pnl - int(fees.total_fee_paise),
+            "fee_paise": total_trade_fees,
+            "entry_fee_paise": int(pos.entry_fees_paise),
+            "exit_fee_paise": int(fees.total_fee_paise),
+            "net_pnl_paise": gross_pnl - total_trade_fees,
             "reason": reason,
         })
 

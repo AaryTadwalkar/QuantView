@@ -1,8 +1,8 @@
 {
   "schema_version": "1.0.0",
   "run_id": "manual_cli_run",
-  "created_at_utc": "2026-10-26T19:21:54.814364+00:00",
-  "config_hash": "28d797dcdc0eb905c7f24db193ba49df2fe121c6b7981e533f412dea1eddda67",
+  "created_at_utc": "2026-10-27T03:44:58.876895+00:00",
+  "config_hash": "e9c39a17946b28c02affd7e8f7e178b88845ad67014ce4829f0bff444c4204ca",
   "strategy_id": "LongCETrendFollowing",
   "strategy_code_hash": "53ba7b1b4bd54667",
   "dataset_manifest_hash": "local_lake_active",

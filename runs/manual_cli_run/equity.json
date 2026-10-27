@@ -1,452 +1,3002 @@
 [
   {
     "bar_index": 0,
-    "timestamp": 1735703760,
+    "timestamp": 1735703160,
     "time_str": "09:15",
-    "equity_paise": 20000000
+    "equity_paise": 10000000
   },
   {
     "bar_index": 1,
-    "timestamp": 1735704060,
-    "time_str": "09:20",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 2,
-    "timestamp": 1735704360,
-    "time_str": "09:25",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 3,
-    "timestamp": 1735704660,
-    "time_str": "09:30",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 4,
-    "timestamp": 1735704960,
-    "time_str": "09:35",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 5,
-    "timestamp": 1735705260,
-    "time_str": "09:40",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 6,
-    "timestamp": 1735705560,
-    "time_str": "09:45",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 7,
-    "timestamp": 1735705860,
-    "time_str": "09:50",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 8,
-    "timestamp": 1735706160,
-    "time_str": "09:55",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 9,
-    "timestamp": 1735706460,
-    "time_str": "10:00",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 10,
-    "timestamp": 1735706760,
-    "time_str": "10:05",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 11,
-    "timestamp": 1735707060,
-    "time_str": "10:10",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 12,
-    "timestamp": 1735707360,
-    "time_str": "10:15",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 13,
-    "timestamp": 1735707660,
-    "time_str": "10:20",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 14,
-    "timestamp": 1735707960,
-    "time_str": "10:25",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 15,
-    "timestamp": 1735708260,
-    "time_str": "10:30",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 16,
-    "timestamp": 1735708560,
-    "time_str": "10:35",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 17,
-    "timestamp": 1735708860,
-    "time_str": "10:40",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 18,
-    "timestamp": 1735709160,
-    "time_str": "10:45",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 19,
-    "timestamp": 1735709460,
-    "time_str": "10:50",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 20,
-    "timestamp": 1735709760,
-    "time_str": "10:55",
-    "equity_paise": 20000000
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 21,
-    "timestamp": 1735710060,
-    "time_str": "11:00",
-    "equity_paise": 19998047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 22,
-    "timestamp": 1735710360,
-    "time_str": "11:05",
-    "equity_paise": 19999047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 23,
-    "timestamp": 1735710660,
-    "time_str": "11:10",
-    "equity_paise": 20000047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 24,
-    "timestamp": 1735710960,
-    "time_str": "11:15",
-    "equity_paise": 20001047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 25,
-    "timestamp": 1735711260,
-    "time_str": "11:20",
-    "equity_paise": 20002047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 26,
-    "timestamp": 1735711560,
-    "time_str": "11:25",
-    "equity_paise": 20003047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 27,
-    "timestamp": 1735711860,
-    "time_str": "11:30",
-    "equity_paise": 20004047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 28,
-    "timestamp": 1735712160,
-    "time_str": "11:35",
-    "equity_paise": 20005047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 29,
-    "timestamp": 1735712460,
-    "time_str": "11:40",
-    "equity_paise": 20006047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 30,
-    "timestamp": 1735712760,
-    "time_str": "11:45",
-    "equity_paise": 20007047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 31,
-    "timestamp": 1735713060,
-    "time_str": "11:50",
-    "equity_paise": 20008047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 32,
-    "timestamp": 1735713360,
-    "time_str": "11:55",
-    "equity_paise": 20009047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 33,
-    "timestamp": 1735713660,
-    "time_str": "12:00",
-    "equity_paise": 20010047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 34,
-    "timestamp": 1735713960,
-    "time_str": "12:05",
-    "equity_paise": 20011047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 35,
-    "timestamp": 1735714260,
-    "time_str": "12:10",
-    "equity_paise": 20012047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 36,
-    "timestamp": 1735714560,
-    "time_str": "12:15",
-    "equity_paise": 20013047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 37,
-    "timestamp": 1735714860,
-    "time_str": "12:20",
-    "equity_paise": 20014047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 38,
-    "timestamp": 1735715160,
-    "time_str": "12:25",
-    "equity_paise": 20015047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 39,
-    "timestamp": 1735715460,
-    "time_str": "12:30",
-    "equity_paise": 20016047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 40,
-    "timestamp": 1735715760,
-    "time_str": "12:35",
-    "equity_paise": 20017047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 41,
-    "timestamp": 1735716060,
-    "time_str": "12:40",
-    "equity_paise": 20018047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 42,
-    "timestamp": 1735716360,
-    "time_str": "12:45",
-    "equity_paise": 20019047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 43,
-    "timestamp": 1735716660,
-    "time_str": "12:50",
-    "equity_paise": 20020047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 44,
-    "timestamp": 1735716960,
-    "time_str": "12:55",
-    "equity_paise": 20021047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 45,
-    "timestamp": 1735717260,
-    "time_str": "13:00",
-    "equity_paise": 20022047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 46,
-    "timestamp": 1735717560,
-    "time_str": "13:05",
-    "equity_paise": 20023047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 47,
-    "timestamp": 1735717860,
-    "time_str": "13:10",
-    "equity_paise": 20024047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 48,
-    "timestamp": 1735718160,
-    "time_str": "13:15",
-    "equity_paise": 20025047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 49,
-    "timestamp": 1735718460,
-    "time_str": "13:20",
-    "equity_paise": 20026047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 50,
-    "timestamp": 1735718760,
-    "time_str": "13:25",
-    "equity_paise": 20027047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 51,
-    "timestamp": 1735719060,
-    "time_str": "13:30",
-    "equity_paise": 20028047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 52,
-    "timestamp": 1735719360,
-    "time_str": "13:35",
-    "equity_paise": 20029047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 53,
-    "timestamp": 1735719660,
-    "time_str": "13:40",
-    "equity_paise": 20030047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 54,
-    "timestamp": 1735719960,
-    "time_str": "13:45",
-    "equity_paise": 20031047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 55,
-    "timestamp": 1735720260,
-    "time_str": "13:50",
-    "equity_paise": 20032047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 56,
-    "timestamp": 1735720560,
-    "time_str": "13:55",
-    "equity_paise": 20033047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 57,
-    "timestamp": 1735720860,
-    "time_str": "14:00",
-    "equity_paise": 20034047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 58,
-    "timestamp": 1735721160,
-    "time_str": "14:05",
-    "equity_paise": 20035047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 59,
-    "timestamp": 1735721460,
-    "time_str": "14:10",
-    "equity_paise": 20036047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 60,
-    "timestamp": 1735721760,
-    "time_str": "14:15",
-    "equity_paise": 20037047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 61,
-    "timestamp": 1735722060,
-    "time_str": "14:20",
-    "equity_paise": 20038047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 62,
-    "timestamp": 1735722360,
-    "time_str": "14:25",
-    "equity_paise": 20039047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 63,
-    "timestamp": 1735722660,
-    "time_str": "14:30",
-    "equity_paise": 20040047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 64,
-    "timestamp": 1735722960,
-    "time_str": "14:35",
-    "equity_paise": 20041047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 65,
-    "timestamp": 1735723260,
-    "time_str": "14:40",
-    "equity_paise": 20042047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 66,
-    "timestamp": 1735723560,
-    "time_str": "14:45",
-    "equity_paise": 20043047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 67,
-    "timestamp": 1735723860,
-    "time_str": "14:50",
-    "equity_paise": 20044047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 68,
-    "timestamp": 1735724160,
-    "time_str": "14:55",
-    "equity_paise": 20045047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 69,
-    "timestamp": 1735724460,
-    "time_str": "15:00",
-    "equity_paise": 20046047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 70,
-    "timestamp": 1735724760,
-    "time_str": "15:05",
-    "equity_paise": 20047047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 71,
-    "timestamp": 1735725060,
-    "time_str": "15:10",
-    "equity_paise": 20048047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 72,
-    "timestamp": 1735725360,
-    "time_str": "15:15",
-    "equity_paise": 20049047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 73,
-    "timestamp": 1735725660,
-    "time_str": "15:20",
-    "equity_paise": 20050047
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
   },
   {
     "bar_index": 74,
-    "timestamp": 1735725960,
-    "time_str": "15:25",
-    "equity_paise": 20047020
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 75,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 76,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 77,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 78,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 79,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 80,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 81,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 82,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 83,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 84,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 85,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 86,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 87,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 88,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 89,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 90,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 91,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 92,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 93,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 94,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 95,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 96,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 97,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 98,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 99,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 100,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 101,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 102,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 103,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 104,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 105,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 106,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 107,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 108,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 109,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 110,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 111,
+    "timestamp": 1735703160,
+    "time_str": "09:15",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 112,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 113,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 114,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 115,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 116,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 117,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 118,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 119,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 120,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 121,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 122,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 123,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 124,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 125,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 126,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 127,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 128,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 129,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 130,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 131,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 132,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 133,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 134,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 135,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 136,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 137,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 138,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 139,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 140,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 141,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 142,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 143,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 144,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 145,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 146,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 147,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 148,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 149,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 150,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 151,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 152,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 153,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 154,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 155,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 156,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 157,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 158,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 159,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 160,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 161,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 162,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 163,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 164,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 165,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 166,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 167,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 168,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 169,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 170,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 171,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 172,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 173,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 174,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 175,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 176,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 177,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 178,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 179,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 180,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 181,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 182,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 183,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 184,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 185,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 186,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 187,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 188,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 189,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 190,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 191,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 192,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 193,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 194,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 195,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 196,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 197,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 198,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 199,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 200,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 201,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 202,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 203,
+    "timestamp": 1735703220,
+    "time_str": "09:16",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 204,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 205,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 206,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 207,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 208,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 209,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 210,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 211,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 212,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 213,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 214,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 215,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 216,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 217,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 218,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 219,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 220,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 221,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 222,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 223,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 224,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 225,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 226,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 227,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 228,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 229,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 230,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 231,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 232,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 233,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 234,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 235,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 236,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 237,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 238,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 239,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 240,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 241,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 242,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 243,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 244,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 245,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 246,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 247,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 248,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 249,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 250,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 251,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 252,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 253,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 254,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 255,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 256,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 257,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 258,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 259,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 260,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 261,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 262,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 263,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 264,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 265,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 266,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 267,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 268,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 269,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 270,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 271,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 272,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 273,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 274,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 275,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 276,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 277,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 278,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 279,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 280,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 281,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 282,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 283,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 284,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 285,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 286,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 287,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 288,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 289,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 290,
+    "timestamp": 1735703280,
+    "time_str": "09:17",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 291,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 292,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 293,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 294,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 295,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 296,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 297,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 298,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 299,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 300,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 301,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 302,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 303,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 304,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 305,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 306,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 307,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 308,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 309,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 310,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 311,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 312,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 313,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 314,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 315,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 316,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 317,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 318,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 319,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 320,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 321,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 322,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 323,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 324,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 325,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 326,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 327,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 328,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 329,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 330,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 331,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 332,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 333,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 334,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 335,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 336,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 337,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 338,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 339,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 340,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 341,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 342,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 343,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 344,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 345,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 346,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 347,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 348,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 349,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 350,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 351,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 352,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 353,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 354,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 355,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 356,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 357,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 358,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 359,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 360,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 361,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 362,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 363,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 364,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 365,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 366,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 367,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 368,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 369,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 370,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 371,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 372,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 373,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 374,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 375,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 376,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 377,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 378,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 379,
+    "timestamp": 1735703340,
+    "time_str": "09:18",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 380,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 381,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 382,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 383,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 384,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 385,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 386,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 387,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 388,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 389,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 390,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 391,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 392,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 393,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 394,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 395,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 396,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 397,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 398,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 399,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 400,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 401,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 402,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 403,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 404,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 405,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 406,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 407,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 408,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 409,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 410,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 411,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 412,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 413,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 414,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 415,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 416,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 417,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 418,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 419,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 420,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 421,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 422,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 423,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 424,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 425,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 426,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 427,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 428,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 429,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 430,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 431,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 432,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 433,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 434,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 435,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 436,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 437,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 438,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 439,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 440,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 441,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 442,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 443,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 444,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 445,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 446,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 447,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 448,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 449,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 450,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 451,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 452,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 453,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 454,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 455,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 456,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 457,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 458,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 459,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 460,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 461,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 462,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 463,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 464,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 465,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 466,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 467,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 468,
+    "timestamp": 1735703400,
+    "time_str": "09:19",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 469,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 470,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 471,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 472,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 473,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 474,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 475,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 476,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 477,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 478,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 479,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 480,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10000000
+  },
+  {
+    "bar_index": 481,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9997638
+  },
+  {
+    "bar_index": 482,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 483,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 484,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 485,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 486,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 487,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 488,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 489,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 490,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 491,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 492,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 493,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 494,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 9994274
+  },
+  {
+    "bar_index": 495,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 10008246
+  },
+  {
+    "bar_index": 496,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 8119996
+  },
+  {
+    "bar_index": 497,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 7934496
+  },
+  {
+    "bar_index": 498,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 8014496
+  },
+  {
+    "bar_index": 499,
+    "timestamp": 1735703460,
+    "time_str": "09:20",
+    "equity_paise": 7935243
   }
 ]

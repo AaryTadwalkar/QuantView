@@ -50,6 +50,7 @@ class ActivePosition:
         entry_time: UtcEpochSec,
         stop_loss_paise: Optional[Paise] = None,
         take_profit_paise: Optional[Paise] = None,
+        entry_fees_paise: Paise = Paise(0),
     ) -> None:
         self.contract = contract
         self.side = side
@@ -58,6 +59,7 @@ class ActivePosition:
         self.entry_time = entry_time
         self.stop_loss_paise = stop_loss_paise
         self.take_profit_paise = take_profit_paise
+        self.entry_fees_paise = entry_fees_paise
         self.consecutive_stale_bars = 0
 
     def update_stops(self, new_stop: Optional[Paise], new_target: Optional[Paise]) -> None:

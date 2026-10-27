@@ -179,7 +179,7 @@ class FinancialLedger:
         if contract_id:
             meta["contract_id"] = contract_id
 
-        now_epoch = UtcEpochSec(int(datetime.now(timezone.utc).timestamp()))
+        now_epoch = event_time if event_time is not None else UtcEpochSec(int(datetime.now(timezone.utc).timestamp()))
 
         idem_key = idempotency_key or generate_idempotency_key(
             run_id=self.run_id,

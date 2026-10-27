@@ -48,7 +48,7 @@ Per `DOCS/AGENTS.md §5`, Stage 3 governs the 18 milestones assigned to **Gate G
 | **M4-07** | Financial Event Contracts & Parquet Ledger | `packages/ledger/events.py`, `ledger.py` | [`M4-07.md`](../../ops/evidence/M4-07.md) | `test_financial_ledger.py` (7/7 pass) | **PASS** |
 | **M4-08** | Standalone Backtest Runner CLI & Provenance | `tools/run_backtest.py`, `packages/engine/runner.py` | [`M4-08.md`](../../ops/evidence/M4-08.md) | `test_backtest_runner.py` (5/5 pass) | **PASS** |
 | **M4-09** | Real-Market DuckDB Benchmark & Sensitivity Sweeps | `tests/integration/test_backtest_reproducibility.py` | [`M4-09.md`](../../ops/evidence/M4-09.md) | 446 sessions, 0x..3x slip, Rs 10k..200k | **PASS** |
-| **M4-10** | 3-Rerun Byte-Identical Determinism & Scalability | `tests/integration/test_backtest_reproducibility.py` | [`M4-10.md`](../../ops/evidence/M4-10.md) | SHA-256 match, 1,250 sessions in 0.28s | **PASS** |
+| **M4-10** | 3-Rerun Byte-Identical Determinism & Scalability | `tests/integration/test_backtest_reproducibility.py` | [`M4-10.md`](../../ops/evidence/M4-10.md) | SHA-256 match, 1,250 sessions in 7.21s | **PASS** |
 | **M4-11** | Relational Database Schema & Anti-Mutation Triggers | `packages/db/`, `packages/db/migrations/` | [`M4-11.md`](../../ops/evidence/M4-11.md) | `test_postgres_ledger.py` (5/5 pass) | **PASS** |
 | **M4-12** | Strategy Registry & Source Code Hasher | `packages/strategies/registry.py`, `smoke.py` | [`M4-12.md`](../../ops/evidence/M4-12.md) | `test_strategy_registry.py` (4/4 pass) | **PASS** |
 | **M4-13** | Golden Test Scenario Suite Automation | `tests/fixtures/golden_scenarios.py` | [`M4-13.md`](../../ops/evidence/M4-13.md) | `test_engine_golden_scenarios.py` (7/7 pass) | **PASS** |
@@ -159,13 +159,13 @@ This ensures that selection bias is accurately penalized according to the full s
 To prevent ambiguity between computational scalability testing and empirical financial performance, QuantView explicitly distinguishes two benchmark suites:
 
 ### 1. 5-Year Synthetic Scalability Benchmark (Computational Stress Test)
-- **Workload:** 1,250 consecutive trading sessions (simulating 5 calendar trading years at 250 sessions/year), 62,500 total 1-minute bars generated deterministically with intraday trend and mean-reverting dynamics.
+- **Workload:** 1,250 consecutive trading sessions (simulating 5 calendar trading years at 250 sessions/year), 12,500 total 1-minute bars generated deterministically with intraday trend and mean-reverting dynamics.
 - **Purpose:** Verification of algorithmic throughput, state transition efficiency, memory footprint stability, and absence of leaks under high-volume intraday data.
 - **Hardware Profile:** Single-threaded execution on x86_64 AMD64, Python 3.11.9, Windows 11.
 - **Performance Result:**
-  * **Elapsed Wall-Clock Time:** **0.28 seconds**
-  * **Execution Speed:** **44,320 bars/sec**
-  * **Specification Invariant:** Must execute in $\le 300\text{s}$ (5 minutes). Achieved margin: **> 1,000x faster than requirement**.
+  * **Elapsed Wall-Clock Time:** **7.21 seconds**
+  * **Execution Speed:** **1,734 bars/sec**
+  * **Specification Invariant:** Must execute in $\le 300\text{s}$ (5 minutes). Achieved margin: **> 40x faster than requirement**.
 - **Notice of Scope:** This is a computational scalability benchmark validating software throughput; it is **not** an empirical claim of 5-year historical trading profitability.
 
 ### 2. Real-Market DuckDB Analytical Lake Benchmark
@@ -218,6 +218,18 @@ QuantView provides a centralized, production-grade CLI runner at `tools/run_back
   ```powershell
   .\venv\Scripts\python.exe tools/run_backtest.py
   ```
+  *Reconciled Console Output (Round-Trip Fee & Equity Parity Verified):*
+  ```text
+  BACKTEST SUCCESS: run_id=manual_cli_run
+  Total Trades: 1
+  Gross Realized P&L: Rs 266.25
+  Total Fees: Rs 54.73
+  Net Realized P&L: Rs 211.52
+  Final Equity: Rs 100211.52
+  Artifacts written to: runs\manual_cli_run
+  ```
+  *(Arithmetical proof: Initial Rs 100,000.00 + Net Realized Rs 211.52 == Final Equity Rs 100,211.52 == Ledger Cash Balance Rs 100,211.52 down to the exact paisa).*
+
 - **Real Historical Data Lake Execution:**
   ```powershell
   .\venv\Scripts\python.exe tools/run_backtest.py --lake --limit 500
@@ -244,7 +256,47 @@ All runs automatically emit 5 immutable provenance artifacts into `runs/{run_id}
 
 ---
 
-## 8. Formal Gate G2a Closure Verdict
+## 8. End-to-End Manual Test Fixture Verification (`DeterministicTestFixtureStrategy`)
+
+To definitively validate the unbroken operational connection between strategy signals, the backtesting engine, execution causality, statutory fees, and reproducible outputs, QuantView implements a dedicated test strategy fixture:
+[`packages/strategies/smoke.py::DeterministicTestFixtureStrategy`](../../packages/strategies/smoke.py).
+
+> [!IMPORTANT]
+> This strategy is strictly classified as a **TEST FIXTURE**, not a candidate trading strategy. It validates mechanical and accounting correctness without conflating strategy alpha.
+
+### Test Fixture Scenario Sequence & Hand Calculations
+Executed by [`tests/integration/test_end_to_end_test_fixture.py`](../../tests/integration/test_end_to_end_test_fixture.py):
+1. **Long Entry Signal:** Emitted at Bar 1 close ($09:16$ IST).
+2. **Next-Bar Open Fill:** Enters at Bar 2 open ($09:17$ IST) at $15,060\text{ paise} + 5\text{ paise adverse slippage} = \mathbf{15,065\text{ paise}}$ for $25\text{ units}$ (turnover: $376,625\text{ paise}$).
+3. **Statutory Entry Fees (`UPSTOX_2025_OCT`):**
+   * Brokerage: $2,000\text{ paise}$
+   * STT: $0\text{ paise}$ (exempt on buy)
+   * Exchange Turnover ($0.03503\%$): $132\text{ paise}$
+   * GST ($18\%$ of $2,000 + 132$): $384\text{ paise}$
+   * Stamp Duty ($0.003\%$): $11\text{ paise}$
+   * **Total Entry Fee:** $\mathbf{2,527\text{ paise}}$ (Rs 25.27).
+4. **Exit Signal:** Emitted at Bar 4 close ($09:19$ IST).
+5. **Next-Bar Open Exit Fill:** Exits at Bar 5 open ($09:20$ IST) at $15,220\text{ paise} - 5\text{ paise adverse slippage} = \mathbf{15,215\text{ paise}}$ for $25\text{ units}$ (turnover: $380,375\text{ paise}$).
+6. **Statutory Exit Fees (`UPSTOX_2025_OCT`):**
+   * Brokerage: $2,000\text{ paise}$
+   * STT ($0.10\%$ on sell): $380\text{ paise}$
+   * Exchange Turnover ($0.03503\%$): $133\text{ paise}$
+   * GST ($18\%$ of $2,000 + 133$): $384\text{ paise}$
+   * Stamp Duty: $0\text{ paise}$ (exempt on sell)
+   * **Total Exit Fee:** $\mathbf{2,897\text{ paise}}$ (Rs 28.97).
+7. **Round-Trip Accounting Reconciliation:**
+   * **Gross Realized P&L:** $(15,215 - 15,065) \times 25 = \mathbf{+3,750\text{ paise}}$ (+Rs 37.50).
+   * **Total Round-Trip Fees:** $2,527 + 2,897 = \mathbf{5,424\text{ paise}}$ (Rs 54.24).
+   * **Net Realized P&L:** $3,750 - 5,424 = \mathbf{-1,674\text{ paise}}$ (-Rs 16.74).
+   * **Ending Equity & Cash Balance:** $10,000,000 - 1,674 = \mathbf{9,998,326\text{ paise}}$ (Rs 99,983.26).
+   * *Reconciliation Error:* **$\mathbf{0.00\text{ paise}}$**.
+8. **Cold Rerun Determinism Check:**
+   * Executed two consecutive cold runs from clean temporary workspaces.
+   * SHA-256 digests of `ledger.parquet`, `metrics.json`, `equity.json`, and `trades.json` verified **100% byte-identical**.
+
+---
+
+## 9. Formal Gate G2a Closure Verdict
 
 All conditions for Gate `G2a` certification have been satisfied in full without exceptions, technical debt, or manual workarounds:
 

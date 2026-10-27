@@ -319,7 +319,136 @@ class LongPEMeanReversion:
         self.in_position = False
 
 
-# Register smoke strategies in the default registry upon module import
+class DeterministicTestFixtureParams(BaseModel):
+    """
+    1. The use of class:
+       Pydantic parameter schema for DeterministicTestFixtureStrategy.
+
+    2. What the class contains:
+       - entry_bar_index: Bar index (0-based) at which to trigger ENTER_LONG signal.
+       - exit_bar_index: Bar index (0-based) at which to trigger EXIT signal.
+
+    3. Technologies used and why:
+       Pydantic BaseModel for immutable parameter validation and schema verification.
+
+    4. Key design and overall design of the class:
+       Guarantees deterministic test fixture execution for engine accounting and artifact audits.
+    """
+    entry_bar_index: int = Field(default=1, ge=0)
+    exit_bar_index: int = Field(default=4, ge=1)
+
+
+class DeterministicTestFixtureStrategy:
+    """
+    1. The use of class:
+       TEST FIXTURE ONLY: Deterministic test fixture strategy for validating the end-to-end connection
+       between strategy signals, the backtesting engine, execution causality, financial accounting,
+       and artifact reproducibility. This is NOT a candidate trading strategy.
+
+    2. What the class contains:
+       - entry_bar_index: Configurable bar at which to emit ENTER_LONG.
+       - exit_bar_index: Configurable bar at which to emit EXIT.
+       - current_bar_index: Internal counter of consumed closed bars.
+       - in_position: Operational position flag.
+       - on_start, on_bar, on_stop: Canonical lifecycle hooks adhering to Strategy protocol.
+
+    3. Technologies used and why:
+       Pure Python state machine without external mathematical dependencies for reproducible test oracle verification.
+
+    4. Key design and overall design of the class:
+       Guarantees an exact known entry and exit timing to verify next-bar open fills, adverse tick rounding,
+       regulatory fee schedules, and byte-identical rerun determinism.
+    """
+
+    def __init__(self) -> None:
+        self.entry_bar_index: int = 1
+        self.exit_bar_index: int = 4
+        self.current_bar_index: int = 0
+        self.in_position: bool = False
+
+    def on_start(self, config: Dict[str, Any]) -> None:
+        """
+        1. The use of function:
+           Initializes test fixture strategy state from configuration parameters.
+
+        2. How does the specific function work:
+           Reads entry_bar_index and exit_bar_index from dictionary and resets counters.
+
+        3. Concepts used in the function:
+           Lifecycle initialization.
+
+        4. Places where this function is imported and used:
+           Invoked by StrategyRegistry or BacktestRunner prior to simulation.
+
+        5. Final output of the function, before and after:
+           Before: Uninitialized fixture. After: Initialized fixture ready for bar evaluation.
+        """
+        self.entry_bar_index = int(config.get("entry_bar_index", 1))
+        self.exit_bar_index = int(config.get("exit_bar_index", 4))
+        self.current_bar_index = 0
+        self.in_position = False
+
+    def on_bar(self, timestamp: UtcEpochSec, features: Dict[str, Any]) -> Optional[StrategySignal]:
+        """
+        1. The use of function:
+           Evaluates completed candle bar and emits deterministic test signals.
+
+        2. How does the specific function work:
+           - Increments internal current_bar_index.
+           - If current index equals entry_bar_index and not in position, emits ENTER_LONG.
+           - If current index equals exit_bar_index and in position, emits EXIT.
+           - Otherwise returns None.
+
+        3. Concepts used in the function:
+           Causal discrete signal generation without lookahead bias.
+
+        4. Places where this function is imported and used:
+           Invoked on every bar close by the backtesting engine.
+
+        5. Final output of the function, before and after:
+           Before: Candle features. After: Deterministic StrategySignal or None.
+        """
+        bar_idx = self.current_bar_index
+        self.current_bar_index += 1
+
+        if not self.in_position and bar_idx == self.entry_bar_index:
+            self.in_position = True
+            return StrategySignal(
+                action=SignalAction.ENTER_LONG,
+                timestamp=timestamp,
+                reason=f"TEST_FIXTURE: Pre-planned long entry condition met at bar {bar_idx}",
+            )
+        elif self.in_position and bar_idx == self.exit_bar_index:
+            self.in_position = False
+            return StrategySignal(
+                action=SignalAction.EXIT,
+                timestamp=timestamp,
+                reason=f"TEST_FIXTURE: Pre-planned exit condition met at bar {bar_idx}",
+            )
+
+        return None
+
+    def on_stop(self) -> None:
+        """
+        1. The use of function:
+           Resets test fixture state when simulation terminates.
+
+        2. How does the specific function work:
+           Clears position flag.
+
+        3. Concepts used in the function:
+           State cleanup.
+
+        4. Places where this function is imported and used:
+           Invoked by BacktestRunner at end of run.
+
+        5. Final output of the function, before and after:
+           Before: Active test state. After: Clean state.
+        """
+        self.in_position = False
+
+
+# Register smoke and test fixture strategies in the default registry upon module import
 _reg = get_default_strategy_registry()
 _reg.register(
     name="LongCETrendFollowing",
@@ -332,4 +461,10 @@ _reg.register(
     strategy_cls=LongPEMeanReversion,
     param_schema=LongPEMeanReversionParams,
     description="Baseline single-leg Put mean reversion strategy using rolling price deviation.",
+)
+_reg.register(
+    name="DeterministicTestFixtureStrategy",
+    strategy_cls=DeterministicTestFixtureStrategy,
+    param_schema=DeterministicTestFixtureParams,
+    description="TEST FIXTURE ONLY: Deterministic test fixture strategy for verifying engine execution, accounting causality, and artifact reproducibility. NOT a candidate trading strategy.",
 )
