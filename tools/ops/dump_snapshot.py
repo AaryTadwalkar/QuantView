@@ -22,13 +22,13 @@
 
 import argparse
 import csv
-from datetime import datetime, timezone
-from decimal import Decimal
 import gzip
 import json
 import logging
-from pathlib import Path
 import sys
+from datetime import datetime, timezone
+from decimal import Decimal
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 # Standard QuantView repository bootstrap

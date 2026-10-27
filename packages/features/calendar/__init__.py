@@ -14,6 +14,11 @@
    - Clean public API for packages.features.calendar.
 """
 
+from packages.features.calendar.high_water import (
+    SessionHighWater,
+    compute_session_high_water,
+    register_high_water_feature,
+)
 from packages.features.calendar.session import (
     IST_OFFSET,
     IST_TZ,
@@ -21,11 +26,6 @@ from packages.features.calendar.session import (
     compute_session_progress,
     parse_utc_to_ist,
     register_session_progress_feature,
-)
-from packages.features.calendar.high_water import (
-    SessionHighWater,
-    compute_session_high_water,
-    register_high_water_feature,
 )
 
 __all__ = [

@@ -19,17 +19,16 @@
    - Causal, deterministic session progress feature stream for intraday risk and timing rules.
 """
 
-from datetime import date, datetime, time, timezone, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from typing import NamedTuple, Optional, Union
-from packages.domain import UtcEpochSec
+
+from packages.features.registry import FeatureRegistry
 from packages.features.schemas import (
     FeatureDefinition,
-    FeatureStatus,
     MemoryClass,
     RepaintClass,
     SourceTier,
 )
-from packages.features.registry import FeatureRegistry
 
 # IST Timezone Offset: UTC + 5:30
 IST_OFFSET = timedelta(hours=5, minutes=30)

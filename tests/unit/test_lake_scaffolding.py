@@ -26,12 +26,12 @@
    - Automated pytest/unittest test results validating Phase 1 compliance.
 """
 
-from datetime import date, datetime, timezone
-from decimal import Decimal
 import json
-from pathlib import Path
 import tempfile
 import unittest
+from datetime import date, datetime, timezone
+from decimal import Decimal
+from pathlib import Path
 
 import duckdb
 import pandas as pd
@@ -39,21 +39,21 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from packages.data.schemas import (
-    UnderlyingCandleRow,
-    OptionCandleRow,
-    IndiaVixCandleRow,
-    UNDERLYING_CANDLES_SCHEMA,
-    OPTION_CANDLES_SCHEMA,
     INDIA_VIX_CANDLES_SCHEMA,
+    OPTION_CANDLES_SCHEMA,
     SNAPSHOT_CAPTURES_SCHEMA,
     SNAPSHOT_ROWS_SCHEMA,
-    validate_candle_ohlc,
+    UNDERLYING_CANDLES_SCHEMA,
+    IndiaVixCandleRow,
+    OptionCandleRow,
+    UnderlyingCandleRow,
     check_is_flat_bar,
     compute_field_presence_mask,
+    validate_candle_ohlc,
 )
-from tools.lake.promote_option_candles import parse_staged_option_csv_to_table
-from tools.lake.promote_india_vix import reconcile_vix_sessions
 from tools.lake.compact_option_snapshots import classify_and_parse_snapshot
+from tools.lake.promote_india_vix import reconcile_vix_sessions
+from tools.lake.promote_option_candles import parse_staged_option_csv_to_table
 
 
 class TestCanonicalSchemas(unittest.TestCase):

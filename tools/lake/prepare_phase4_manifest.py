@@ -200,14 +200,14 @@ class Phase4ManifestGenerator:
             json.dump(manifest, f, indent=2)
         tmp_path.replace(manifest_path)
 
-        print(f"\n=======================================================", flush=True)
-        print(f"QUANTVIEW -- PHASE 4 STAGING MANIFEST GENERATED", flush=True)
+        print("\n=======================================================", flush=True)
+        print("QUANTVIEW -- PHASE 4 STAGING MANIFEST GENERATED", flush=True)
         print(f"Manifest Path: {manifest_path}", flush=True)
         print(f"SHA-256: {compute_file_sha256(manifest_path)}", flush=True)
         print(f"Derived Candles Partitions:   {derived['file_count']} ({derived['total_rows']:,} rows, {derived['total_bytes'] / (1024*1024):.2f} MB)", flush=True)
         print(f"Data Eligibility Partitions:  {eligibility['file_count']} ({eligibility['total_rows']:,} rows, {eligibility['total_bytes'] / (1024*1024):.4f} MB)", flush=True)
         print(f"Aggregate Totals:             {total_files} files, {total_rows:,} rows, {total_mb:.2f} MB", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         return manifest_path
 

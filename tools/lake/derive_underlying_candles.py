@@ -45,8 +45,8 @@ import pyarrow.parquet as pq
 
 from packages.data.schemas import (
     DERIVED_CANDLES_SCHEMA,
-    validate_candle_ohlc,
     check_is_flat_bar,
+    validate_candle_ohlc,
 )
 
 
@@ -335,12 +335,12 @@ class CandleDeriver:
         5. Final output of the function, before and after:
            Before: 1m Parquets. After: Staged multi-timeframe Parquets, comparison report, summary dict.
         """
-        print(f"\n=======================================================", flush=True)
-        print(f"QUANTVIEW -- MULTI-TIMEFRAME DERIVATION (TASK M3-07)", flush=True)
+        print("\n=======================================================", flush=True)
+        print("QUANTVIEW -- MULTI-TIMEFRAME DERIVATION (TASK M3-07)", flush=True)
         print(f"Input Lake:    {self.lake_root}", flush=True)
         print(f"Staging Root:  {self.staging_root}", flush=True)
         print(f"Active Hash:   {self.active_manifest_hash[:16]}...", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         t_start = time.perf_counter()
         derivation_results = []
@@ -380,7 +380,7 @@ class CandleDeriver:
             "",
             "## 1. Executive Summary",
             "",
-            f"All 6 canonical intraday intervals (`3m`, `5m`, `15m`, `30m`, `1h`, `4h`) were derived from canonical 1-minute underlying candles (`underlying_candles`). Aggregation strictly enforces the Asia/Kolkata session boundary (`09:15` to `15:30`), guaranteeing zero cross-session data leakage and full causal availability (`available_at = ts_end`).",
+            "All 6 canonical intraday intervals (`3m`, `5m`, `15m`, `30m`, `1h`, `4h`) were derived from canonical 1-minute underlying candles (`underlying_candles`). Aggregation strictly enforces the Asia/Kolkata session boundary (`09:15` to `15:30`), guaranteeing zero cross-session data leakage and full causal availability (`available_at = ts_end`).",
             "",
             f"A total of **{total_derived_bars:,} derived bars** across **{total_partitions} Parquet partitions ({total_mb} MB)** were staged into `staging/lake_preparation_phase4/`. Mathematical verification against vendor CSV series confirms **100.00% match rate** across all overlapping historical bars.",
             "",
@@ -431,11 +431,11 @@ class CandleDeriver:
         with open(report_path, "w", encoding="utf-8") as f:
             f.write("\n".join(report_lines))
 
-        print(f"\n=======================================================", flush=True)
+        print("\n=======================================================", flush=True)
         print(f"M3-07 DERIVATION COMPLETE IN {total_elapsed}s", flush=True)
         print(f"Total Bars: {total_derived_bars:,} across {total_partitions} partitions ({total_mb} MB)", flush=True)
         print(f"Report Generated: {report_path}", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         return {
             "status": "SUCCESS",

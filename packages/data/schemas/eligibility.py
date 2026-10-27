@@ -23,6 +23,7 @@
 
 from datetime import date, datetime, timezone
 from typing import List, Optional
+
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 

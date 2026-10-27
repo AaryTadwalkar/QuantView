@@ -469,12 +469,12 @@ class SnapshotCompactor:
         if max_sessions:
             session_dates = session_dates[:max_sessions]
 
-        print(f"\n=======================================================", flush=True)
-        print(f"QUANTVIEW -- OPTION SNAPSHOT COMPACTION (OFFLINE)", flush=True)
+        print("\n=======================================================", flush=True)
+        print("QUANTVIEW -- OPTION SNAPSHOT COMPACTION (OFFLINE)", flush=True)
         print(f"Source Directory: {self.source_dir}", flush=True)
         print(f"Sessions Discovered: {len(session_dates)} | Dry Run: {dry_run}", flush=True)
         print(f"Destination: {self.output_prep}", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         results = []
         total_captures = 0

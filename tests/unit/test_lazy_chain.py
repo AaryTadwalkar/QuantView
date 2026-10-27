@@ -19,6 +19,7 @@
 """
 
 from datetime import date
+
 import duckdb
 import pytest
 

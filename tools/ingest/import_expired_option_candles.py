@@ -40,16 +40,17 @@
    - Audit report: reports/historical_options_2025_h1_audit_report.md
 """
 
+import gzip
+import hashlib
+import json
 import os
 import sys
-import gzip
-import json
 import time
-import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import quote
+
 import pandas as pd
 import requests
 from dotenv import load_dotenv
@@ -521,7 +522,7 @@ class ExpiredOptionImporter:
         if from_date is None:
             from_date = to_date
 
-        print(f"\n--- Expired Option Candle Importer ---")
+        print("\n--- Expired Option Candle Importer ---")
         print(f"Expiry: {expiry_date} | Range: {from_date} to {to_date} | Dry Run: {dry_run}")
 
         # Resolve contracts source
@@ -772,12 +773,12 @@ class ExpiredOptionImporter:
                 continue
             cycle_groups.setdefault(active_exp, []).append(d)
 
-        print(f"\n=======================================================")
-        print(f"QUANTVIEW -- COMPREHENSIVE DAILY OPTION BACKFILL PIPELINE")
+        print("\n=======================================================")
+        print("QUANTVIEW -- COMPREHENSIVE DAILY OPTION BACKFILL PIPELINE")
         print(f"Horizon: {from_date} to {to_date} ({len(trading_days)} Trading Days across {len(cycle_groups)} Expiry Cycles)")
         print(f"Strike Band: +/- {band_pts} pts around Session Spot Open")
         print(f"Dry Run Mode: {dry_run}")
-        print(f"=======================================================\n")
+        print("=======================================================\n")
 
         total_days_processed = 0
         total_days_skipped = 0

@@ -26,17 +26,18 @@
    - Coverage report: reports/underlying_import_report.json
 """
 
+import gzip
+import hashlib
+import json
 import os
 import sys
-import gzip
-import json
 import time
-import hashlib
 from dataclasses import dataclass
-from datetime import datetime, date, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import quote
+
 import requests
 from dotenv import load_dotenv
 
@@ -279,7 +280,7 @@ class UnderlyingCandleImporter:
         checkpoint = self.load_checkpoint()
         completed = set(checkpoint.get("completed_chunks", []))
 
-        print(f"\n--- Underlying Historical Importer (Upstox V3) ---")
+        print("\n--- Underlying Historical Importer (Upstox V3) ---")
         print(f"Instrument: {self.instrument_key} | Interval: {self.interval} {self.unit}")
         print(f"Date Range: {start_date} to {end_date} | Total Chunks: {len(chunks)}")
         print(f"Dry Run Mode: {dry_run}")

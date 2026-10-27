@@ -17,6 +17,7 @@
 """
 
 from typing import Optional
+
 from packages.domain import ContractIdentifier, Paise
 from packages.risk.rules import RiskDecision, RiskRules, RiskVerdict
 

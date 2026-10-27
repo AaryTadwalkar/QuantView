@@ -22,6 +22,7 @@
 
 from datetime import date
 from pathlib import Path
+
 import pytest
 
 from packages.domain import ContractIdentifier, OptionType

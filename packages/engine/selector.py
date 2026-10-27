@@ -29,7 +29,8 @@
 
 from datetime import date, datetime
 from enum import Enum
-from typing import Dict, List, NamedTuple, Optional, Protocol, Set, Tuple, Union
+from typing import List, NamedTuple, Optional, Protocol, Set, Tuple, Union
+
 from packages.domain import ContractIdentifier, OptionType
 
 

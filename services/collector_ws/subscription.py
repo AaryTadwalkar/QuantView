@@ -25,13 +25,12 @@
    - Exported SubscriptionManager, FeedMode, SubscriptionConfig, and SubscriptionRejection classes.
 """
 
-from dataclasses import asdict, dataclass, field
+import logging
+import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
-import json
-import logging
-from typing import Any, Dict, List, Optional, Set
-import uuid
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("quantview.collector_ws.subscription")
 

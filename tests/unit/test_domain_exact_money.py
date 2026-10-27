@@ -21,29 +21,31 @@
 """
 
 import unittest
-import pytest
 from decimal import Decimal
+
+import pytest
+
 from packages.domain import (
-    Paise,
-    PriceUnquantizableError,
-    to_paise,
-    from_rupees,
-    paise_to_decimal,
-    paise_to_str,
-    rupees_to_paise,
-    paise_to_rupees,
-    OrderSide,
-    TickQuantizer,
-    quantize_tick,
-    UtcEpochSec,
-    from_iso_to_utc_epoch,
-    utc_epoch_to_iso,
-    utc_epoch_to_ist_datetime,
-    ist_datetime_to_utc_epoch,
-    is_regular_trading_minute,
+    ContractIdentifier,
     OperatingMode,
     OptionType,
-    ContractIdentifier,
+    OrderSide,
+    Paise,
+    PriceUnquantizableError,
+    TickQuantizer,
+    UtcEpochSec,
+    from_iso_to_utc_epoch,
+    from_rupees,
+    is_regular_trading_minute,
+    ist_datetime_to_utc_epoch,
+    paise_to_decimal,
+    paise_to_rupees,
+    paise_to_str,
+    quantize_tick,
+    rupees_to_paise,
+    to_paise,
+    utc_epoch_to_iso,
+    utc_epoch_to_ist_datetime,
 )
 
 

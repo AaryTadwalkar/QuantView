@@ -24,18 +24,19 @@
 """
 
 from pathlib import Path
+
 import pytest
 
-from packages.domain import Paise, UtcEpochSec, OrderSide
+from packages.domain import OrderSide, Paise, UtcEpochSec
 from packages.ledger.events import (
     CanonicalLedgerEventType,
     generate_idempotency_key,
 )
 from packages.ledger.fees import UPSTOX_2025_OCT, UPSTOX_2026_APR
 from packages.ledger.ledger import (
+    DuplicateEventError,
     FinancialLedger,
     LedgerWriter,
-    DuplicateEventError,
 )
 from packages.ledger.projections import LedgerProjectionEngine
 from tests.fixtures.golden_scenarios import ALL_GOLDEN_SCENARIOS

@@ -215,11 +215,11 @@ class IndiaVixPreparer:
 
     def run(self, dry_run: bool = False) -> Dict:
         """Executes India VIX lake preparation and session coverage reporting."""
-        print(f"\n=======================================================", flush=True)
-        print(f"QUANTVIEW -- INDIA VIX LAKE PREPARATION & RECONCILIATION", flush=True)
+        print("\n=======================================================", flush=True)
+        print("QUANTVIEW -- INDIA VIX LAKE PREPARATION & RECONCILIATION", flush=True)
         print(f"Dry Run Mode: {dry_run}", flush=True)
         print(f"Destination: {self.output_prep}", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         res_1m, special_sessions = self.prepare_1m_partitions(dry_run=dry_run)
         print(f"  [1-Minute Series] Rows: {res_1m['total_rows']:,} | Sessions: {res_1m['unique_sessions']} | Partitions: {res_1m['partitions']}", flush=True)
@@ -232,7 +232,7 @@ class IndiaVixPreparer:
         actual_bars = res_1m["total_rows"]
         diff = actual_bars - expected_bars
 
-        print(f"\n--- India VIX Session Reconciliation ---", flush=True)
+        print("\n--- India VIX Session Reconciliation ---", flush=True)
         print(f"  Expected Regular Bars (446 sessions x 375): {expected_bars:,}", flush=True)
         print(f"  Observed Continuous Bars:                    {actual_bars:,}", flush=True)
         print(f"  Net Delta Bars:                              {diff} bars", flush=True)

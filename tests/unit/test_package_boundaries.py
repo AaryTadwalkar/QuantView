@@ -24,16 +24,17 @@ import ast
 import unittest
 from pathlib import Path
 
+import config
+import packages.data as data
+import packages.db as db
+
 # Core packages
 import packages.domain as domain
-import packages.data as data
-import packages.features as features
-import packages.strategies as strategies
 import packages.engine as engine
-import packages.risk as risk
+import packages.features as features
 import packages.ledger as ledger
-import packages.db as db
-import config
+import packages.risk as risk
+import packages.strategies as strategies
 
 
 class TestPackageLayout(unittest.TestCase):

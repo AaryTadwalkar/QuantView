@@ -25,6 +25,8 @@
 """
 
 import math
+from typing import List
+
 import pytest
 
 from packages.domain import UtcEpochSec

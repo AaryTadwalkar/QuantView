@@ -27,14 +27,14 @@
 
 import argparse
 import csv
-from datetime import datetime, timezone
 import gzip
 import json
 import logging
-from pathlib import Path
 import sys
-from typing import Any, Dict, List, Optional
 import zoneinfo
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Standard QuantView repository bootstrap
 PROJECT_ROOT = Path(__file__).resolve().parents[2]

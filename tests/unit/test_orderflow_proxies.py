@@ -18,15 +18,16 @@
 """
 
 import pytest
+
 from packages.features import FeatureRegistry
 from packages.features.orderflow import (
-    DepthImbalanceResult,
     CandleDeltaResult,
-    compute_depth_imbalance,
+    DepthImbalanceResult,
     compute_candle_volume_delta,
+    compute_depth_imbalance,
     compute_series_candle_delta,
-    register_depth_imbalance_feature,
     register_candle_delta_feature,
+    register_depth_imbalance_feature,
 )
 
 

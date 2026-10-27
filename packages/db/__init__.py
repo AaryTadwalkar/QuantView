@@ -65,8 +65,8 @@ class DatabaseConfig(NamedTuple):
 
 
 from packages.db.ledger_repo import (
-    SqliteLedgerRepository,
     RelationalLedgerMutationError,
+    SqliteLedgerRepository,
 )
 
 __all__ = [

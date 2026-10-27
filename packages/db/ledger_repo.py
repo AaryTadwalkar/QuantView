@@ -21,9 +21,10 @@
 """
 
 import json
-from pathlib import Path
 import sqlite3
-from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
+from typing import List, Optional, Union
+
 from packages.domain import Paise, UtcEpochSec
 from packages.ledger.events import CanonicalLedgerEventType, FinancialEventRecord
 

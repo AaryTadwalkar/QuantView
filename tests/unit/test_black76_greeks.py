@@ -19,8 +19,9 @@
    - Automated pytest suite certifying Task M5-05 under @pytest.mark.gate_g3.
 """
 
-from datetime import date
 import math
+from datetime import date
+
 import pytest
 
 from packages.features.chain import (

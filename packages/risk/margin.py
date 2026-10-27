@@ -25,8 +25,7 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from packages.domain import OperatingMode, OrderSide, Paise
-
+from packages.domain import OrderSide, Paise
 
 # Dated verification record per Task M4-17 acceptance contract
 MARGIN_VERIFICATION_RECORD: Dict[str, Any] = {

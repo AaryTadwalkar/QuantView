@@ -17,9 +17,9 @@
    - Exported OrderIntentType, OrderStatus, and ActiveOrder classes.
 """
 
-from enum import Enum
-from typing import NamedTuple, Optional
 import uuid
+from enum import Enum
+from typing import Optional
 
 from packages.domain import (
     ContractIdentifier,

@@ -21,16 +21,17 @@
 """
 
 import argparse
-from datetime import datetime, time as dt_time, timezone
 import logging
 import os
-from pathlib import Path
 import signal
 import subprocess
 import sys
 import time
-from typing import List, Tuple
 import zoneinfo
+from datetime import datetime, timezone
+from datetime import time as dt_time
+from pathlib import Path
+from typing import List, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -186,7 +187,7 @@ def main() -> None:
     parser.add_argument("--now", action="store_true", help="Immediately stop all collectors without waiting")
     args = parser.parse_args()
 
-    print(f"\n--- QuantView Market Close Watchdog Supervisor ---", flush=True)
+    print("\n--- QuantView Market Close Watchdog Supervisor ---", flush=True)
     now_ist = datetime.now(KOLKATA_TZ)
     print(f"Current Time:   {now_ist.strftime('%Y-%m-%d %H:%M:%S')} IST", flush=True)
     print(f"Target Close:   {args.close_time} IST", flush=True)

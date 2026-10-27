@@ -22,12 +22,9 @@
    - Causal, lazy option chain query engine preserving point-in-time integrity and missing contract visibility.
 """
 
-from datetime import date, datetime
 import math
+from datetime import date
 from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
-from packages.domain import UtcEpochSec
-from packages.features.schemas import SourceTier
-
 
 # Canonical DuckDB View Definition per DATA §4.8
 SQL_CREATE_VIEW_RECONSTRUCTED_CHAIN = """

@@ -13,16 +13,16 @@
    - Clean public API for packages.features.orderflow.
 """
 
-from packages.features.orderflow.depth_imbalance import (
-    DepthImbalanceResult,
-    compute_depth_imbalance,
-    register_depth_imbalance_feature,
-)
 from packages.features.orderflow.candle_delta import (
     CandleDeltaResult,
     compute_candle_volume_delta,
     compute_series_candle_delta,
     register_candle_delta_feature,
+)
+from packages.features.orderflow.depth_imbalance import (
+    DepthImbalanceResult,
+    compute_depth_imbalance,
+    register_depth_imbalance_feature,
 )
 
 __all__ = [

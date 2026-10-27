@@ -525,11 +525,11 @@ class SnapshotLakePublisher:
         5. Final output of the function, before and after:
            Before: Lake v1. After: Lake v2 with snapshots queryable via DuckDB.
         """
-        print(f"\n=======================================================", flush=True)
-        print(f"QUANTVIEW -- PHASE 3 SNAPSHOT PUBLICATION (OFFLINE)", flush=True)
+        print("\n=======================================================", flush=True)
+        print("QUANTVIEW -- PHASE 3 SNAPSHOT PUBLICATION (OFFLINE)", flush=True)
         print(f"Staging Root: {self.staging_root}", flush=True)
         print(f"Active Lake:  {self.lake_root} | Dry Run: {dry_run}", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         # 1. Baseline validation
         base_ok, v1_manifest = self.validate_baseline()
@@ -550,11 +550,11 @@ class SnapshotLakePublisher:
         # 5. Register DuckDB views
         view_benchmarks = self.register_duckdb_views(dry_run=dry_run)
 
-        print(f"\n=======================================================", flush=True)
-        print(f"PHASE 3 SNAPSHOT LAKE PUBLICATION COMPLETED SUCCESSFULLY", flush=True)
+        print("\n=======================================================", flush=True)
+        print("PHASE 3 SNAPSHOT LAKE PUBLICATION COMPLETED SUCCESSFULLY", flush=True)
         print(f"Published Files: {pub_stats['published_files']} ({pub_stats['published_rows']:,} rows)", flush=True)
         print(f"Manifest Active: {active_manifest_path} (Version 2)", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         return {
             "status": "SUCCESS",

@@ -23,8 +23,9 @@
 """
 
 import math
-import pytest
 from typing import List
+
+import pytest
 
 from packages.features import (
     FeatureRegistry,

@@ -31,8 +31,9 @@
 """
 
 from decimal import Decimal
-from typing import NamedTuple, List, Dict, Any, Optional
-from packages.domain import Paise, OptionType, OrderSide
+from typing import Any, Dict, List, NamedTuple, Optional
+
+from packages.domain import OptionType, OrderSide, Paise
 
 
 class ExpectedFill(NamedTuple):

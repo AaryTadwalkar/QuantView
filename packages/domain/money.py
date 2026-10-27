@@ -27,7 +27,7 @@
    - Exported currency primitives and arithmetic conversion functions.
 """
 
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from typing import NewType, Union
 
 # Strict integer type for currency representation in paise (100 paise = 1 INR)

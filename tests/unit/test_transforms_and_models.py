@@ -20,7 +20,14 @@
 """
 
 import pytest
+
 from packages.features import FeatureRegistry
+from packages.features.models import (
+    BaselineDecisionModel,
+    FrozenModelContract,
+    NoInferenceTrainingAllowedError,
+    R1BaselineType,
+)
 from packages.features.transforms import (
     HeikinAshiBar,
     RenkoBrick,
@@ -28,12 +35,6 @@ from packages.features.transforms import (
     compute_renko_bricks,
     register_heikin_ashi_feature,
     register_renko_feature,
-)
-from packages.features.models import (
-    BaselineDecisionModel,
-    FrozenModelContract,
-    NoInferenceTrainingAllowedError,
-    R1BaselineType,
 )
 
 

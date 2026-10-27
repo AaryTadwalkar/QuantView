@@ -25,10 +25,10 @@
    - Exported ParsedFrame dataclass, pack_frame, and unpack_frames_from_bytes functions.
 """
 
-from dataclasses import dataclass
 import struct
-from typing import List, Optional, Tuple
 import zlib
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
 
 FRAME_MAGIC = b"QVWS"
 # Magic(4s) + SeqNum(Q, 8B) + RecvTimeUs(q, 8B) + PayloadLen(I, 4B) + CRC32(I, 4B) = 28 bytes

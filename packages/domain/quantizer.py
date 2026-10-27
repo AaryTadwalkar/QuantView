@@ -24,6 +24,7 @@
 from decimal import Decimal
 from enum import Enum
 from typing import Union
+
 from packages.domain.money import Paise, to_paise
 
 

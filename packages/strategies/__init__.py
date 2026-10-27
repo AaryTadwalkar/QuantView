@@ -21,8 +21,9 @@
 """
 
 from enum import Enum
-from typing import Dict, Any, Optional, Protocol, runtime_checkable
-from packages.domain import UtcEpochSec, ContractIdentifier
+from typing import Any, Dict, Optional, Protocol, runtime_checkable
+
+from packages.domain import ContractIdentifier, UtcEpochSec
 
 
 class SignalAction(str, Enum):
@@ -110,6 +111,14 @@ class Strategy(Protocol):
         ...
 
 
+from packages.strategies.multileg import (
+    BearPutSpreadStrategy,
+    BullCallSpreadStrategy,
+    LongStraddleStrategy,
+    MultiLegSignalAction,
+    MultiLegStrategySignal,
+    ShortStrangleTheoreticalStrategy,
+)
 from packages.strategies.registry import (
     StrategyRegistry,
     StrategyRegistryEntry,
@@ -120,14 +129,6 @@ from packages.strategies.smoke import (
     LongCETrendFollowingParams,
     LongPEMeanReversion,
     LongPEMeanReversionParams,
-)
-from packages.strategies.multileg import (
-    MultiLegSignalAction,
-    MultiLegStrategySignal,
-    BullCallSpreadStrategy,
-    BearPutSpreadStrategy,
-    LongStraddleStrategy,
-    ShortStrangleTheoreticalStrategy,
 )
 
 __all__ = [

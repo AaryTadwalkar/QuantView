@@ -21,16 +21,15 @@
    - Causal sequence of confirmed Renko bricks with exact bar index and timestamp provenance.
 """
 
-import math
-from typing import List, NamedTuple, Optional, Sequence
+from typing import List, NamedTuple, Sequence
+
+from packages.features.registry import FeatureRegistry
 from packages.features.schemas import (
     FeatureDefinition,
-    FeatureStatus,
     MemoryClass,
     RepaintClass,
     SourceTier,
 )
-from packages.features.registry import FeatureRegistry
 
 
 class RenkoBrick(NamedTuple):

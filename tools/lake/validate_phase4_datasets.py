@@ -40,8 +40,8 @@ if str(PROJECT_ROOT) not in sys.path:
 import pyarrow.parquet as pq
 
 from packages.data.schemas import (
-    DERIVED_CANDLES_SCHEMA,
     DATA_ELIGIBILITY_SCHEMA,
+    DERIVED_CANDLES_SCHEMA,
 )
 
 
@@ -271,11 +271,11 @@ class Phase4Validator:
 
     def run_all_checks(self) -> Dict:
         """Executes all 6 validation gates and serializes evidence report."""
-        print(f"\n=======================================================", flush=True)
-        print(f"QUANTVIEW -- PHASE 4 VALIDATION GATES (M3-07, M3-08, M3-09)", flush=True)
+        print("\n=======================================================", flush=True)
+        print("QUANTVIEW -- PHASE 4 VALIDATION GATES (M3-07, M3-08, M3-09)", flush=True)
         print(f"Staging Root: {self.staging_root}", flush=True)
         print(f"Lake Root:    {self.lake_root}", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         g1 = self.check_derived_candles()
         g2 = self.check_vendor_comparison()

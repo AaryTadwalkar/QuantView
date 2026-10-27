@@ -17,14 +17,16 @@
    - Unit test execution results for Task M4-15.
 """
 
-import unittest
 import math
+import unittest
+
 import pytest
+
 from packages.engine.metrics import (
+    BacktestMetrics,
+    compute_deflated_sharpe_ratio,
     standard_normal_cdf,
     standard_normal_ppf,
-    compute_deflated_sharpe_ratio,
-    BacktestMetrics,
 )
 
 

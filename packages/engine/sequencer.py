@@ -24,21 +24,16 @@
 """
 
 from enum import Enum
-from typing import Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Dict, List, NamedTuple, Optional, Tuple
 
 from packages.domain import (
-    ContractIdentifier,
     OrderSide,
     Paise,
-    TickQuantizer,
     UtcEpochSec,
 )
-from packages.engine.clock import SimulationMinute
 from packages.engine.groups import (
-    InvalidLeggingTransitionError,
-    LegPosition,
-    LegStatus,
     LeggingState,
+    LegPosition,
     PositionGroup,
     StrategyIntent,
 )

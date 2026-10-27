@@ -24,10 +24,10 @@ import argparse
 import hashlib
 import json
 import logging
-from pathlib import Path
 import shutil
 import sys
-from typing import Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # Standard QuantView repository bootstrap
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -166,7 +166,7 @@ def main() -> None:
     src = Path(args.source)
     dst = Path(args.dest) if args.dest else PROJECT_ROOT / "Data" / "raw"
 
-    print(f"\n--- QuantView Unidirectional Production-to-Research Sync ---")
+    print("\n--- QuantView Unidirectional Production-to-Research Sync ---")
     print(f"Source:       {src.resolve()}")
     print(f"Destination:  {dst.resolve()}")
     print("Enforcing:    Strict Read-Only Direction (No Write-Back Path)\n")

@@ -25,7 +25,8 @@
 import hashlib
 import json
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict
+
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 

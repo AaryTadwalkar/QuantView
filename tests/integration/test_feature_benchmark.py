@@ -20,6 +20,7 @@
 
 import time
 from typing import NamedTuple
+
 import pytest
 
 from packages.features.statistical import (

@@ -26,7 +26,7 @@
    - Exported UtcEpochSec type and timezone conversion helpers.
 """
 
-from datetime import datetime, timezone, time
+from datetime import datetime, time, timezone
 from typing import NewType
 from zoneinfo import ZoneInfo
 

@@ -27,10 +27,10 @@
 import math
 import threading
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Sequence
+
 from packages.domain import UtcEpochSec
 from packages.features.schemas import (
     FeatureDefinition,
-    FeatureStatus,
     MemoryClass,
     RepaintClass,
     SourceTier,

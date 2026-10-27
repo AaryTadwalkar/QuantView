@@ -17,17 +17,18 @@
 """
 
 from datetime import date, datetime, timezone
+
 import pytest
 
 from packages.features import FeatureRegistry
 from packages.features.calendar import (
-    SessionProgress,
     SessionHighWater,
-    compute_session_progress,
+    SessionProgress,
     compute_session_high_water,
+    compute_session_progress,
     parse_utc_to_ist,
-    register_session_progress_feature,
     register_high_water_feature,
+    register_session_progress_feature,
 )
 
 

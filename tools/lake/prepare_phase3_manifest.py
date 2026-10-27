@@ -201,14 +201,14 @@ class Phase3ManifestGenerator:
             json.dump(manifest, f, indent=2)
         tmp_path.replace(manifest_path)
 
-        print(f"\n=======================================================", flush=True)
-        print(f"QUANTVIEW -- PHASE 3 STAGING MANIFEST GENERATED", flush=True)
+        print("\n=======================================================", flush=True)
+        print("QUANTVIEW -- PHASE 3 STAGING MANIFEST GENERATED", flush=True)
         print(f"Manifest Path: {manifest_path}", flush=True)
         print(f"SHA-256: {compute_file_sha256(manifest_path)}", flush=True)
         print(f"Captures Partitions: {captures['file_count']} ({captures['total_rows']:,} rows, {captures['total_bytes'] / (1024*1024):.2f} MB)", flush=True)
         print(f"Rows Partitions:     {rows['file_count']} ({rows['total_rows']:,} rows, {rows['total_bytes'] / (1024*1024):.2f} MB)", flush=True)
         print(f"Aggregate Totals:    {total_files} files, {total_rows:,} rows, {total_mb:.2f} MB", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         return manifest_path
 

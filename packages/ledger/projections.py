@@ -22,7 +22,8 @@
 """
 
 from typing import Dict, List, NamedTuple, Optional
-from packages.domain import Paise, OrderSide
+
+from packages.domain import OrderSide, Paise
 from packages.ledger.events import CanonicalLedgerEventType, FinancialEventRecord
 
 

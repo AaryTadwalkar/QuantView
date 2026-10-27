@@ -24,6 +24,7 @@
 """
 
 from typing import Any, Dict, List, NamedTuple, Optional
+
 from packages.domain import OptionType, OrderSide, Paise
 from packages.engine.groups import LeggingState, StrategyIntent
 

@@ -17,6 +17,7 @@
 import os
 from pathlib import Path
 from typing import Optional
+
 from dotenv import load_dotenv
 
 
@@ -95,6 +96,5 @@ def get_settings() -> QuantViewSettings:
     """
     global _settings_instance
     if _settings_instance is None:
-        from typing import Optional
         _settings_instance = QuantViewSettings()
     return _settings_instance

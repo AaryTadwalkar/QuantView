@@ -24,9 +24,10 @@
 """
 
 from datetime import date, datetime
-from decimal import Decimal, ROUND_HALF_UP
-from typing import NamedTuple, Optional, List, Union
-from packages.domain import Paise, OrderSide
+from decimal import ROUND_HALF_UP, Decimal
+from typing import List, NamedTuple, Optional, Union
+
+from packages.domain import OrderSide, Paise
 
 
 def _round_half_up_paise(val_decimal: Decimal) -> Paise:

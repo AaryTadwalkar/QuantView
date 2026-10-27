@@ -18,9 +18,11 @@
 """
 
 import unittest
+
 import pytest
-from packages.engine.config import EngineRunConfig
+
 from packages.domain import OperatingMode
+from packages.engine.config import EngineRunConfig
 
 
 @pytest.mark.gate_g2a

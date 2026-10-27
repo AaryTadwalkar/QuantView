@@ -24,16 +24,15 @@
 
 import math
 from typing import Dict, List, NamedTuple, Optional, Sequence, Tuple
+
 from packages.features.chain.lazy_chain import ReconstructedOptionChain
+from packages.features.registry import FeatureRegistry
 from packages.features.schemas import (
     FeatureDefinition,
-    FeatureStatus,
     MemoryClass,
     RepaintClass,
     SourceTier,
 )
-from packages.features.registry import FeatureRegistry
-from packages.features.volatility.black76 import black76_price
 from packages.features.volatility.greeks_solver import ModelGreeksResult
 
 

@@ -19,10 +19,10 @@
    - Exported CanonicalLedgerEventType, FinancialEventRecord, and idempotency generation utilities.
 """
 
-from enum import Enum
 import hashlib
-import json
+from enum import Enum
 from typing import Any, Dict, NamedTuple, Optional
+
 from packages.domain import Paise, UtcEpochSec
 
 

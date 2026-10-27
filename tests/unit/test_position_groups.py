@@ -22,6 +22,7 @@
 """
 
 from datetime import date
+
 import pytest
 
 from packages.domain import (
@@ -34,9 +35,9 @@ from packages.domain import (
 )
 from packages.engine.groups import (
     InvalidLeggingTransitionError,
+    LeggingState,
     LegPosition,
     LegStatus,
-    LeggingState,
     PositionGroup,
     StrategyIntent,
 )

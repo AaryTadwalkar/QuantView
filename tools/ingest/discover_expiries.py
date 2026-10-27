@@ -26,15 +26,16 @@
    - Machine-readable index: reports/expired_contracts_index.json
 """
 
+import gzip
+import hashlib
+import json
 import os
 import sys
-import gzip
-import json
 import time
-import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+
 import requests
 from dotenv import load_dotenv
 

@@ -7,7 +7,10 @@
 ALLOW.txt: one substring per line; a removed line/token/id is tolerated only if it contains one.
 STALE.txt: one regex per line; any match anywhere in the docs fails lint (old names after a rename).
 """
-import re, sys, json, hashlib
+import hashlib
+import json
+import re
+import sys
 from collections import Counter
 from pathlib import Path
 
@@ -201,7 +204,9 @@ def run(cmd, timeout=10):
         return f"(could not run: {type(e).__name__})"
 
 def report(d, out="ops/qv_report.txt"):
-    import platform, shutil, os
+    import os
+    import platform
+    import shutil
     L = []; add = L.append; d = Path(d)
     add("== QV REPORT =="); add(f"python={platform.python_version()} os={platform.platform()}")
     add("\n-- files in %s (bytes, lines, sha12) --" % d)

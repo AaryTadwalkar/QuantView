@@ -1,4 +1,4 @@
-"""
+r"""
 1. What this file does:
    Executes M0-06 (backup checksum verification against secondary medium D:) and
    M0-08 (isolated restore verification from secondary medium D: into a sandbox),
@@ -21,10 +21,10 @@
    ops/evidence/M0-08.md (isolated restore verification), returning exit code 0 on complete match.
 """
 
-import os
-import sys
-import shutil
 import hashlib
+import os
+import shutil
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -55,7 +55,7 @@ def compute_sha256(file_path: Path) -> str:
 
 
 class BackupVerifier:
-    """
+    r"""
     1. The use of class:
        Orchestrates the comparative inventory and restore verification between primary and secondary storage.
 

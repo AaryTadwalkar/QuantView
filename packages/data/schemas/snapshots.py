@@ -26,6 +26,7 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Dict, List, Optional
+
 import pyarrow as pa
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 

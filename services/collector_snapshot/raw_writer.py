@@ -27,12 +27,12 @@
    - Returned RawCaptureRecord containing verified hashes and file references.
 """
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
 import gzip
 import hashlib
 import json
 import os
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 

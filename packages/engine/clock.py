@@ -18,15 +18,13 @@
    - Exported SimulationMinute and SimulationClock classes.
 """
 
-from datetime import date, datetime, time, timedelta, timezone
-from typing import Generator, List, NamedTuple, Optional, Union
+from datetime import date, datetime, timedelta
+from typing import Generator, NamedTuple
+
 from packages.domain import (
-    UtcEpochSec,
     IST_TIMEZONE,
-    UTC_TIMEZONE,
-    utc_epoch_to_ist_datetime,
+    UtcEpochSec,
     ist_datetime_to_utc_epoch,
-    is_regular_trading_minute,
 )
 
 

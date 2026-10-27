@@ -23,14 +23,44 @@
    - Clean public API for packages.features.
 """
 
-from packages.features.schemas import (
-    FeatureDefinition,
-    FeatureStatus,
-    MemoryClass,
-    RepaintClass,
-    SourceTier,
-    canonical_json_dumps,
-    compute_param_hash,
+from packages.features.calendar import (
+    SessionHighWater,
+    SessionProgress,
+    compute_session_high_water,
+    compute_session_progress,
+    parse_utc_to_ist,
+    register_high_water_feature,
+    register_session_progress_feature,
+)
+from packages.features.chain import (
+    SQL_CREATE_VIEW_RECONSTRUCTED_CHAIN,
+    ChainRow,
+    LazyChainProvider,
+    ReconstructedOptionChain,
+    StraddleResult,
+    compute_atm_straddle,
+    compute_delta_band_oi,
+    compute_oi_roc,
+    compute_pcr,
+    get_atm_band_strikes,
+    get_atm_strike,
+    register_pcr_feature,
+)
+from packages.features.models import (
+    BaselineDecisionModel,
+    FrozenModelContract,
+    ModelInferenceInterface,
+    NoInferenceTrainingAllowedError,
+    R1BaselineType,
+)
+from packages.features.orderflow import (
+    CandleDeltaResult,
+    DepthImbalanceResult,
+    compute_candle_volume_delta,
+    compute_depth_imbalance,
+    compute_series_candle_delta,
+    register_candle_delta_feature,
+    register_depth_imbalance_feature,
 )
 from packages.features.registry import (
     DuplicateFeatureRegistrationError,
@@ -44,6 +74,19 @@ from packages.features.registry import (
     verify_availability_enforcement,
     verify_future_perturbation,
     verify_prefix_invariance,
+)
+from packages.features.runner import (
+    IsolatedFeatureRunner,
+    SubprocessFeatureResult,
+)
+from packages.features.schemas import (
+    FeatureDefinition,
+    FeatureStatus,
+    MemoryClass,
+    RepaintClass,
+    SourceTier,
+    canonical_json_dumps,
+    compute_param_hash,
 )
 from packages.features.statistical import (
     SessionVWAPGuard,
@@ -73,28 +116,14 @@ from packages.features.structure import (
     compute_market_structure,
     register_market_structure_feature,
 )
-from packages.features.calendar import (
-    SessionHighWater,
-    SessionProgress,
-    compute_session_high_water,
-    compute_session_progress,
-    parse_utc_to_ist,
-    register_high_water_feature,
-    register_session_progress_feature,
-)
-from packages.features.chain import (
-    SQL_CREATE_VIEW_RECONSTRUCTED_CHAIN,
-    ChainRow,
-    LazyChainProvider,
-    ReconstructedOptionChain,
-    StraddleResult,
-    compute_atm_straddle,
-    compute_delta_band_oi,
-    compute_oi_roc,
-    compute_pcr,
-    get_atm_band_strikes,
-    get_atm_strike,
-    register_pcr_feature,
+from packages.features.transforms import (
+    HeikinAshiBar,
+    NonTradableTransformError,
+    RenkoBrick,
+    compute_heikin_ashi,
+    compute_renko_bricks,
+    register_heikin_ashi_feature,
+    register_renko_feature,
 )
 from packages.features.volatility import (
     ModelGreeksResult,
@@ -109,35 +138,6 @@ from packages.features.volatility import (
     register_liquid_atm_greeks_feature,
     register_skew_feature,
     solve_implied_volatility,
-)
-from packages.features.orderflow import (
-    CandleDeltaResult,
-    DepthImbalanceResult,
-    compute_candle_volume_delta,
-    compute_depth_imbalance,
-    compute_series_candle_delta,
-    register_candle_delta_feature,
-    register_depth_imbalance_feature,
-)
-from packages.features.transforms import (
-    HeikinAshiBar,
-    NonTradableTransformError,
-    RenkoBrick,
-    compute_heikin_ashi,
-    compute_renko_bricks,
-    register_heikin_ashi_feature,
-    register_renko_feature,
-)
-from packages.features.models import (
-    BaselineDecisionModel,
-    FrozenModelContract,
-    ModelInferenceInterface,
-    NoInferenceTrainingAllowedError,
-    R1BaselineType,
-)
-from packages.features.runner import (
-    IsolatedFeatureRunner,
-    SubprocessFeatureResult,
 )
 
 __all__ = [

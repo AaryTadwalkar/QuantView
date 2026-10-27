@@ -23,14 +23,14 @@
 """
 
 from typing import List, NamedTuple, Sequence
+
+from packages.features.registry import FeatureRegistry
 from packages.features.schemas import (
     FeatureDefinition,
-    FeatureStatus,
     MemoryClass,
     RepaintClass,
     SourceTier,
 )
-from packages.features.registry import FeatureRegistry
 
 
 class CandleDeltaResult(NamedTuple):

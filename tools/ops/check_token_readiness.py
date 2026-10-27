@@ -24,8 +24,8 @@
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # Standard QuantView repository bootstrap
 PROJECT_ROOT = Path(__file__).resolve().parents[2]

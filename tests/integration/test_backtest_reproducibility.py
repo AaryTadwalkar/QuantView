@@ -25,9 +25,10 @@ import shutil
 import tempfile
 import time
 import unittest
-import pytest
 
 import duckdb
+import pytest
+
 from packages.domain import Paise
 from packages.engine.config import EngineRunConfig
 from packages.engine.runner import BacktestRunner

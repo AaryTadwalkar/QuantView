@@ -23,13 +23,14 @@ import shutil
 import tempfile
 import unittest
 
+import pytest
+
 from packages.domain import Paise, UtcEpochSec
 from packages.engine.config import EngineRunConfig
 from packages.engine.runner import BacktestRunner
 from packages.ledger.ledger import LedgerWriter
 from packages.ledger.projections import LedgerProjectionEngine
 from tools.run_backtest import parse_override_args
-import pytest
 
 
 @pytest.mark.gate_g2a
@@ -215,8 +216,9 @@ class TestBacktestRunner(unittest.TestCase):
         5. Final output of the function, before and after:
            Before: Unvalidated CLI tool. After: Validated CLI return code.
         """
-        from tools.run_backtest import main
         import sys
+
+        from tools.run_backtest import main
 
         cfg_path = os.path.join(self.temp_dir, "test_config.json")
         with open(cfg_path, "w", encoding="utf-8") as f:

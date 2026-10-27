@@ -20,8 +20,9 @@
    - Executable pytest suite marked with @pytest.mark.gate_g2b.
 """
 
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 import pytest
 
 from packages.domain import OrderSide, Paise, UtcEpochSec

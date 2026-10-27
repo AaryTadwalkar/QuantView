@@ -31,14 +31,14 @@
 
 import math
 from typing import List, Optional, Sequence, Tuple
+
+from packages.features.registry import FeatureRegistry
 from packages.features.schemas import (
     FeatureDefinition,
-    FeatureStatus,
     MemoryClass,
     RepaintClass,
     SourceTier,
 )
-from packages.features.registry import FeatureRegistry, register_feature
 
 
 def compute_sma(source: Sequence[float], length: int) -> List[float]:

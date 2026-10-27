@@ -236,7 +236,7 @@ class DataEligibilityEngine:
         5. Final output of the function, before and after:
            Before: Unmaterialized metrics. After: Parquet file in staging and Markdown report in reports/.
         """
-        print(f"\nComputing data eligibility matrix ...", flush=True)
+        print("\nComputing data eligibility matrix ...", flush=True)
         records, summary = self.evaluate_all()
 
         # 1. Write Parquet dataset to staging

@@ -25,16 +25,15 @@
    - Production-ready raw capture outputs in Data/raw/upstox_rest/snapshots/.
 """
 
-from datetime import datetime, time as dtime, timezone
 import hashlib
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from packages.data.schemas import SNAPSHOT_CAPTURES_SCHEMA
-from services.collector_snapshot.adapter import UpstoxSnapshotAdapter, SnapshotResponsePayload
-from services.collector_snapshot.raw_writer import RawSnapshotWriter, RawCaptureRecord
+from services.collector_snapshot.adapter import SnapshotResponsePayload, UpstoxSnapshotAdapter
+from services.collector_snapshot.raw_writer import RawCaptureRecord, RawSnapshotWriter
 
 logger = logging.getLogger("quantview.collector_snapshot")
 
@@ -275,7 +274,7 @@ class SnapshotCollectorService:
             logger.error("Decoder parse error on snapshot %s: %s", snapshot_id, decoder_error)
 
         # 5. Update companion manifest with decoder outcome (raw payload is already safe!)
-        updated_manifest = self.writer.update_manifest_decoder_status(
+        _updated_manifest = self.writer.update_manifest_decoder_status(
             manifest_path=record.manifest_path,
             decoder_status=decoder_status,
             error_message=decoder_error,

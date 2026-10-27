@@ -123,11 +123,11 @@ class DryRunManifestGenerator:
            Before: Staged Parquet files. After: Manifest JSON file written to prep_root / manifest_filename and returned dict.
         """
         now_ts = datetime.now(timezone.utc).isoformat()
-        print(f"\n=======================================================", flush=True)
-        print(f"QUANTVIEW -- STAGING LAKE DRY-RUN MANIFEST GENERATOR", flush=True)
+        print("\n=======================================================", flush=True)
+        print("QUANTVIEW -- STAGING LAKE DRY-RUN MANIFEST GENERATOR", flush=True)
         print(f"Inspection Root: {self.prep_root}", flush=True)
         print(f"Timestamp: {now_ts}", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         datasets = {
             "option_candles": "option_candles",
@@ -172,7 +172,7 @@ class DryRunManifestGenerator:
 
         print(f"\nDry-run manifest generated at: {out_manifest_path}", flush=True)
         print(f"Total Prepared: {total_files} files | {total_rows:,} rows | {manifest['aggregate_totals']['total_mb']} MB", flush=True)
-        print(f"Active Lake Publication Status: UNPUBLISHED (Phase 1 boundary preserved)", flush=True)
+        print("Active Lake Publication Status: UNPUBLISHED (Phase 1 boundary preserved)", flush=True)
 
         return manifest
 

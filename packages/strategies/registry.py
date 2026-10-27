@@ -22,6 +22,7 @@
 import hashlib
 import inspect
 from typing import Any, Dict, List, NamedTuple, Optional, Type
+
 from pydantic import BaseModel
 
 from packages.strategies import Strategy

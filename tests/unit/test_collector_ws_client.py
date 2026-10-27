@@ -22,10 +22,10 @@
 
 import asyncio
 import json
-from pathlib import Path
 import tempfile
-from typing import Any, Callable, Dict, List, Optional
 import unittest
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
 import websockets

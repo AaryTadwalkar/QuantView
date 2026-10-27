@@ -17,16 +17,16 @@
    - Causal session high/low feature series for breakout, support/resistance, and mean reversion models.
 """
 
-from typing import List, NamedTuple, Optional, Sequence
+from typing import List, NamedTuple, Sequence
+
+from packages.features.calendar.session import parse_utc_to_ist
+from packages.features.registry import FeatureRegistry
 from packages.features.schemas import (
     FeatureDefinition,
-    FeatureStatus,
     MemoryClass,
     RepaintClass,
     SourceTier,
 )
-from packages.features.registry import FeatureRegistry
-from packages.features.calendar.session import parse_utc_to_ist
 
 
 class SessionHighWater(NamedTuple):

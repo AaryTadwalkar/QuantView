@@ -18,15 +18,15 @@
    - Causal volatility surface skew and smile feature stream.
 """
 
-from typing import List, NamedTuple, Optional, Sequence
+from typing import NamedTuple, Optional, Sequence
+
+from packages.features.registry import FeatureRegistry
 from packages.features.schemas import (
     FeatureDefinition,
-    FeatureStatus,
     MemoryClass,
     RepaintClass,
     SourceTier,
 )
-from packages.features.registry import FeatureRegistry
 from packages.features.volatility.greeks_solver import ModelGreeksResult
 
 

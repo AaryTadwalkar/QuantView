@@ -23,10 +23,10 @@
    - Exported WsQuote dataclass, WsQuoteDecoder class, and DECODER_VERSION constant.
 """
 
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
 import hashlib
 import logging
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from services.collector_ws.proto import MarketDataFeedV3_pb2 as pb

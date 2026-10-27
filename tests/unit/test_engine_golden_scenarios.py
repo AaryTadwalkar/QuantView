@@ -21,7 +21,9 @@
 """
 
 import unittest
+
 import pytest
+
 from packages.domain import OrderSide, TickQuantizer
 from tests.fixtures.golden_scenarios import ALL_GOLDEN_SCENARIOS
 

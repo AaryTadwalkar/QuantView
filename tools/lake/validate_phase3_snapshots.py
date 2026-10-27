@@ -278,11 +278,11 @@ class Phase3SnapshotValidator:
 
     def run_all_checks(self) -> Dict:
         """Executes all validation gates and persists evidence JSON."""
-        print(f"\n=======================================================", flush=True)
-        print(f"QUANTVIEW -- PHASE 3 SNAPSHOT COMPACTION VALIDATION GATES", flush=True)
+        print("\n=======================================================", flush=True)
+        print("QUANTVIEW -- PHASE 3 SNAPSHOT COMPACTION VALIDATION GATES", flush=True)
         print(f"Staging Root: {self.staging_root}", flush=True)
         print(f"Lake Root:    {self.lake_root}", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         inv_check = self.check_inventory_and_quarantine()
         schema_check = self.check_schemas_and_precision()

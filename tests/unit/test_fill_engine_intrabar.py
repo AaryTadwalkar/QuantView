@@ -22,6 +22,7 @@
 """
 
 from datetime import date
+
 import pytest
 
 from packages.domain import (

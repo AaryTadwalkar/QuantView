@@ -21,16 +21,15 @@
    - Exported BacktestResult and BacktestRunner classes.
 """
 
-from datetime import datetime, date
 import json
 import os
-import uuid
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel
 
 from packages.domain import (
     ContractIdentifier,
-    OperatingMode,
     OptionType,
     OrderSide,
     Paise,
@@ -41,8 +40,6 @@ from packages.engine.config import EngineRunConfig
 from packages.engine.execution import CandleBar, IntrabarFillEngine
 from packages.engine.manifest import RunManifest, create_run_manifest
 from packages.engine.metrics import BacktestMetrics
-from packages.engine.orders import ActiveOrder, OrderStatus
-from packages.engine.positions import ActivePosition
 from packages.engine.selector import (
     ContractMasterProvider,
     InMemoryContractMaster,
@@ -52,7 +49,7 @@ from packages.ledger.fees import get_default_fee_engine
 from packages.ledger.ledger import FinancialLedger, LedgerWriter
 from packages.risk.evaluator import RiskPolicyEvaluator, RiskVerdict
 from packages.risk.rules import RiskRules
-from packages.strategies import SignalAction, Strategy, StrategySignal, get_default_strategy_registry
+from packages.strategies import SignalAction, Strategy, get_default_strategy_registry
 
 
 class BacktestResult(BaseModel):

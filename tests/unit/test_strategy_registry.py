@@ -18,8 +18,9 @@
 """
 
 from typing import Any, Dict, Optional
-from pydantic import BaseModel
+
 import pytest
+from pydantic import BaseModel
 
 from packages.domain import UtcEpochSec
 from packages.strategies import (

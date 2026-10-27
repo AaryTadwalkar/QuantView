@@ -26,20 +26,18 @@
    - Quarantined fragments: Data/raw/upstox_ws/ticks/quarantine/trade_date=YYYY-MM-DD/*.
 """
 
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
 import gzip
 import hashlib
 import json
 import logging
 import os
-from pathlib import Path
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from services.collector_ws.framing import (
-    FRAME_MAGIC,
-    ParsedFrame,
     pack_frame,
     unpack_frames_from_bytes,
 )

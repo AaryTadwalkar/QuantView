@@ -20,6 +20,7 @@
 """
 
 from datetime import date
+
 import pytest
 
 from packages.features.chain import (

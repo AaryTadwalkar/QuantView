@@ -21,9 +21,9 @@ import hashlib
 import json
 import uuid
 from typing import Any, Dict, Optional
+
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from packages.domain import OperatingMode, OptionType, Paise
 from packages.risk.rules import RiskRules
 
 

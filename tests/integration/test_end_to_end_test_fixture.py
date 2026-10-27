@@ -26,9 +26,10 @@ import os
 import shutil
 import tempfile
 import unittest
+
 import pytest
 
-from packages.domain import Paise, OrderSide
+from packages.domain import OrderSide, Paise
 from packages.domain.quantizer import TickQuantizer
 from packages.engine.config import EngineRunConfig
 from packages.engine.runner import BacktestRunner

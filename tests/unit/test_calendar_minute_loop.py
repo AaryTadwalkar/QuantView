@@ -17,6 +17,7 @@
 """
 
 from datetime import date
+
 import pytest
 
 from packages.engine.clock import SimulationClock, SimulationMinute

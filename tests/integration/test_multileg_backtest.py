@@ -21,8 +21,9 @@
 """
 
 import hashlib
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 import pytest
 
 from packages.domain import (
@@ -33,9 +34,9 @@ from packages.domain import (
     UtcEpochSec,
 )
 from packages.engine.groups import (
+    LeggingState,
     LegPosition,
     LegStatus,
-    LeggingState,
     PositionGroup,
     StrategyIntent,
 )

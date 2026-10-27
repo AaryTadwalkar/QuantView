@@ -19,14 +19,13 @@
    - Exported BackfillCheckpoint, BackfillCheckpointManager, and ExpiredOptionBackfillService classes.
 """
 
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
 import json
 import logging
 import os
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
-import time
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 from packages.data.budget import RateBudgetManager, RequestPriority
 

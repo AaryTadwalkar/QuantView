@@ -24,16 +24,16 @@
    - Lock file at Data/raw/upstox_ws/.collector_ws.lock during active execution.
 """
 
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
 import json
 import logging
 import os
-from pathlib import Path
 import platform
 import sys
-from typing import Any, Dict, Optional
 import uuid
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
 
 logger = logging.getLogger("quantview.collector_ws.lease")
 
@@ -211,7 +211,7 @@ class SingleOwnerLease:
             try:
                 msvcrt.locking(fileno, msvcrt.LK_NBLCK, 1)
                 locked_successfully = True
-            except OSError as ex:
+            except OSError:
                 locked_successfully = False
         else:
             import fcntl

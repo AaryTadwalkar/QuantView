@@ -26,9 +26,8 @@
 
 from enum import Enum
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
 
-from packages.domain import ContractIdentifier, OptionType, UtcEpochSec
+from packages.domain import ContractIdentifier, UtcEpochSec
 from packages.engine.groups import StrategyIntent
 from packages.strategies.registry import get_default_strategy_registry
 

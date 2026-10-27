@@ -25,16 +25,15 @@
 """
 
 from enum import Enum
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
-from packages.domain import UtcEpochSec
+from typing import List, NamedTuple, Optional, Sequence
+
+from packages.features.registry import FeatureRegistry
 from packages.features.schemas import (
     FeatureDefinition,
-    FeatureStatus,
     MemoryClass,
     RepaintClass,
     SourceTier,
 )
-from packages.features.registry import FeatureRegistry, register_feature
 
 
 class MarketBias(str, Enum):

@@ -17,7 +17,9 @@
    - Fail-closed VWAP quarantine guard and registered BLOCKED_QUARANTINED feature definition.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
+
+from packages.features.registry import FeatureRegistry
 from packages.features.schemas import (
     FeatureDefinition,
     FeatureStatus,
@@ -25,7 +27,6 @@ from packages.features.schemas import (
     RepaintClass,
     SourceTier,
 )
-from packages.features.registry import FeatureRegistry
 
 
 class SessionVWAPQuarantinedError(RuntimeError):

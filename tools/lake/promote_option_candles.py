@@ -295,11 +295,11 @@ class OptionCandlePreparer:
         total_rows = 0
         total_neg_vols = 0
 
-        print(f"\n=======================================================")
-        print(f"QUANTVIEW -- OPTION CANDLE LAKE PREPARATION (OFFLINE)")
+        print("\n=======================================================")
+        print("QUANTVIEW -- OPTION CANDLE LAKE PREPARATION (OFFLINE)")
         print(f"Expiries Discovered: {len(exp_keys)} | Dry Run: {dry_run}")
         print(f"Destination: {self.output_prep}")
-        print(f"=======================================================\n")
+        print("=======================================================\n")
 
         for idx, exp in enumerate(exp_keys, 1):
             res = self.prepare_expiry_partition(exp, exp_map[exp], dry_run=dry_run)

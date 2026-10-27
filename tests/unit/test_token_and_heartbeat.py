@@ -22,13 +22,13 @@
 """
 
 import base64
-from datetime import datetime, timezone
 import json
 import os
-from pathlib import Path
 import tempfile
 import time
 import unittest
+from datetime import datetime, timezone
+from pathlib import Path
 from unittest.mock import MagicMock
 
 from services.collector_snapshot.heartbeat import (

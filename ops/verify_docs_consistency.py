@@ -18,8 +18,9 @@ import json
 import os
 import re
 import sys
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
+
 
 def run_checks():
     defects = []

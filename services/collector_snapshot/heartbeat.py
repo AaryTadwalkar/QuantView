@@ -23,14 +23,14 @@
    - Atomically persisted telemetry files: Data/raw/telemetry/heartbeat_<service_name>.json.
 """
 
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
 import json
 import logging
 import os
-from pathlib import Path
 import threading
 import time
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger("quantview.heartbeat")

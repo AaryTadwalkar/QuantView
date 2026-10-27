@@ -27,18 +27,16 @@
 """
 
 import asyncio
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
 import json
 import logging
 import os
-from pathlib import Path
 import random
-import sys
 import time
-from typing import Any, Callable, Coroutine, Dict, List, Optional
 import uuid
 import zlib
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from typing import Callable, List, Optional
 
 import requests
 import websockets
@@ -48,7 +46,7 @@ from services.collector_snapshot.heartbeat import HeartbeatMonitor
 from services.collector_ws.decoder import WsQuote, WsQuoteDecoder
 from services.collector_ws.lease import DuplicateCollectorInstanceError, SingleOwnerLease
 from services.collector_ws.raw_segment_writer import RawSegmentWriter
-from services.collector_ws.subscription import FeedMode, SubscriptionConfig, SubscriptionManager
+from services.collector_ws.subscription import SubscriptionManager
 
 logger = logging.getLogger("quantview.collector_ws.client")
 

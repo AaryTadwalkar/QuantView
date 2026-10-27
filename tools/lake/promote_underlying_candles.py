@@ -305,11 +305,11 @@ class UnderlyingCandlePreparer:
 
     def run(self, dry_run: bool = False) -> Dict:
         """Runs underlying candle preparation for both 1m and 1d intervals."""
-        print(f"\n=======================================================", flush=True)
-        print(f"QUANTVIEW -- UNDERLYING CANDLE LAKE PREPARATION (OFFLINE)", flush=True)
+        print("\n=======================================================", flush=True)
+        print("QUANTVIEW -- UNDERLYING CANDLE LAKE PREPARATION (OFFLINE)", flush=True)
         print(f"Dry Run Mode: {dry_run}", flush=True)
         print(f"Destination: {self.output_prep}", flush=True)
-        print(f"=======================================================\n", flush=True)
+        print("=======================================================\n", flush=True)
 
         res_1m = self.prepare_1m_partitions(dry_run=dry_run)
         print(f"  [1-Minute Series] Rows: {res_1m['total_rows']:,} | Partitions: {res_1m['partitions']} | Quarantined: {res_1m['quarantined']}", flush=True)

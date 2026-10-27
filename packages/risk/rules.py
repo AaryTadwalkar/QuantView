@@ -17,12 +17,11 @@
    - Exported RiskRules, RiskVerdict, and RiskDecision classes.
 """
 
-from enum import Enum
 import hashlib
+from enum import Enum
 from typing import NamedTuple, Optional
-from pydantic import BaseModel, ConfigDict, Field
 
-from packages.domain import Paise
+from pydantic import BaseModel, ConfigDict
 
 
 class RiskVerdict(str, Enum):

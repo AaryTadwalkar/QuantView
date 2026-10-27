@@ -16,6 +16,7 @@
 """
 
 from typing import Optional
+
 from packages.domain import ContractIdentifier, OrderSide, Paise, UtcEpochSec
 
 
