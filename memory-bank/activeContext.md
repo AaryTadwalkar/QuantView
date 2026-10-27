@@ -1,6 +1,12 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
-## Current State of the Union (2026-10-27 — Stage 3 Final Closure & Gate G2a Certified PASS)
+## Current State of the Union (2026-10-27 — Stage 2 Gate G0 Certified PASS & Stage 3 Gate G2a Certified PASS)
+- **STAGE 2 / GATE G0 FULLY CERTIFIED PASS & CLOSED:**
+  - **Live Market Production Ingestion:** Verified live on 2026-10-27. WebSocket collector streaming live quotes (> 102,000 decoded quotes, > 37 MB segment) for Nifty 50 + 22 option strikes (ATM ± 5).
+  - **Dynamic Expiry Discovery:** Hardened `UpstoxSnapshotAdapter` and `SnapshotCollectorService` to query `/v2/option/contract` dynamically, resolving today's active expiry (`2026-10-27`) without static JSON dependency.
+  - **Snapshot Ingestion Verified:** Successfully captured 144 strikes (288 CE/PE rows) at 60s intervals with 100% manifest and SHA-256 hash parity.
+  - **Process Lifecycle Management:** Snapshot collector cleanly terminated on PC A (leaving dedicated PC B running live option chain captures).
+  - **Audit Sign-Off:** Full audit report updated and certified at [`reports/stage2_closure/gate_g0_audit_report.md`](file:///c:/Algo/quantview/reports/stage2_closure/gate_g0_audit_report.md). 67/67 Stage 2 tests PASS; 224/224 full repo tests PASS.
 - **GATE G2a FULLY CERTIFIED PASS:** 89/89 Gate G2a tests PASS, 224/224 full repo tests PASS in 9.19s. Full audit report published at [`reports/stage3_closure/gate_g2a_audit_report.md`](file:///c:/Algo/quantview/reports/stage3_closure/gate_g2a_audit_report.md).
 - **REVIEWER AUDIT RECONCILIATIONS COMPLETED:**
   - **Smoke Test Equity Parity:** Fixed round-trip fee accounting in `execution.py` (entry + exit fees tracked in `ActivePosition`). Cash balance, net P&L, and equity reconcile to the exact paisa (Rs 100,000 + 211.52 == Rs 100,211.52).

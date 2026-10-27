@@ -23,12 +23,15 @@
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import logging
 import random
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import requests
 
 from packages.data.budget import RateBudgetManager, RequestPriority
+
+logger = logging.getLogger("quantview.collector_snapshot.adapter")
 
 
 @dataclass
@@ -121,6 +124,48 @@ class UpstoxSnapshotAdapter:
         """Redacts sensitive tokens in string representation."""
         masked_token = f"{self.access_token[:4]}...{self.access_token[-4:]}" if len(self.access_token) > 8 else "***"
         return f"UpstoxSnapshotAdapter(base_url='{self.base_url}', access_token='{masked_token}', timeout={self.timeout_sec}s)"
+
+    def fetch_active_expiries(
+        self,
+        instrument_key: str = "NSE_INDEX|Nifty 50",
+    ) -> List[str]:
+        """
+        1. The use of function:
+           Fetches available live option contract expiries dynamically from Upstox REST API.
+
+        2. How does the specific function work:
+           - Queries /v2/option/contract endpoint with instrument_key.
+           - Extracts and returns a sorted list of unique expiry dates.
+           - Returns empty list if query fails or network unavailable.
+
+        3. Concepts used in the function:
+           Dynamic instrument contract discovery, defensive fallback.
+
+        4. Places where this function is imported and used:
+           Called by SnapshotCollectorService.resolve_active_expiry() to discover current live expiries.
+
+        5. Final output of the function, before and after:
+           Before: Unknown expiries. After: Sorted list of ISO-8601 expiry strings (e.g. ['2026-10-27', ...]).
+        """
+        contracts_url = "https://api.upstox.com/v2/option/contract"
+        headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {self.access_token}",
+        }
+        try:
+            resp = self.session.get(
+                contracts_url,
+                headers=headers,
+                params={"instrument_key": instrument_key},
+                timeout=self.timeout_sec,
+            )
+            if resp.status_code == 200:
+                data = resp.json().get("data", [])
+                expiries = sorted(list({c.get("expiry") for c in data if c.get("expiry")}))
+                return expiries
+        except Exception as ex:
+            logger.warning("Failed to fetch active expiries dynamically: %s", ex)
+        return []
 
     def fetch_raw_option_chain(
         self,

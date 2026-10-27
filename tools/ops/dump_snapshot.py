@@ -318,7 +318,9 @@ def main() -> None:
 
     print(f"Loading raw snapshot: {target_file.name}")
     header, rows = extract_snapshot_rows(target_file)
-    print(f"Loaded {header['total_strikes']} strikes ({len(rows)} CE/PE rows). Spot: INR {header['spot_price']:,.2f}")
+    spot_val = header.get("spot_price")
+    spot_str = f"INR {spot_val:,.2f}" if spot_val is not None else "N/A"
+    print(f"Loaded {header['total_strikes']} strikes ({len(rows)} CE/PE rows). Spot: {spot_str}")
 
     if args.to_csv:
         out_path = Path(args.to_csv)

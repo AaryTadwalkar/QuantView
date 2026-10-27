@@ -111,18 +111,24 @@ class SnapshotCollectorService:
         self.writer = writer or RawSnapshotWriter()
         self.default_instrument = default_instrument
 
-    def resolve_active_expiry(self, explicit_expiry: Optional[str] = None) -> str:
+    def resolve_active_expiry(
+        self,
+        explicit_expiry: Optional[str] = None,
+        instrument_key: Optional[str] = None,
+    ) -> str:
         """
         1. The use of function:
            Resolves the active expiry date dynamically without hardcoding.
 
         2. How does the specific function work:
            - If explicit_expiry is provided, returns it directly.
+           - Queries adapter.fetch_active_expiries() for real-time upcoming expiries.
+           - If adapter lookup yields future dates, selects the earliest date >= today.
            - Else checks config/nse_nifty_expiries_2025_2026.json for nearest future expiry.
-           - Falls back to nearest Thursday calculation if config is unavailable.
+           - Falls back to current date if config or adapter is unavailable.
 
         3. Concepts used in the function:
-           Dynamic configuration resolution, fallback date arithmetic.
+           Dynamic broker contract discovery, fallback date resolution.
 
         4. Places where this function is imported and used:
            Called during capture_once() when expiry_date is omitted.
@@ -133,9 +139,22 @@ class SnapshotCollectorService:
         if explicit_expiry:
             return explicit_expiry
 
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        inst = instrument_key or self.default_instrument
+
+        # 1. Dynamic live contract discovery via adapter
+        if hasattr(self.adapter, "fetch_active_expiries"):
+            try:
+                live_expiries = self.adapter.fetch_active_expiries(instrument_key=inst)
+                for exp in sorted(live_expiries):
+                    if exp >= today_str:
+                        return exp
+            except Exception as ex:
+                logger.warning("Dynamic expiry lookup via adapter failed: %s", ex)
+
+        # 2. Fallback to static config file if present
         project_root = Path(__file__).resolve().parents[2]
         expiries_json = project_root / "config" / "nse_nifty_expiries_2025_2026.json"
-        today_str = datetime.now().strftime("%Y-%m-%d")
 
         if expiries_json.exists():
             try:
@@ -154,12 +173,10 @@ class SnapshotCollectorService:
                 for exp in all_expiries:
                     if exp >= today_str:
                         return exp
-                if all_expiries:
-                    return all_expiries[-1]
             except Exception as ex:
                 logger.warning("Failed to parse expiries config: %s", ex)
 
-        # Fallback to current date
+        # 3. Fallback to current date
         return today_str
 
     def capture_once(
@@ -192,7 +209,7 @@ class SnapshotCollectorService:
            Before: Uncaptured market state. After: Durably persisted raw file, manifest, and summary dict.
         """
         inst = instrument_key or self.default_instrument
-        resolved_expiry = self.resolve_active_expiry(expiry_date)
+        resolved_expiry = self.resolve_active_expiry(expiry_date, instrument_key=inst)
         recv_now = datetime.now(timezone.utc)
         t_date = trade_date or recv_now.strftime("%Y-%m-%d")
 

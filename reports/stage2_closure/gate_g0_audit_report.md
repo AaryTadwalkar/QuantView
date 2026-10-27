@@ -79,6 +79,24 @@ Derived from the empirical analysis of today's live trading session ([`reports/f
 
 ---
 
-## 5. Formal Gate G0 Sign-Off Verdict
+## 5. Live Market Final Production Verification (2026-10-27 Session)
 
-**Gate G0 is certified PASS.** All live market capture invariants, raw-first durability standards, process lease controls, fault injection resilience, and post-market reconciliation workflows are fully operational. Stage 2 is officially complete and closed.
+On Tuesday, 27 October 2026 during active live market trading hours (09:15 to 10:10 IST), final live-environment end-to-end operational verification was conducted:
+1. **WebSocket Collector Live Production Run:**
+   - Active process streaming live from Upstox Protobuf V3 feed (`run_collector_ws.py --instruments "NSE_INDEX|Nifty 50" --atm-count 5`).
+   - Recorded over 102,000 decoded quotes across Nifty 50 and 22 option strikes (ATM ± 5) into raw `.bin.partial` segment exceeding 37 MB.
+   - All quotes decoded live with accurate spot price, Delta, IV, Open Interest, and top-5 market depth.
+2. **REST Option Chain Live Production Run:**
+   - Hardened `UpstoxSnapshotAdapter` and `SnapshotCollectorService` with dynamic contract discovery (`/v2/option/contract`).
+   - Auto-resolved today's live expiry (`2026-10-27`) without static file dependencies.
+   - Captured full 144 strikes (288 CE/PE rows) at 60-second intervals (~16.5 KB gzipped per capture) with 100% manifest and hash parity.
+   - Clean shutdown executed without process hangs or resource leaks.
+3. **Automated Test Suite Parity:**
+   - 67/67 Stage 2 collector and WebSocket tests PASS.
+   - 224/224 full repository unit/integration tests PASS.
+
+---
+
+## 6. Formal Gate G0 Sign-Off Verdict
+
+**Gate G0 is certified PASS.** All live market capture invariants, raw-first durability standards, process lease controls, fault injection resilience, dynamic contract discovery, and post-market reconciliation workflows are fully operational. Stage 2 is officially complete and closed.
