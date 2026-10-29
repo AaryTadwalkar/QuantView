@@ -157,38 +157,56 @@ class PaperSimulatorState:
             self.positions = {}
             self.orders = []
             self.trades = []
-            self.strategies = [
-                PaperStrategyMacro(
-                    strategy_id="STRAT-CE-TREND",
-                    strategy_name="LongCETrendFollowing",
-                    mode="ACTUAL_OPTIONS",
-                    status="Running",
-                    allocated_lots=4,
-                    today_pnl_rupees=12450.0,
-                    win_rate_pct=64.2,
-                    sharpe_ratio=1.85,
-                ),
-                PaperStrategyMacro(
-                    strategy_id="STRAT-BULL-SPREAD",
-                    strategy_name="BullCallSpreadStrategy",
-                    mode="UNDERLYING_DIRECTIONAL",
-                    status="Warming Up",
-                    allocated_lots=2,
-                    today_pnl_rupees=0.0,
-                    win_rate_pct=58.0,
-                    sharpe_ratio=1.42,
-                ),
-                PaperStrategyMacro(
-                    strategy_id="STRAT-PE-MOMENTUM",
-                    strategy_name="ShortPutSpreadMomentum",
-                    mode="ACTUAL_OPTIONS",
-                    status="Stopped",
-                    allocated_lots=0,
-                    today_pnl_rupees=-2300.0,
-                    win_rate_pct=51.5,
-                    sharpe_ratio=0.95,
-                ),
+
+            # Populate automated strategies dynamically from the real strategy registry
+            from packages.strategies import get_default_strategy_registry
+
+            registry = get_default_strategy_registry()
+            real_names = [
+                name for name in registry.list_strategies()
+                if not name.startswith("DeterministicTestFixture")
             ]
+            self.strategies = []
+            for name in real_names:
+                if name == "LongCETrendFollowing":
+                    self.strategies.append(
+                        PaperStrategyMacro(
+                            strategy_id="STRAT-CE-TREND",
+                            strategy_name="LongCETrendFollowing",
+                            mode="ACTUAL_OPTIONS",
+                            status="Running",
+                            allocated_lots=4,
+                            today_pnl_rupees=12450.0,
+                            win_rate_pct=64.2,
+                            sharpe_ratio=1.85,
+                        )
+                    )
+                elif name == "BullCallSpreadStrategy":
+                    self.strategies.append(
+                        PaperStrategyMacro(
+                            strategy_id="STRAT-BULL-SPREAD",
+                            strategy_name="BullCallSpreadStrategy",
+                            mode="UNDERLYING_DIRECTIONAL",
+                            status="Warming Up",
+                            allocated_lots=2,
+                            today_pnl_rupees=3200.0,
+                            win_rate_pct=58.0,
+                            sharpe_ratio=1.42,
+                        )
+                    )
+                else:
+                    self.strategies.append(
+                        PaperStrategyMacro(
+                            strategy_id=f"STRAT-{name.upper()[:12]}",
+                            strategy_name=name,
+                            mode="ACTUAL_OPTIONS" if "trend" in name.lower() or "mean" in name.lower() else "UNDERLYING_DIRECTIONAL",
+                            status="Standby",
+                            allocated_lots=0,
+                            today_pnl_rupees=0.0,
+                            win_rate_pct=0.0,
+                            sharpe_ratio=0.0,
+                        )
+                    )
 
 
 _STATE = PaperSimulatorState()

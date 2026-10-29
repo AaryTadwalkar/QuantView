@@ -626,6 +626,129 @@ export class QuantChart {
 
   /**
    * 1. The use of function:
+   *    Converts timeframe string representations (e.g. '1m', '5m', '1h', '1d') to duration in seconds.
+   *
+   * 2. How does the specific function work:
+   *    Extracts numeric prefix and unit suffix (m=minutes, h=hours, d=days), performs scalar multiplication,
+   *    and returns the interval duration in integer seconds with a 300s (5m) fallback.
+   *
+   * 3. Concepts used in the function:
+   *    Timeframe normalization, temporal conversion, regex parsing.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by updateLiveBar in QuantChart (apps/web/js/chart.js).
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Timeframe string. After: Integer seconds interval (e.g. '5m' -> 300).
+   */
+  getTimeframeSeconds(tf) {
+    const s = String(tf || "5m").toLowerCase().trim();
+    if (s === "1m") return 60;
+    if (s === "3m") return 180;
+    if (s === "5m") return 300;
+    if (s === "15m") return 900;
+    if (s === "30m") return 1800;
+    if (s === "1h") return 3600;
+    if (s === "4h") return 14400;
+    if (s === "1d") return 86400;
+    const match = s.match(/^(\d+)([mhd])$/);
+    if (match) {
+      const v = parseInt(match[1], 10);
+      const u = match[2];
+      if (u === "m") return v * 60;
+      if (u === "h") return v * 3600;
+      if (u === "d") return v * 86400;
+    }
+    return 300;
+  }
+
+  /**
+   * 1. The use of function:
+   *    Updates or appends the active real-time live candlestick and volume bar on tick arrival.
+   *
+   * 2. How does the specific function work:
+   *    Normalizes tick timestamp to the active timeframe bar slot. If the latest bar matches
+   *    the slot, updates high, low, close, and volume in-place; if a new bar slot has elapsed,
+   *    creates and appends the new bar. Updates the main series via series.update() and repaints.
+   *
+   * 3. Concepts used in the function:
+   *    Streaming candle construction, in-place bar mutation, Lightweight Charts real-time updates.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by QuantApp WebSocket tick listener and fetchQuotes polling in apps/web/js/app.js.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Static chart ending at historical close. After: Live animating bar reflecting live market prices.
+   */
+  updateLiveBar(tick) {
+    if (!tick || !Number.isFinite(tick.price) || tick.price <= 0) return;
+    if (!this.main || !this.rawCandles) return;
+
+    const tfSec = this.getTimeframeSeconds(this.timeframe);
+    const tickTime = tick.time ? Number(tick.time) : Math.floor(Date.now() / 1000);
+    const barTime = Math.floor(tickTime / tfSec) * tfSec;
+    const price = Number(tick.price);
+    const vol = Number(tick.volume) || 0;
+
+    const n = this.rawCandles.length;
+    const last = n > 0 ? this.rawCandles[n - 1] : null;
+
+    let activeBar = null;
+
+    if (last && last.time === barTime) {
+      last.close = price;
+      last.high = Math.max(last.high, price);
+      last.low = Math.min(last.low, price);
+      if (vol > 0) last.volume = (last.volume || 0) + vol;
+      activeBar = last;
+    } else if (!last || barTime > last.time) {
+      const newBar = {
+        time: barTime,
+        open: price,
+        high: price,
+        low: price,
+        close: price,
+        volume: vol,
+      };
+      this.rawCandles.push(newBar);
+      activeBar = newBar;
+    } else {
+      return;
+    }
+
+    if (this.chartType === "heikin") {
+      const prevHA = n > 1 ? this.rawCandles[n - 2] : activeBar;
+      const haClose = (activeBar.open + activeBar.high + activeBar.low + activeBar.close) / 4;
+      const haOpen = (prevHA.open + prevHA.close) / 2;
+      const haHigh = Math.max(activeBar.high, haOpen, haClose);
+      const haLow = Math.min(activeBar.low, haOpen, haClose);
+      this.main.update({ time: activeBar.time, open: haOpen, high: haHigh, low: haLow, close: haClose });
+    } else if (this.chartType === "line" || this.chartType === "area") {
+      this.main.update({ time: activeBar.time, value: activeBar.close });
+    } else {
+      this.main.update({
+        time: activeBar.time,
+        open: activeBar.open,
+        high: activeBar.high,
+        low: activeBar.low,
+        close: activeBar.close,
+      });
+    }
+
+    if (this.volume && (activeBar.volume > 0 || this.rawCandles.some((b) => b.volume > 0))) {
+      this.volume.update({
+        time: activeBar.time,
+        value: activeBar.volume || 0,
+        color: activeBar.close >= activeBar.open ? "rgba(8, 153, 129, 0.45)" : "rgba(242, 54, 69, 0.45)",
+      });
+    }
+
+    this.updateLegend();
+    this.drawings?.drawOverlay();
+  }
+
+  /**
+   * 1. The use of function:
    *    Transforms and renders currently cached raw candles according to active chartType.
    *
    * 2. How does the specific function work:
@@ -668,15 +791,20 @@ export class QuantChart {
     }
 
     if (this.volume) {
-      const volData = this.rawCandles.map((b) => ({
-        time: b.time,
-        value: b.volume || 0,
-        color:
-          b.close >= b.open
-            ? "rgba(8, 153, 129, 0.45)"
-            : "rgba(242, 54, 69, 0.45)",
-      }));
-      this.volume.setData(volData);
+      const hasVol = this.rawCandles.some((b) => b.volume && b.volume > 0);
+      if (hasVol) {
+        const volData = this.rawCandles.map((b) => ({
+          time: b.time,
+          value: b.volume || 0,
+          color:
+            b.close >= b.open
+              ? "rgba(8, 153, 129, 0.45)"
+              : "rgba(242, 54, 69, 0.45)",
+        }));
+        this.volume.setData(volData);
+      } else {
+        this.volume.setData([]);
+      }
     }
   }
 
@@ -1543,22 +1671,40 @@ export class QuantChart {
     if (!this.legendEl) return;
     this.legendEl.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-act]");
-      if (!btn) return;
-      e.stopPropagation();
-      const act = btn.dataset.act;
-      const row = btn.closest("[data-uid]");
+      const nameEl = e.target.closest(".name");
+      const row = e.target.closest("[data-uid]");
       const uid = row?.dataset.uid;
       if (!uid) return;
 
-      if (act === "remove") {
-        this.removeIndicator(uid);
-      } else if (act === "hide") {
-        this.toggleIndicatorVisibility(uid);
-      } else if (act === "settings") {
+      if (btn) {
+        e.stopPropagation();
+        const act = btn.dataset.act;
+        if (act === "remove") {
+          this.removeIndicator(uid);
+        } else if (act === "hide") {
+          this.toggleIndicatorVisibility(uid);
+        } else if (act === "settings") {
+          const ind = this.indicators.find((x) => x.uid === uid);
+          if (ind && typeof this.onOpenIndicatorSettings === "function") {
+            this.onOpenIndicatorSettings(ind);
+          }
+        }
+      } else if (nameEl) {
+        e.stopPropagation();
         const ind = this.indicators.find((x) => x.uid === uid);
         if (ind && typeof this.onOpenIndicatorSettings === "function") {
           this.onOpenIndicatorSettings(ind);
         }
+      }
+    });
+
+    this.legendEl.addEventListener("dblclick", (e) => {
+      const row = e.target.closest("[data-uid]");
+      const uid = row?.dataset.uid;
+      if (!uid) return;
+      const ind = this.indicators.find((x) => x.uid === uid);
+      if (ind && typeof this.onOpenIndicatorSettings === "function") {
+        this.onOpenIndicatorSettings(ind);
       }
     });
   }
@@ -1569,17 +1715,17 @@ export class QuantChart {
    *
    * 2. How does the specific function work:
    *    Extracts candle bar at logical index (defaults to latest bar), renders price change %,
-   *    and iterates through active indicators rendering title, params, value coordinates,
-   *    and interactive micro-buttons (settings gear, eye hide, remove X).
+   *    and iterates through active indicators rendering title, action buttons ([gear], [eye], [remove]),
+   *    and output values. Action buttons are placed immediately after indicator name so they never clip.
    *
    * 3. Concepts used in the function:
-   *    DOM template rendering, crosshair tracking, indicator HUD visualization.
+   *    DOM template rendering, crosshair tracking, indicator HUD visualization, TradingView action positioning.
    *
    * 4. Places where this function is imported and used:
    *    Invoked by crosshair move subscriber and renderIndicators().
    *
    * 5. Final output of the function, before and after:
-   *    Before: Stale legend HTML. After: Live updated HUD reflecting cursor position.
+   *    Before: Action buttons placed after values and clipped. After: Action buttons immediately adjacent to name.
    */
   updateLegend(index = null) {
     if (!this.legendEl) return;
@@ -1623,13 +1769,13 @@ export class QuantChart {
       const rowStyle = ind.hidden ? "opacity:0.45;" : "";
       html += `
         <div class="row ind" data-uid="${ind.uid}" style="${rowStyle}">
-          <span class="name" style="cursor:pointer;" title="Click gear for settings">${esc(label)}</span>
-          <span class="vals" style="margin-left:6px;">${vals}</span>
+          <span class="name" style="cursor:pointer;" title="Click for indicator settings">${esc(label)}</span>
           <span class="acts">
             <button data-act="settings" title="Settings">${ICON.gear}</button>
             <button data-act="hide" title="Show / Hide">${ICON.eye}</button>
             <button data-act="remove" title="Remove">${ICON.x}</button>
           </span>
+          <span class="vals" style="margin-left:6px;">${vals}</span>
         </div>
       `;
     }

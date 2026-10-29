@@ -4,7 +4,9 @@ venv activate command:
 
 WS command:
 python tools/ops/run_collector_ws.py --atm-count 5
+
 snapshot command:
+python tools/ops/run_collector_snapshot.py --loop --interval-sec 60
 python tools/ops/run_collector_snapshot.py --loop --interval-sec 60
 
 web app

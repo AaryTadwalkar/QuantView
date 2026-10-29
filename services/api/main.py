@@ -19,15 +19,64 @@
    - Configured FastAPI application instance ready for production serving or testing.
 """
 
+import json
+import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional, Set
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from services.api.config import ApiConfig, get_api_config
 from services.api.routers import backtest, drawings, health, indicators, market, options, paper
+
+logger = logging.getLogger(__name__)
+
+
+class MarketStreamManager:
+    """
+    1. The use of class:
+       Coordinates active WebSocket subscriber connections for real-time market ticks and option updates.
+
+    2. What the class contains:
+       - active_connections: Set of connected client WebSocket instances.
+       - connect(): Registers new WebSocket connection.
+       - disconnect(): Removes disconnected WebSocket client.
+       - broadcast(): Distributes JSON message to all connected clients.
+
+    3. Technologies used and why:
+       FastAPI WebSockets and asyncio for asynchronous low-latency bidirectional market streaming.
+
+    4. Key design and overall design of the class:
+       In-memory event hub bridging external collectors/market tickers to web workstation clients.
+    """
+
+    def __init__(self) -> None:
+        self.active_connections: Set[WebSocket] = set()
+
+    async def connect(self, websocket: WebSocket) -> None:
+        """Accepts and registers incoming client WebSocket."""
+        await websocket.accept()
+        self.active_connections.add(websocket)
+
+    def disconnect(self, websocket: WebSocket) -> None:
+        """Removes closed WebSocket from active subscribers."""
+        self.active_connections.discard(websocket)
+
+    async def broadcast(self, message: Dict[str, Any]) -> None:
+        """Dispatches JSON payload to all active client connections."""
+        dead = []
+        for conn in self.active_connections:
+            try:
+                await conn.send_json(message)
+            except Exception:
+                dead.append(conn)
+        for conn in dead:
+            self.disconnect(conn)
+
+
+market_stream_manager = MarketStreamManager()
 
 
 def create_app(config: Optional[ApiConfig] = None) -> FastAPI:
@@ -93,6 +142,60 @@ def create_app(config: Optional[ApiConfig] = None) -> FastAPI:
         tags=["backtest"],
         summary="Quantitative Strategy Sensitivity Heatmap (Alias)",
     )
+
+    @application.websocket("/ws/market")
+    async def websocket_market_endpoint(websocket: WebSocket) -> None:
+        """
+        1. The use of function:
+           WebSocket endpoint serving real-time market ticks, live candle streams, and option chain updates.
+
+        2. How does the specific function work:
+           Accepts client connection, registers with market_stream_manager, listens for incoming tick payloads
+           from external collectors or client publishers, and broadcasts them across all connected clients.
+
+        3. Concepts used in the function:
+           WebSocket protocol, real-time message dispatch, publish-subscribe event routing.
+
+        4. Places where this function is imported and used:
+           Mounted directly on FastAPI application gateway at /ws/market.
+
+        5. Final output of the function, before and after:
+           Before: Unconnected socket. After: Bidirectional streaming conduit for real-time market data.
+        """
+        await market_stream_manager.connect(websocket)
+        try:
+            while True:
+                data = await websocket.receive_text()
+                try:
+                    payload = json.loads(data)
+                    await market_stream_manager.broadcast(payload)
+                except Exception:
+                    pass
+        except WebSocketDisconnect:
+            market_stream_manager.disconnect(websocket)
+        except Exception:
+            market_stream_manager.disconnect(websocket)
+
+    @application.post("/api/v1/market/tick", tags=["market"])
+    async def broadcast_market_tick(payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        1. The use of function:
+           REST API endpoint allowing external collectors to push real-time market ticks into the WebSocket stream.
+
+        2. How does the specific function work:
+           Receives tick payload JSON and dispatches it asynchronously via market_stream_manager.broadcast().
+
+        3. Concepts used in the function:
+           Webhook ingestion, cross-protocol event bridging (HTTP -> WebSocket).
+
+        4. Places where this function is imported and used:
+           Mounted under POST /api/v1/market/tick.
+
+        5. Final output of the function, before and after:
+           Before: Raw incoming tick. After: Broadcasted message and subscriber confirmation response.
+        """
+        await market_stream_manager.broadcast(payload)
+        return {"status": "broadcasted", "subscribers": len(market_stream_manager.active_connections)}
 
     web_path = Path(api_config.web_static_dir)
     if not web_path.is_absolute():

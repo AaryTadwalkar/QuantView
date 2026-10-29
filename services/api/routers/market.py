@@ -385,12 +385,12 @@ def get_market_screener(
     now_ts = int(time.time())
 
     # 1. NIFTY 50 Spot
-    nifty_price = 23530.50
-    nifty_high = 23610.00
-    nifty_low = 23480.20
-    nifty_volume = 14250000
-    nifty_change = 125.40
-    nifty_change_pct = 0.54
+    nifty_price = 0.0
+    nifty_high = 0.0
+    nifty_low = 0.0
+    nifty_volume = 0
+    nifty_change = 0.0
+    nifty_change_pct = 0.0
     range_52w = "21,281.45 - 26,277.35"
 
     try:
@@ -412,11 +412,11 @@ def get_market_screener(
         pass
 
     # 2. India VIX
-    vix_price = 14.25
-    vix_high = 14.80
-    vix_low = 13.90
-    vix_change = -0.35
-    vix_change_pct = -2.40
+    vix_price = 0.0
+    vix_high = 0.0
+    vix_low = 0.0
+    vix_change = 0.0
+    vix_change_pct = 0.0
 
     try:
         q_vix = (
@@ -442,17 +442,17 @@ def get_market_screener(
         regime = "High (> 18)"
 
     # 3. ATM Strike Calculation
-    atm_strike = round(nifty_price / 50.0) * 50.0
+    atm_strike = round(nifty_price / 50.0) * 50.0 if nifty_price > 0 else 23000.0
 
     # 4. Weekly ATM CE Option
-    ce_price = 145.20
-    ce_high = 168.00
-    ce_low = 122.50
-    ce_vol = 320000
-    ce_change = 14.50
-    ce_change_pct = 11.10
-    ce_cid = f"OPT-NIFTY-20250109-{int(atm_strike)}-CE"
-    ce_exp = "2025-01-09"
+    ce_price = 0.0
+    ce_high = 0.0
+    ce_low = 0.0
+    ce_vol = 0
+    ce_change = 0.0
+    ce_change_pct = 0.0
+    ce_cid = f"OPT-NIFTY-ATM-{int(atm_strike)}-CE"
+    ce_exp = "—"
 
     try:
         q_ce = (
@@ -476,14 +476,14 @@ def get_market_screener(
         pass
 
     # 5. Weekly ATM PE Option
-    pe_price = 112.40
-    pe_high = 135.00
-    pe_low = 98.00
-    pe_vol = 285000
-    pe_change = -12.80
-    pe_change_pct = -10.22
-    pe_cid = f"OPT-NIFTY-20250109-{int(atm_strike)}-PE"
-    pe_exp = "2025-01-09"
+    pe_price = 0.0
+    pe_high = 0.0
+    pe_low = 0.0
+    pe_vol = 0
+    pe_change = 0.0
+    pe_change_pct = 0.0
+    pe_cid = f"OPT-NIFTY-ATM-{int(atm_strike)}-PE"
+    pe_exp = "—"
 
     try:
         q_pe = (

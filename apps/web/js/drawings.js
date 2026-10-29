@@ -813,11 +813,37 @@ export class DrawingLayer {
       ctx.fillStyle = "#ffffff";
       ctx.strokeStyle = color;
       ctx.lineWidth = 1.5;
-      for (const p of pts) {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+
+      let handlePoints = pts;
+      if ((d.type === "long" || d.type === "short") && pts.length >= 2 && d.points.length >= 2) {
+        const p0 = d.points[0];
+        const p1 = d.points[1];
+        const dir = d.type === "long" ? 1 : -1;
+        const risk = Math.abs(p0.price - p1.price) || p0.price * 0.01;
+        const stop = p0.price - dir * risk;
+        const target = p0.price + dir * risk * (d.rr || 2);
+        const ys = this.y(stop);
+        const yt = this.y(target);
+        const aPt = pts[0];
+        const bPt = pts[1];
+        const x1 = Math.min(aPt.x, bPt.x);
+        const w = Math.max(Math.abs(bPt.x - aPt.x), 40);
+
+        handlePoints = [
+          { x: x1, y: aPt.y },
+          { x: x1 + w, y: aPt.y },
+          { x: x1 + w / 2, y: yt != null ? yt : aPt.y },
+          { x: x1 + w / 2, y: ys != null ? ys : bPt.y },
+        ];
+      }
+
+      for (const p of handlePoints) {
+        if (p && p.x != null && p.y != null) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        }
       }
     }
   }
@@ -952,7 +978,46 @@ export class DrawingLayer {
    */
   hitAnchor(x, y) {
     if (!this.selected || !this.selected.points) return null;
-    const pts = this.selected.points.map((p) => ({
+    const d = this.selected;
+
+    if ((d.type === "long" || d.type === "short") && d.points.length >= 2) {
+      const p0 = d.points[0];
+      const p1 = d.points[1];
+      const ax = this.x(p0.time);
+      const ay = this.y(p0.price);
+      const bx = this.x(p1.time);
+      const by = this.y(p1.price);
+      const dir = d.type === "long" ? 1 : -1;
+      const risk = Math.abs(p0.price - p1.price) || p0.price * 0.01;
+      const stop = p0.price - dir * risk;
+      const target = p0.price + dir * risk * (d.rr || 2);
+      const ys = this.y(stop);
+      const yt = this.y(target);
+
+      if (ax != null && ay != null && bx != null && by != null) {
+        const x1 = Math.min(ax, bx);
+        const w = Math.max(Math.abs(bx - ax), 40);
+
+        // Check target handle
+        if (yt != null && Math.hypot(x - (x1 + w / 2), y - yt) <= 10) {
+          return { drawing: d, special: "target" };
+        }
+        // Check stop handle
+        if (ys != null && Math.hypot(x - (x1 + w / 2), y - ys) <= 10) {
+          return { drawing: d, special: "stop" };
+        }
+        // Check width handle (right edge)
+        if (Math.hypot(x - (x1 + w), y - ay) <= 10) {
+          return { drawing: d, special: "width" };
+        }
+        // Check entry handle (left edge)
+        if (Math.hypot(x - x1, y - ay) <= 10) {
+          return { drawing: d, special: "entry" };
+        }
+      }
+    }
+
+    const pts = d.points.map((p) => ({
       x: this.x(p.time),
       y: this.y(p.price),
     }));
@@ -960,7 +1025,7 @@ export class DrawingLayer {
       const p = pts[i];
       if (p.x != null && p.y != null) {
         if (Math.hypot(x - p.x, y - p.y) <= 10) {
-          return { drawing: this.selected, pointIndex: i };
+          return { drawing: d, pointIndex: i };
         }
       }
     }
@@ -1090,7 +1155,30 @@ export class DrawingLayer {
     if (this.dragAnchor) {
       const pt = this.pointAt(x, y);
       if (pt) {
-        this.dragAnchor.drawing.points[this.dragAnchor.pointIndex] = pt;
+        const d = this.dragAnchor.drawing;
+        if (this.dragAnchor.special) {
+          const p0 = d.points[0];
+          const p1 = d.points[1];
+          const risk = Math.abs(p0.price - p1.price) || p0.price * 0.01;
+
+          if (this.dragAnchor.special === "target") {
+            const newRisk = Math.abs(pt.price - p0.price);
+            if (risk > 0) {
+              d.rr = Math.max(0.1, Number((newRisk / risk).toFixed(2)));
+            }
+          } else if (this.dragAnchor.special === "stop") {
+            p1.price = pt.price;
+          } else if (this.dragAnchor.special === "width") {
+            p1.time = pt.time;
+          } else if (this.dragAnchor.special === "entry") {
+            const priceDiff = pt.price - p0.price;
+            p0.price = pt.price;
+            p0.time = pt.time;
+            p1.price += priceDiff;
+          }
+        } else if (this.dragAnchor.pointIndex != null) {
+          d.points[this.dragAnchor.pointIndex] = pt;
+        }
         this.update();
       }
       return;
