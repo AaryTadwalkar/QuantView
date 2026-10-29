@@ -145,7 +145,10 @@ def get_candles(
        - Validates resolution string against SUPPORTED_RESOLUTIONS, raising HTTP 400 if invalid.
        - Normalizes symbol to determine whether to query v_candles_vix, v_candles_derived, or v_candles_underlying.
        - Constructs parameterized SQL query projecting UTC epoch seconds, open, high, low, close, and volume.
-       - Applies optional epoch timestamp filters (from_ts, to_ts) and ordering ascending by time.
+       - Applies optional epoch timestamp filters (from_ts, to_ts).
+       - If from_ts is omitted, selects the most recent limit bars via subquery (ORDER BY time DESC LIMIT ?)
+         and sorts them ascending chronologically for seamless viewport charting.
+       - If from_ts is provided, selects chronologically forward from that timestamp (ORDER BY time ASC LIMIT ?).
        - Gracefully catches duckdb.Error (missing tables or empty lake) and returns an empty list.
        - Deserializes results into CandleResponse with guaranteed <= 300ms execution latency.
 
@@ -187,19 +190,30 @@ def get_candles(
         conditions.append(f"{sym_col} = ?")
         params.append(canon_symbol)
 
-    if from_ts is not None:
-        conditions.append(f"epoch({ts_col}) >= ?")
-        params.append(from_ts)
+    from_val = from_ts if isinstance(from_ts, int) else None
+    to_val = to_ts if isinstance(to_ts, int) else None
 
-    if to_ts is not None:
+    if from_val is not None:
+        conditions.append(f"epoch({ts_col}) >= ?")
+        params.append(from_val)
+
+    if to_val is not None:
         conditions.append(f"epoch({ts_col}) <= ?")
-        params.append(to_ts)
+        params.append(to_val)
 
     where_clause = " WHERE " + " AND ".join(conditions)
-    query = (
-        f"SELECT CAST(epoch({ts_col}) AS BIGINT) as time, open, high, low, close, COALESCE(volume, 0) as volume "
-        f"FROM {table}{where_clause} ORDER BY time ASC LIMIT ?"
-    )
+    if from_val is None:
+        query = (
+            f"SELECT time, open, high, low, close, volume FROM ("
+            f"  SELECT CAST(epoch({ts_col}) AS BIGINT) as time, open, high, low, close, COALESCE(volume, 0) as volume "
+            f"  FROM {table}{where_clause} ORDER BY time DESC LIMIT ?"
+            f") ORDER BY time ASC"
+        )
+    else:
+        query = (
+            f"SELECT CAST(epoch({ts_col}) AS BIGINT) as time, open, high, low, close, COALESCE(volume, 0) as volume "
+            f"FROM {table}{where_clause} ORDER BY time ASC LIMIT ?"
+        )
     params.append(limit)
 
     try:

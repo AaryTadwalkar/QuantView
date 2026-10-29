@@ -80,6 +80,16 @@ class BacktestRequest(BaseModel):
         description="Statutory brokerage and regulatory fee schedule version",
     )
     lots: int = Field(default=1, gt=0, description="Order sizing lot multiplier (must be >= 1)")
+    target_pct: Optional[float] = Field(
+        default=None, description="Take-profit percentage target (e.g. 0.30 for 30%)"
+    )
+    stop_loss_pct: Optional[float] = Field(
+        default=None, description="Stop-loss percentage ceiling (e.g. 0.15 for 15%)"
+    )
+    strike_policy: Optional[str] = Field(
+        default="ATM",
+        description="Strike selection policy (ATM, ITM_1, ITM_2, OTM_1, OTM_2)",
+    )
     strategy_params: Dict[str, Any] = Field(
         default_factory=dict,
         description="Custom parameter dictionary matching strategy parameter schema",

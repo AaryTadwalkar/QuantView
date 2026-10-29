@@ -226,6 +226,7 @@ class IntrabarFillEngine:
                     stop_loss_paise=order.stop_loss_paise,
                     take_profit_paise=order.take_profit_paise,
                     entry_fees_paise=fees.total_fee_paise,
+                    entry_time_str=minute.ist_time_str,
                 )
             elif order.side == OrderSide.SELL:
                 if self.active_position is not None:
@@ -233,7 +234,9 @@ class IntrabarFillEngine:
                     total_trade_fees = int(self.active_position.entry_fees_paise) + int(fees.total_fee_paise)
                     self.trade_history.append({
                         "symbol": order.contract.instrument_key,
-                        "entry_time": minute.ist_time_str,
+                        "entry_time": getattr(self.active_position, "entry_time_str", minute.ist_time_str),
+                        "entry_time_utc": int(self.active_position.entry_time),
+                        "exit_time_utc": int(minute.bar_start_utc),
                         "entry_price_paise": int(self.active_position.entry_price_paise),
                         "exit_price_paise": int(quantized_fill),
                         "quantity": order.qty,
@@ -347,7 +350,9 @@ class IntrabarFillEngine:
         total_trade_fees = int(pos.entry_fees_paise) + int(fees.total_fee_paise)
         self.trade_history.append({
             "symbol": pos.contract.instrument_key,
-            "entry_time": minute.ist_time_str,
+            "entry_time": getattr(pos, "entry_time_str", minute.ist_time_str),
+            "entry_time_utc": int(pos.entry_time),
+            "exit_time_utc": int(minute.bar_end_utc),
             "entry_price_paise": int(pos.entry_price_paise),
             "exit_price_paise": int(fill_price),
             "quantity": pos.qty,

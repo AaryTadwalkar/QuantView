@@ -260,9 +260,10 @@ class BacktestRunner:
                     elif minute.ist_time_str < self.config.entry_window_start or minute.ist_time_str > self.config.last_entry_time:
                         pass  # Blocked by RK-02 trading window
                     else:
+                        order_qty = self.config.lots * 65
                         risk_decision = self.risk_evaluator.evaluate_order(
                             contract=contract,
-                            quantity=self.config.lots * 25,
+                            quantity=order_qty,
                             price_paise=candle.close_paise,
                             current_time_str=minute.ist_time_str,
                         )
@@ -279,7 +280,7 @@ class BacktestRunner:
                             self.fill_engine.queue_order(
                                 contract=contract,
                                 side=OrderSide.BUY,
-                                qty=self.config.lots * 25,
+                                qty=order_qty,
                                 current_minute=minute,
                                 stop_loss_paise=sl_paise,
                                 take_profit_paise=tp_paise,

@@ -20,7 +20,7 @@
 import hashlib
 import json
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -100,9 +100,9 @@ class EngineRunConfig(BaseModel):
     tick_paise: int = 5
 
     # 8. Order Exit Parameters
-    stop_loss_pct: Optional[str] = None
-    take_profit_pct: Optional[str] = None
-    trailing_stop_pct: Optional[str] = None
+    stop_loss_pct: Optional[Union[str, float]] = None
+    take_profit_pct: Optional[Union[str, float]] = None
+    trailing_stop_pct: Optional[Union[str, float]] = None
 
     # 9. Session Timing Windows (Asia/Kolkata)
     entry_window_start: str = "09:20"

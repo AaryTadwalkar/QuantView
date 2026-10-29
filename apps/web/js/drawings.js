@@ -259,16 +259,17 @@ export class DrawingLayer {
     this.canvas.addEventListener("pointerup", (e) => this.onPointerUp(e));
     this.canvas.addEventListener("click", (e) => this.onCanvasClick(e));
 
-    // Also observe container mousemove for cursor hit-testing when in cursor mode
+    // Also observe container mousemove for cursor hit-testing and anchor manipulation
     this.container.addEventListener("mousemove", (e) => {
       if (this.tool === "cursor" && !this.temp) {
         const rect = this.container.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         const hit = this.hitTest(x, y);
-        if (hit) {
+        const anchor = this.hitAnchor ? this.hitAnchor(x, y) : null;
+        if (hit || anchor || this.selected) {
           this.canvas.style.pointerEvents = "auto";
-          this.canvas.style.cursor = "pointer";
+          this.canvas.style.cursor = anchor ? "crosshair" : hit ? "pointer" : "default";
         } else {
           this.canvas.style.pointerEvents = "none";
           this.canvas.style.cursor = "";
@@ -354,7 +355,8 @@ export class DrawingLayer {
    *    Before: Query initiated. After: Returns [this._view].
    */
   paneViews() {
-    return [this._view];
+    // Dedicated transparent HTML overlay canvas handles rendering cleanly without sub-pane duplication
+    return [];
   }
 
   /**
@@ -840,7 +842,7 @@ export class DrawingLayer {
    */
   hitTest(x, y) {
     let best = null;
-    let bestD = 7;
+    let bestD = 12;
 
     const segDist = (p, q) => {
       const dx = q.x - p.x;
@@ -933,6 +935,40 @@ export class DrawingLayer {
 
   /**
    * 1. The use of function:
+   *    Tests if a pointer coordinate (x, y) strikes an anchor handle point of the selected drawing.
+   *
+   * 2. How does the specific function work:
+   *    Iterates over projected pixel coordinates of the currently selected drawing's anchor points.
+   *    If Euclidean distance <= 10 pixels, returns descriptor { drawing, pointIndex }.
+   *
+   * 3. Concepts used in the function:
+   *    Anchor hit-testing, Euclidean proximity detection.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by onPointerDown and mousemove handlers to initiate control point dragging.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Canvas (x, y). After: Hit anchor handle descriptor or null.
+   */
+  hitAnchor(x, y) {
+    if (!this.selected || !this.selected.points) return null;
+    const pts = this.selected.points.map((p) => ({
+      x: this.x(p.time),
+      y: this.y(p.price),
+    }));
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      if (p.x != null && p.y != null) {
+        if (Math.hypot(x - p.x, y - p.y) <= 10) {
+          return { drawing: this.selected, pointIndex: i };
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 1. The use of function:
    *    Resolves canvas coordinate (x, y) into a chart coordinate { time, price }.
    *
    * 2. How does the specific function work:
@@ -957,17 +993,17 @@ export class DrawingLayer {
    *    Handles pointerdown events for drawing tool point anchoring and selection.
    *
    * 2. How does the specific function work:
-   *    Calculates relative coordinates, checks if in cursor mode (hit-testing) or drawing mode
-   *    (point creation). If drawing, initializes or extends this.temp anchor points.
+   *    Calculates relative coordinates, checks if in cursor mode (hit-testing or anchor dragging)
+   *    or drawing mode (point creation). If drawing, initializes or extends this.temp anchor points.
    *
    * 3. Concepts used in the function:
-   *    Pointer interaction, anchor point accumulation, mode branching.
+   *    Pointer interaction, anchor point accumulation, control point dragging.
    *
    * 4. Places where this function is imported and used:
    *    Registered on overlay canvas in bindOverlayEvents().
    *
    * 5. Final output of the function, before and after:
-   *    Before: Pointer event received. After: State updated, drawing initialized or selected.
+   *    Before: Pointer event received. After: State updated, drawing initialized, selected, or dragged.
    */
   onPointerDown(e) {
     if (!this.canvas) return;
@@ -976,7 +1012,22 @@ export class DrawingLayer {
     const y = e.clientY - rect.top;
 
     if (this.tool === "cursor") {
+      const anchor = this.hitAnchor(x, y);
+      if (anchor) {
+        this.dragAnchor = anchor;
+        if (this.canvas.setPointerCapture && e.pointerId) {
+          try {
+            this.canvas.setPointerCapture(e.pointerId);
+          } catch {
+            /* ignore */
+          }
+        }
+        return;
+      }
       this.selected = this.hitTest(x, y);
+      if (this.selected) {
+        this.canvas.style.pointerEvents = "auto";
+      }
       this.update();
       return;
     }
@@ -1015,26 +1066,42 @@ export class DrawingLayer {
 
   /**
    * 1. The use of function:
-   *    Handles pointermove events to provide real-time preview of drawings in progress.
+   *    Handles pointermove events to provide real-time preview of drawings or anchor adjustments.
    *
    * 2. How does the specific function work:
-   *    If this.temp is active, updates the last anchor point to match current cursor position
-   *    and triggers update() to repaint the preview at 60 FPS.
+   *    If an anchor point is being dragged, updates the corresponding control point and repaints.
+   *    If temp drawing is active, updates the last anchor point to match current cursor position.
    *
    * 3. Concepts used in the function:
-   *    Live preview rendering, temporal point tracking.
+   *    Live preview rendering, interactive vector reshaping, 60 FPS repaint.
    *
    * 4. Places where this function is imported and used:
    *    Registered on overlay canvas in bindOverlayEvents().
    *
    * 5. Final output of the function, before and after:
-   *    Before: Stale preview line. After: Real-time updated vector preview under cursor.
+   *    Before: Stale preview line. After: Real-time updated vector preview or readjusted anchor.
    */
   onPointerMove(e) {
-    if (!this.canvas || !this.temp) return;
+    if (!this.canvas) return;
     const rect = this.canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+
+    if (this.dragAnchor) {
+      const pt = this.pointAt(x, y);
+      if (pt) {
+        this.dragAnchor.drawing.points[this.dragAnchor.pointIndex] = pt;
+        this.update();
+      }
+      return;
+    }
+
+    if (this.tool === "cursor" && this.selected) {
+      const anchor = this.hitAnchor(x, y);
+      this.canvas.style.cursor = anchor ? "crosshair" : "pointer";
+    }
+
+    if (!this.temp) return;
     const pt = this.pointAt(x, y);
     if (!pt) return;
 
@@ -1044,28 +1111,42 @@ export class DrawingLayer {
 
   /**
    * 1. The use of function:
-   *    Handles pointerup events concluding a drag or click gesture.
+   *    Handles pointerup events concluding a drag gesture or point readjustment.
    *
    * 2. How does the specific function work:
-   *    Placeholder for future drag-to-resize gesture release; maintains current drawing state.
+   *    If an anchor was being dragged, releases pointer capture, persists updated coordinates
+   *    to the backend API, and clears dragging state.
    *
    * 3. Concepts used in the function:
-   *    Gesture lifecycle completion.
+   *    Gesture lifecycle completion, RESTful vector persistence.
    *
    * 4. Places where this function is imported and used:
    *    Registered on overlay canvas in bindOverlayEvents().
    *
    * 5. Final output of the function, before and after:
-   *    Before: Active gesture. After: Completed pointer gesture.
+   *    Before: In-flight drag state. After: Drag completed, drawing persisted, canvas updated.
    */
-  onPointerUp(_e) {}
+  onPointerUp(e) {
+    if (this.dragAnchor) {
+      if (this.canvas.releasePointerCapture && e?.pointerId) {
+        try {
+          this.canvas.releasePointerCapture(e.pointerId);
+        } catch {
+          /* ignore */
+        }
+      }
+      this.saveDrawingToBackend(this.dragAnchor.drawing);
+      this.dragAnchor = null;
+      this.update();
+    }
+  }
 
   /**
    * 1. The use of function:
    *    Handles direct click events on the overlay canvas.
    *
    * 2. How does the specific function work:
-   *    Evaluates click coordinates and satisfies hit-test selection if in cursor mode.
+   *    Evaluates click coordinates and updates selection or deselects when clicking empty canvas space.
    *
    * 3. Concepts used in the function:
    *    Click delegation, selection dispatch.
@@ -1081,7 +1162,13 @@ export class DrawingLayer {
       const rect = this.canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      this.selected = this.hitTest(x, y);
+      const hit = this.hitTest(x, y);
+      const anchor = this.hitAnchor(x, y);
+      if (!hit && !anchor) {
+        this.selected = null;
+      } else if (hit) {
+        this.selected = hit;
+      }
       this.update();
     }
   }

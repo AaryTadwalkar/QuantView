@@ -368,11 +368,14 @@ select.tb option {
   color: var(--muted);
 }
 .legend .ind .acts {
-  display: none;
-  gap: 2px;
-}
-.legend .ind:hover .acts {
   display: inline-flex;
+  gap: 2px;
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+}
+.legend .ind:hover .acts,
+.legend:hover .acts {
+  opacity: 1;
 }
 .legend .ind .acts button {
   border: 0;
@@ -475,6 +478,20 @@ select.tb option {
   overflow: auto;
   min-height: 0;
 }
+/* Draggable Dock Resizer Splitter */
+.dock-splitter {
+  height: 6px;
+  background: var(--border);
+  cursor: row-resize;
+  flex: none;
+  z-index: 10;
+  transition: background 0.15s ease;
+}
+.dock-splitter:hover,
+.dock-splitter.dragging {
+  background: var(--accent);
+}
+
 .bottom {
   height: 320px;
   border-top: 1px solid var(--border);
@@ -489,8 +506,12 @@ select.tb option {
 .bottom.collapsed .tab-body {
   display: none;
 }
-.bottom.collapsed #bottomToggle svg {
+#bottomToggle svg {
   transform: rotate(180deg);
+  transition: transform 0.2s ease;
+}
+.bottom.collapsed #bottomToggle svg {
+  transform: rotate(0deg);
 }
 .pad {
   padding: 10px 12px;
@@ -822,6 +843,15 @@ h4 {
   font-size: 12px;
 }
 
+/* Hide TradingView Watermark Logo & Attribution Links */
+a[href*="tradingview.com"],
+.tv-lightweight-charts a,
+div[class*="tradingview"] a {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* modal */
 .modal {
   position: fixed;
@@ -830,18 +860,18 @@ h4 {
   z-index: 40;
   display: grid;
   place-items: start center;
-  padding-top: 9vh;
+  padding-top: 6vh;
 }
 .modal-card {
-  width: min(560px, 94vw);
-  max-height: 78vh;
+  width: min(680px, 94vw);
+  max-height: 86vh;
   display: flex;
   flex-direction: column;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow-y: auto;
 }
 .modal-head {
   display: flex;
@@ -2039,11 +2069,12 @@ table.chain-table td.itm-pe {
 
 /* Settings Modal Tabs */
 .settings-modal-card {
-  width: 640px;
-  max-width: 90vw;
+  width: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  padding: 4px;
 }
 
 .settings-tabs {
@@ -2057,8 +2088,8 @@ table.chain-table td.itm-pe {
   background: transparent;
   border: 1px solid transparent;
   color: var(--muted);
-  padding: 5px 12px;
-  font-size: 12px;
+  padding: 6px 14px;
+  font-size: 12.5px;
   font-weight: 500;
   border-radius: 4px;
   cursor: pointer;
@@ -2078,8 +2109,8 @@ table.chain-table td.itm-pe {
 .settings-tab-pane {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 12px;
+  gap: 10px;
+  font-size: 12.5px;
   padding: 4px 0;
 }
 
@@ -2087,10 +2118,26 @@ table.chain-table td.itm-pe {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.02);
+  flex-wrap: wrap;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 7px 10px;
+  border-radius: 6px;
+  padding: 10px 14px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.settings-grid-row > span:first-child {
+  color: var(--muted);
+  font-weight: 500;
+  flex: 1 1 200px;
+}
+
+.settings-grid-row > *:last-child {
+  text-align: right;
+  word-break: break-word;
+  flex: 1 1 220px;
 }
 
 .paper-account-summary {

@@ -1,6 +1,21 @@
 # Progress — QuantView (`c:\Algo\quantview`)
 
 ## Completed Milestones
+- **[2026-10-29] Stage 6 Post-Verification Systematic Debugging & Live Terminal UX Hardening (14/14 RESOLVED):**
+  - **Bug 1 (Candle Date Range)**: Market router subqueries newest 5,000 bars DESC then sorts ASC; queries across all timeframes (1m, 5m, 15m, 1h, 1d) now return data up to latest session (`2026-10-19 15:25:00 IST`).
+  - **Bug 2 (Indicator Settings & Visibility)**: Added persistent hover discovery for RSI/indicator settings gear, eye toggle, and remove buttons.
+  - **Bug 3 (TradingView Watermark Link)**: Suppressed external TradingView anchor links via CSS.
+  - **Bug 4 & 5 (Drawing Handles, Deletion & Duplication Glitch)**: Isolated drawing layer to HTML overlay canvas (clearing series primitive duplication), implemented 10px anchor hit-testing for repositioning, and bound delete tool.
+  - **Bug 6 (Bottom Dock Toggle Arrow)**: Inverted chevron rotation so arrow points down when expanded and up when collapsed.
+  - **Bug 7 (Option Chain LTP Accuracy)**: Sourced accurate end-of-expiry quotes from DuckDB lake and displayed snapshot timestamp badge.
+  - **Bug 8 (Lot Sizing 65 qty & Live LTP)**: Updated lot size from 25 to 65 across UI forms, order modals, margin estimation, and backtests; surfaced live LTP, Bid, Ask in order modal.
+  - **Bug 9 (Historical Bar Replay Engine)**: Built interactive bar replay workflow (prompt to click starting bar, series slicing, floating HUD with Play/Pause, Step, Speed selector, bar progress, and exit restoration).
+  - **Bug 10 (Draggable Dock Resizer)**: Mounted `#dockSplitter` with `cursor: row-resize` and dynamic chart re-layout.
+  - **Bug 11 (Paper Trading Macro View Default)**: Set Macro Strategy Bots as default view without top-level dual buttons, with click-to-drill-down into micro console and back navigation.
+  - **Bug 12 (Light Theme & Settings Modal Cutoff)**: Implemented white background/dark text chart theme switcher and flex-wrap layout preventing settings modal text truncation.
+  - **Bug 13 (Exact Candle Trade Markers)**: Recorded exact UTC entry and exit timestamps per trade, placing arrow markers directly on corresponding candle bars rather than stacking at chart end.
+  - **Bug 14 (Strategy Tester Parameters & Feasibility)**: Added Strike Selection (ATM, ITM 1/2, OTM 1/2), Target %, Stop-Loss %, 65 qty/lot sizing, and real-time capital feasibility warning banner.
+  - **Test Suite Status**: 461/461 passing tests (107/107 API, 330/330 unit, 7/7 package boundaries), 0 ruff lint errors.
 - **[2026-10-11] Stage A — Pre-Edit Inspection, Comparison & Reconciliation Matrix:**
   - Read all 10 source Markdown files across `DOCS/person_1/` and `DOCS/person_2/` in full and recorded baseline SHA-256 hashes.
   - Identified and presented the 6 material architectural questions (`Q1–Q6`) to the owner; owner approved all 6 with explicit constraints.

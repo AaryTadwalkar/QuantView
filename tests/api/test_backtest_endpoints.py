@@ -183,7 +183,7 @@ class TestBacktestEndpoints:
         assert trade["trade_id"].startswith("TRD-")
         assert trade["entry_time"] > 0
         assert trade["exit_time"] >= trade["entry_time"]
-        assert trade["quantity"] == 25
+        assert trade["quantity"] == 65
         assert trade["entry_price"] > 0
         assert trade["exit_price"] > 0
         assert "gross_pnl_rupees" in trade

@@ -107,6 +107,7 @@ export class QuantApp {
     this.buildChartTypeSelector();
     this.bindTopbarActions();
     this.bindBottomDock();
+    this.bindDockSplitter();
     this.bindModals();
     this.buildDrawbar();
     this.bindKeyboardShortcuts();
@@ -258,9 +259,7 @@ export class QuantApp {
 
     const replayBtn = document.getElementById("replayBtn");
     if (replayBtn) {
-      replayBtn.addEventListener("click", () => {
-        this.toast("Historical Bar Replay Engine initialized.", "info");
-      });
+      replayBtn.addEventListener("click", () => this.toggleReplayMode());
     }
 
     const themeBtn = document.getElementById("themeBtn");
@@ -270,6 +269,7 @@ export class QuantApp {
         const current = root.dataset.theme || "dark";
         const next = current === "dark" ? "light" : "dark";
         root.dataset.theme = next;
+        if (this.chart) this.chart.setTheme(next);
       });
     }
 
@@ -323,6 +323,398 @@ export class QuantApp {
         if (this.chart) setTimeout(() => this.chart.syncResize(), 100);
       });
     }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Binds draggable pointer events to the dock splitter to dynamically resize the bottom dock height.
+   *
+   * 2. How does the specific function work:
+   *    Attaches mousedown on #dockSplitter, tracks vertical pointer delta, clamps dock height between
+   *    100px and 75% window height, adjusts #bottom element style.height, and triggers chart.syncResize().
+   *
+   * 3. Concepts used in the function:
+   *    Drag-and-drop event handling, dynamic viewport dimension calculation, chart re-layout synchronization.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by QuantApp.init() during application startup.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Static bottom dock height. After: Smoothly resizable bottom dock with real-time chart synchronization.
+   */
+  bindDockSplitter() {
+    const splitter = document.getElementById("dockSplitter");
+    const bottomEl = document.getElementById("bottom");
+    if (!splitter || !bottomEl) return;
+
+    let isDragging = false;
+    let startY = 0;
+    let startHeight = 0;
+
+    splitter.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      startY = e.clientY;
+      startHeight = bottomEl.getBoundingClientRect().height;
+      splitter.classList.add("dragging");
+      document.body.style.cursor = "row-resize";
+      document.body.style.userSelect = "none";
+      if (bottomEl.classList.contains("collapsed")) {
+        bottomEl.classList.remove("collapsed");
+      }
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const deltaY = startY - e.clientY;
+      const newHeight = Math.max(100, Math.min(window.innerHeight * 0.75, startHeight + deltaY));
+      bottomEl.style.height = `${newHeight}px`;
+      if (this.chart) this.chart.syncResize();
+    });
+
+    window.addEventListener("mouseup", () => {
+      if (isDragging) {
+        isDragging = false;
+        splitter.classList.remove("dragging");
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        if (this.chart) this.chart.syncResize();
+      }
+    });
+  }
+
+  /**
+   * 1. The use of function:
+   *    Toggles historical bar replay mode on or off.
+   *
+   * 2. How does the specific function work:
+   *    If replay is currently active, exits replay mode; otherwise initiates startReplayMode().
+   *
+   * 3. Concepts used in the function:
+   *    Mode toggling, UI state dispatch.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by topbar #replayBtn click listener in apps/web/js/app.js.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Current mode. After: Toggled replay mode state.
+   */
+  toggleReplayMode() {
+    if (this.isReplaying || this.pickingReplayStart) {
+      this.exitReplayMode();
+    } else {
+      this.startReplayMode();
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Prompts user to select a historical starting bar and prepares chart for replay.
+   *
+   * 2. How does the specific function work:
+   *    Verifies candles exist, sets pickingReplayStart flag, registers click listener on QuantChart,
+   *    and displays informative toast asking user to click a chart bar.
+   *
+   * 3. Concepts used in the function:
+   *    Event-driven chart point selection, point-in-time state preservation.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by toggleReplayMode().
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Chart in regular mode. After: Chart listening for start point click with notification prompt.
+   */
+  startReplayMode() {
+    if (!this.chart || !this.chart.rawCandles || this.chart.rawCandles.length === 0) {
+      this.toast("No historical candles loaded to replay", "down");
+      return;
+    }
+
+    this.pickingReplayStart = true;
+    this.toast("Click any point on the chart to start the replay from.", "info");
+
+    const gridEl = document.getElementById("grid");
+    if (gridEl) gridEl.style.cursor = "crosshair";
+
+    this._replayClickHandler = (p) => {
+      if (!this.pickingReplayStart) return;
+      const candles = this.chart.rawCandles;
+      let idx = -1;
+      if (p.time != null) {
+        idx = candles.findIndex((c) => c.time === p.time);
+      }
+      if (idx < 0 && p.logical != null) {
+        idx = Math.max(0, Math.min(candles.length - 1, Math.round(p.logical)));
+      }
+      if (idx < 0 && candles.length > 0) {
+        idx = Math.max(0, candles.length - 50);
+      }
+
+      if (idx >= 0) {
+        this.pickingReplayStart = false;
+        if (gridEl) gridEl.style.cursor = "";
+        this.chart.removeClickListener(this._replayClickHandler);
+        this.mountReplaySession(idx);
+      }
+    };
+
+    this.chart.addClickListener(this._replayClickHandler);
+  }
+
+  /**
+   * 1. The use of function:
+   *    Mounts the interactive replay session and floating HUD controls at the selected starting index.
+   *
+   * 2. How does the specific function work:
+   *    Stores complete candle cache in replayFullCandles, slices chart to starting index,
+   *    creates floating .replay-bar element with play, step, speed, and exit actions.
+   *
+   * 3. Concepts used in the function:
+   *    Floating DOM overlay, temporal series slicing, timer-based playback orchestration.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by _replayClickHandler when user clicks on a starting bar.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Full historical chart. After: Chart truncated to selected bar with interactive playback bar.
+   */
+  mountReplaySession(startIndex) {
+    this.isReplaying = true;
+    this.replayFullCandles = [...this.chart.rawCandles];
+    this.replayIndex = startIndex;
+    this.replaySpeed = 1;
+    this.replayPlaying = false;
+    this.replayTimer = null;
+
+    // Render slice
+    this.chart.setCandles(this.replayFullCandles.slice(0, this.replayIndex + 1));
+
+    // Remove any existing bar
+    const existing = document.getElementById("replayBar");
+    if (existing) existing.remove();
+
+    const bar = document.createElement("div");
+    bar.id = "replayBar";
+    bar.className = "replay-bar";
+    bar.innerHTML = `
+      <button id="btnReplayPlay" title="Play or pause simulation">▶ Play</button>
+      <button id="btnReplayStep" title="Step forward 1 bar">⏭ Step</button>
+      <select id="replaySpeedSel" title="Playback speed">
+        <option value="1" selected>1x</option>
+        <option value="3">3x</option>
+        <option value="5">5x</option>
+        <option value="10">10x</option>
+      </select>
+      <span class="hint" id="replayProgress">Bar ${this.replayIndex + 1} / ${this.replayFullCandles.length}</span>
+      <button id="btnReplayJumpEnd" title="Jump to current latest bar">Jump to End</button>
+      <button id="btnReplayExit" title="Exit replay mode" style="color:var(--down);font-weight:600;">✕ Exit</button>
+    `;
+
+    const gridEl = document.getElementById("grid");
+    if (gridEl) {
+      gridEl.appendChild(bar);
+    } else {
+      document.body.appendChild(bar);
+    }
+
+    const playBtn = bar.querySelector("#btnReplayPlay");
+    const stepBtn = bar.querySelector("#btnReplayStep");
+    const speedSel = bar.querySelector("#replaySpeedSel");
+    const jumpBtn = bar.querySelector("#btnReplayJumpEnd");
+    const exitBtn = bar.querySelector("#btnReplayExit");
+
+    playBtn.addEventListener("click", () => {
+      this.replayPlaying = !this.replayPlaying;
+      if (this.replayPlaying) {
+        playBtn.textContent = "⏸ Pause";
+        playBtn.style.color = "var(--gold)";
+        this.startReplayTimer();
+      } else {
+        playBtn.textContent = "▶ Play";
+        playBtn.style.color = "";
+        this.stopReplayTimer();
+      }
+    });
+
+    stepBtn.addEventListener("click", () => {
+      if (this.replayPlaying) {
+        this.replayPlaying = false;
+        playBtn.textContent = "▶ Play";
+        playBtn.style.color = "";
+        this.stopReplayTimer();
+      }
+      this.stepReplay();
+    });
+
+    speedSel.addEventListener("change", () => {
+      this.replaySpeed = parseFloat(speedSel.value) || 1;
+      if (this.replayPlaying) {
+        this.stopReplayTimer();
+        this.startReplayTimer();
+      }
+    });
+
+    jumpBtn.addEventListener("click", () => {
+      this.replayIndex = this.replayFullCandles.length - 1;
+      this.chart.setCandles(this.replayFullCandles);
+      this.updateReplayProgress();
+      if (this.replayPlaying) {
+        this.replayPlaying = false;
+        playBtn.textContent = "▶ Play";
+        playBtn.style.color = "";
+        this.stopReplayTimer();
+      }
+    });
+
+    exitBtn.addEventListener("click", () => {
+      this.exitReplayMode();
+    });
+
+    this.toast(`Replay started at bar ${startIndex + 1} of ${this.replayFullCandles.length}. Click 'Play' or 'Step' to advance.`, "ok");
+  }
+
+  /**
+   * 1. The use of function:
+   *    Initiates periodic playback timer stepping through historical bars.
+   *
+   * 2. How does the specific function work:
+   *    Sets setInterval at (1000 / replaySpeed) ms invoking stepReplay() on each tick.
+   *
+   * 3. Concepts used in the function:
+   *    Timing intervals, dynamic frequency scaling.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by mountReplaySession() when play state is activated.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Timer stopped. After: Active interval advancing replay.
+   */
+  startReplayTimer() {
+    this.stopReplayTimer();
+    const intervalMs = Math.max(50, Math.round(1000 / this.replaySpeed));
+    this.replayTimer = setInterval(() => this.stepReplay(), intervalMs);
+  }
+
+  /**
+   * 1. The use of function:
+   *    Halts the active playback timer.
+   *
+   * 2. How does the specific function work:
+   *    Clears this.replayTimer if defined and resets reference to null.
+   *
+   * 3. Concepts used in the function:
+   *    Timer management, resource cleanup.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked on pause, speed change, end of data, or replay exit.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Timer running. After: Timer cancelled.
+   */
+  stopReplayTimer() {
+    if (this.replayTimer) {
+      clearInterval(this.replayTimer);
+      this.replayTimer = null;
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Advances simulation by exactly one candlestick bar.
+   *
+   * 2. How does the specific function work:
+   *    Increments replayIndex, checks boundary against replayFullCandles, updates chart via setCandles(),
+   *    and updates progress HUD text. Pauses automatically if final bar is reached.
+   *
+   * 3. Concepts used in the function:
+   *    Incremental series progression, boundary checking, UI feedback.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by step button or periodic replay timer.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Current bar. After: Advanced to next historical bar.
+   */
+  stepReplay() {
+    if (!this.replayFullCandles || this.replayIndex >= this.replayFullCandles.length - 1) {
+      this.stopReplayTimer();
+      this.replayPlaying = false;
+      const playBtn = document.getElementById("btnReplayPlay");
+      if (playBtn) {
+        playBtn.textContent = "▶ Play";
+        playBtn.style.color = "";
+      }
+      this.toast("Historical replay reached the most recent bar.", "info");
+      return;
+    }
+
+    this.replayIndex++;
+    this.chart.setCandles(this.replayFullCandles.slice(0, this.replayIndex + 1));
+    this.updateReplayProgress();
+  }
+
+  /**
+   * 1. The use of function:
+   *    Updates the progress counter text displayed in the floating replay toolbar.
+   *
+   * 2. How does the specific function work:
+   *    Finds #replayProgress element and formats bar count and IST timestamp.
+   *
+   * 3. Concepts used in the function:
+   *    DOM text update, timestamp formatting.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by stepReplay() and jumpToEnd.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Outdated bar number. After: Current bar number and timestamp displayed.
+   */
+  updateReplayProgress() {
+    const el = document.getElementById("replayProgress");
+    if (!el || !this.replayFullCandles) return;
+    const currentBar = this.replayFullCandles[this.replayIndex];
+    const timeStr = currentBar ? fmtTime(currentBar.time, "shortTime") : "";
+    el.textContent = `Bar ${this.replayIndex + 1} / ${this.replayFullCandles.length}${timeStr ? ` (${timeStr})` : ""}`;
+  }
+
+  /**
+   * 1. The use of function:
+   *    Exits replay mode and restores full historical chart dataset.
+   *
+   * 2. How does the specific function work:
+   *    Cancels timer, restores original candles via chart.setCandles(replayFullCandles),
+   *    removes #replayBar, deregisters click handler, and cleans up state flags.
+   *
+   * 3. Concepts used in the function:
+   *    State teardown, full series restoration, DOM element removal.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by #btnReplayExit, toggleReplayMode(), or symbol change.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Replay mode active with truncated candles. After: Full historical chart restored and HUD removed.
+   */
+  exitReplayMode() {
+    this.stopReplayTimer();
+    this.isReplaying = false;
+    this.pickingReplayStart = false;
+
+    const gridEl = document.getElementById("grid");
+    if (gridEl) gridEl.style.cursor = "";
+
+    if (this._replayClickHandler && this.chart) {
+      this.chart.removeClickListener(this._replayClickHandler);
+      this._replayClickHandler = null;
+    }
+
+    const bar = document.getElementById("replayBar");
+    if (bar) bar.remove();
+
+    if (this.replayFullCandles && this.chart) {
+      this.chart.setCandles(this.replayFullCandles, true);
+      this.replayFullCandles = null;
+    }
+
+    this.toast("Exited bar replay mode. Restored full historical chart.", "info");
   }
 
   /**
@@ -690,6 +1082,7 @@ export class QuantApp {
             <span class="badge badge-oi-call" id="chainTotalCeOi">Calls OI: <b>—</b></span>
             <span class="badge badge-oi-put" id="chainTotalPeOi">Puts OI: <b>—</b></span>
             <span class="badge badge-pcr neutral" id="chainPcr">PCR: <b>—</b></span>
+            <span class="badge" id="chainTimeBadge" style="background:var(--card-bg);border:1px solid var(--border);padding:2px 8px;font-size:11px;color:var(--text-muted);">Snapshot: <b id="chainTimeVal" style="color:var(--text);">—</b></span>
           </div>
         </div>
         <div class="chain-table-wrap">
@@ -776,6 +1169,11 @@ export class QuantApp {
 
         if (spotText) {
           spotText.textContent = `₹${fmtPrice(chain.spot_price)} (ATM: ${chain.atm_strike})`;
+        }
+
+        const chainTimeVal = container.querySelector("#chainTimeVal");
+        if (chainTimeVal && chain.timestamp) {
+          chainTimeVal.textContent = chain.timestamp;
         }
 
         if (!chain.strikes || chain.strikes.length === 0) {
@@ -1119,7 +1517,7 @@ export class QuantApp {
 
     const isBuy = side === "BUY";
     const refPrice = isBuy ? (ask > 0 ? ask : ltp > 0 ? ltp : 150.0) : (bid > 0 ? bid : ltp > 0 ? ltp : 150.0);
-    const lotSize = 25;
+    const lotSize = 65;
 
     const overlay = document.createElement("div");
     overlay.id = "chainOrderModalOverlay";
@@ -1131,7 +1529,7 @@ export class QuantApp {
           <div class="side-badge ${isBuy ? "buy" : "sell"}">${side}</div>
           <div class="modal-title">
             <span class="contract-name">${esc(tradingSymbol)}</span>
-            <span class="contract-expiry">Expiry: ${esc(expiry)} &bull; Strike: ₹${strike}</span>
+            <span class="contract-expiry">Expiry: ${esc(expiry)} &bull; Strike: ₹${strike} &bull; LTP: <b style="color:var(--accent);">₹${ltp > 0 ? ltp.toFixed(2) : "—"}</b> (Bid: ₹${bid.toFixed(2)} / Ask: ₹${ask.toFixed(2)})</span>
           </div>
           <button class="modal-close" id="orderModalCloseBtn" title="Close modal">&times;</button>
         </div>
@@ -1146,13 +1544,13 @@ export class QuantApp {
 
           <div class="form-grid">
             <div class="form-group">
-              <label>Lots (25 qty/lot):</label>
+              <label>Lots (65 qty/lot):</label>
               <div class="lots-input-wrap">
                 <button type="button" class="btn-qty-step" id="btnLotMinus">-</button>
                 <input type="number" id="orderLots" min="1" max="72" value="1" class="tb" />
                 <button type="button" class="btn-qty-step" id="btnLotPlus">+</button>
               </div>
-              <small class="muted" id="totalQtyText">Quantity: 25 contracts</small>
+              <small class="muted" id="totalQtyText">Quantity: 65 contracts</small>
             </div>
 
             <div class="form-group">
@@ -1197,12 +1595,16 @@ export class QuantApp {
 
           <div class="order-summary-box">
             <div class="summary-line">
-              <span class="muted">Ref Price:</span>
+              <span class="muted">Market LTP:</span>
+              <b>₹${ltp > 0 ? ltp.toFixed(2) : "—"}</b>
+            </div>
+            <div class="summary-line">
+              <span class="muted">Execution Ref:</span>
               <b>₹${refPrice.toFixed(2)}</b>
             </div>
             <div class="summary-line">
-              <span class="muted">Estimated Margin:</span>
-              <b id="estimatedMarginText" style="color:var(--accent);">₹${(refPrice * 25).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+              <span class="muted">Estimated Margin (65 qty/lot):</span>
+              <b id="estimatedMarginText" style="color:var(--accent);">₹${(refPrice * 65).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
             </div>
           </div>
         </div>
@@ -1516,7 +1918,7 @@ export class QuantApp {
         account_id: "ACC-MANUAL-PAPER",
         contract_id: contractId,
         side,
-        quantity: 25,
+        quantity: 65,
         order_type: "MARKET",
         stop_loss_pct: 20.0,
         take_profit_pct: 40.0,
@@ -1526,7 +1928,7 @@ export class QuantApp {
       if (resp && resp.status === "FILLED") {
         const tradingSymbol = `${this.chainUnderlying || "NIFTY"} ${strike} ${optionType}`;
         this.toast(
-          `Filled ${side} 25x ${strike} ${optionType} @ ₹${resp.fill_price.toFixed(2)} (Order: ${resp.order_id})`,
+          `Filled ${side} 65x ${strike} ${optionType} @ ₹${resp.fill_price.toFixed(2)} (Order: ${resp.order_id})`,
           "ok"
         );
         this.renderOnChartOrderLines(resp, tradingSymbol, side);
@@ -1579,17 +1981,37 @@ export class QuantApp {
               <label>Initial Capital (₹):
                 <input type="number" id="stratCap" class="tb" value="500000" min="10000" step="10000" style="width:100%;" />
               </label>
-              <label>Lots:
+              <label>Lots (65 qty/lot):
                 <input type="number" id="stratLots" class="tb" value="1" min="1" step="1" style="width:100%;" />
               </label>
             </div>
-            <label>Execution Mode:
-              <select id="stratMode" class="tb" style="width:100%;">
-                <option value="UNDERLYING_DIRECTIONAL" selected>UNDERLYING_DIRECTIONAL</option>
-                <option value="ACTUAL_OPTIONS">ACTUAL_OPTIONS</option>
-                <option value="SYNTHETIC_OPTIONS_ESTIMATE">SYNTHETIC_OPTIONS_ESTIMATE</option>
-              </select>
-            </label>
+            <div id="capitalWarningBanner" style="display:none;margin-top:2px;margin-bottom:6px;"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+              <label>Execution Mode:
+                <select id="stratMode" class="tb" style="width:100%;">
+                  <option value="UNDERLYING_DIRECTIONAL" selected>UNDERLYING_DIRECTIONAL</option>
+                  <option value="ACTUAL_OPTIONS">ACTUAL_OPTIONS</option>
+                  <option value="SYNTHETIC_OPTIONS_ESTIMATE">SYNTHETIC_OPTIONS_ESTIMATE</option>
+                </select>
+              </label>
+              <label>Strike Selection:
+                <select id="stratStrikePolicy" class="tb" style="width:100%;">
+                  <option value="ATM" selected>At-The-Money (ATM)</option>
+                  <option value="ITM_1">In-The-Money 1 (ITM 1)</option>
+                  <option value="ITM_2">In-The-Money 2 (ITM 2)</option>
+                  <option value="OTM_1">Out-Of-The-Money 1 (OTM 1)</option>
+                  <option value="OTM_2">Out-Of-The-Money 2 (OTM 2)</option>
+                </select>
+              </label>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+              <label>Target %:
+                <input type="number" id="stratTargetPct" class="tb" value="30" min="1" max="500" step="1" style="width:100%;" />
+              </label>
+              <label>Stop Loss %:
+                <input type="number" id="stratStopLossPct" class="tb" value="15" min="1" max="100" step="1" style="width:100%;" />
+              </label>
+            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
               <label>Stop Policy:
                 <select id="stratStopPolicy" class="tb" style="width:100%;">
@@ -1664,6 +2086,29 @@ export class QuantApp {
       this.updateStrategyMeta(selected, container);
     });
 
+    // Wire Real-time Capital Feasibility Checker
+    const checkFeasibility = () => {
+      const cap = parseFloat(container.querySelector("#stratCap")?.value) || 0;
+      const lots = parseInt(container.querySelector("#stratLots")?.value, 10) || 1;
+      const estPremium = 200; // Realistic reference ATM premium
+      const reqMargin = lots * 65 * estPremium;
+      const warnEl = container.querySelector("#capitalWarningBanner");
+      if (!warnEl) return;
+      if (cap > 0 && reqMargin > cap) {
+        warnEl.style.display = "block";
+        warnEl.innerHTML = `
+          <div style="color:var(--gold);font-size:11px;background:rgba(255,183,77,0.1);border:1px solid rgba(255,183,77,0.3);padding:6px 8px;border-radius:4px;">
+            ⚠️ <b>Margin Notice</b>: Sizing ${lots} lots (${lots * 65} units) at ~₹${estPremium} premium requires ~₹${reqMargin.toLocaleString("en-IN")}. Initial capital (₹${cap.toLocaleString("en-IN")}) may lead to margin deficit and rejected fills.
+          </div>
+        `;
+      } else {
+        warnEl.style.display = "none";
+      }
+    };
+    container.querySelector("#stratCap")?.addEventListener("input", checkFeasibility);
+    container.querySelector("#stratLots")?.addEventListener("input", checkFeasibility);
+    checkFeasibility();
+
     // Wire Cancel Action (M6-07)
     if (cancelBtn) {
       cancelBtn.addEventListener("click", async () => {
@@ -1690,6 +2135,9 @@ export class QuantApp {
         const modeVal = container.querySelector("#stratMode").value;
         const stopPolicyVal = container.querySelector("#stratStopPolicy").value;
         const feeSchedVal = container.querySelector("#stratFeeSchedule").value;
+        const strikePolicyVal = container.querySelector("#stratStrikePolicy")?.value || "ATM";
+        const targetPctVal = parseFloat(container.querySelector("#stratTargetPct")?.value) || 30.0;
+        const stopLossPctVal = parseFloat(container.querySelector("#stratStopLossPct")?.value) || 15.0;
 
         if (startVal > endVal) {
           this.toast("Start date must be before or equal to end date", "down");
@@ -1708,6 +2156,9 @@ export class QuantApp {
           lots: lotsVal,
           execution_mode: modeVal,
           mode: modeVal,
+          strike_policy: strikePolicyVal,
+          target_pct: targetPctVal,
+          stop_loss_pct: stopLossPctVal,
           intrabar_stop_policy: stopPolicyVal,
           fee_schedule: feeSchedVal,
         };
@@ -2404,7 +2855,7 @@ export class QuantApp {
    *    Before: Basic positions table. After: Rendered institutional macro/micro paper trading workstation.
    */
   async renderPaperTrading(container) {
-    this.paperView = this.paperView || "micro";
+    this.paperView = this.paperView || "macro";
     this.microSection = this.microSection || "positions";
 
     container.innerHTML = `<div style="padding:24px;text-align:center;color:var(--muted);">Loading Paper Trading Console &amp; Risk Policies...</div>`;
@@ -2438,12 +2889,20 @@ export class QuantApp {
 
       container.innerHTML = `
         <div class="paper-container">
-          <!-- Top Controls & View Toggles -->
-          <div class="paper-top-controls">
-            <div class="paper-view-toggle">
-              <button class="view-btn ${isMicro ? "active" : ""}" data-view="micro">[Micro: Discretionary Console]</button>
-              <button class="view-btn ${!isMicro ? "active" : ""}" data-view="macro">[Macro: Strategy Bots]</button>
-            </div>
+          <!-- Top Controls -->
+          <div class="paper-top-controls" style="display:flex;justify-content:space-between;align-items:center;">
+            ${
+              isMicro
+                ? `
+              <button class="tb btn-back-macro" id="btnBackToMacro" style="font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+                <span>←</span>
+                <span>Back to All Strategies</span>
+              </button>
+            `
+                : `
+              <div style="font-size:13px;font-weight:600;color:var(--text);">Macro Strategy Bots Monitor</div>
+            `
+            }
             <div class="risk-badge-pill" title="Firm Risk Limit Governance (RK-01 to RK-26)">
               <span>RK-06: <b>${riskPolicy.freeze_quantity.toLocaleString("en-IN")} units</b></span>
               <span class="sep-dot">•</span>
@@ -2495,7 +2954,6 @@ export class QuantApp {
           `
               : `
             <!-- Macro View: Strategy Bots Monitor -->
-            <h4 style="margin:4px 0 2px;">Automated Strategy Bots Monitor</h4>
             <div class="trade-log-wrap">
               <table class="trade-log-table">
                 <thead>
@@ -2507,12 +2965,13 @@ export class QuantApp {
                     <th>Today's P&L (₹)</th>
                     <th>Win Rate %</th>
                     <th>Sharpe Ratio</th>
+                    <th style="text-align:center;">Action</th>
                   </tr>
                 </thead>
                 <tbody id="macroStrategiesBody">
                   ${
                     stratList.length === 0
-                      ? `<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--muted);">No automated strategy bots currently registered.</td></tr>`
+                      ? `<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--muted);">No automated strategy bots currently registered.</td></tr>`
                       : stratList
                           .map((s) => {
                             const statusCls =
@@ -2522,7 +2981,7 @@ export class QuantApp {
                                   ? "warming"
                                   : "stopped";
                             return `
-                        <tr>
+                        <tr class="strategy-macro-row" data-id="${esc(s.strategy_id)}" style="cursor:pointer;" title="Click to inspect strategy console">
                           <td><b>${esc(s.strategy_name)}</b><br><span style="font-size:10px;color:var(--muted);">${esc(s.strategy_id)}</span></td>
                           <td><span class="regime-pill normal">${esc(s.mode)}</span></td>
                           <td><span class="status-pill ${statusCls}">${esc(s.status)}</span></td>
@@ -2530,6 +2989,7 @@ export class QuantApp {
                           <td class="${s.today_pnl_rupees >= 0 ? "up" : "down"}"><b>${fmtRupees(s.today_pnl_rupees)}</b></td>
                           <td>${s.win_rate_pct.toFixed(1)}%</td>
                           <td><b>${s.sharpe_ratio.toFixed(2)}</b></td>
+                          <td style="text-align:center;"><span style="color:var(--accent);font-weight:600;font-size:11px;">View Console →</span></td>
                         </tr>
                       `;
                           })
@@ -2543,13 +3003,23 @@ export class QuantApp {
         </div>
       `;
 
-      // Event Listeners: View Toggle
-      container.querySelectorAll(".paper-view-toggle .view-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          this.paperView = btn.dataset.view;
+      // Event Listener: Macro Strategy Row Click -> Drill down to Micro view
+      container.querySelectorAll(".strategy-macro-row").forEach((row) => {
+        row.addEventListener("click", () => {
+          this.selectedStrategyId = row.dataset.id;
+          this.paperView = "micro";
           this.renderPaperTrading(container);
         });
       });
+
+      // Event Listener: Back to Macro View
+      const backBtn = container.querySelector("#btnBackToMacro");
+      if (backBtn) {
+        backBtn.addEventListener("click", () => {
+          this.paperView = "macro";
+          this.renderPaperTrading(container);
+        });
+      }
 
       // Event Listeners: Micro Subnav
       container.querySelectorAll(".paper-subnav .subnav-btn").forEach((btn) => {

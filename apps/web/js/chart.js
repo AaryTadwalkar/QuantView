@@ -197,6 +197,7 @@ export class QuantChart {
     this.indResults = {};
     this.indicatorMarkers = [];
     this.extraMarkers = [];
+    this.clickListeners = [];
 
     this.initChart();
   }
@@ -283,7 +284,16 @@ export class QuantChart {
           : null;
       this.updateLegend(i);
     });
-    this.chart.subscribeClick((p) => this.drawings?.onClick(p));
+    this.chart.subscribeClick((p) => {
+      this.drawings?.onClick(p);
+      this.clickListeners.forEach((cb) => {
+        try {
+          cb(p);
+        } catch (err) {
+          console.warn("[QuantChart] Click listener error:", err);
+        }
+      });
+    });
     this.chart.timeScale().subscribeVisibleLogicalRangeChange(() => this.drawings?.drawOverlay());
     this.chart.timeScale().subscribeVisibleTimeRangeChange(() => this.drawings?.drawOverlay());
 
@@ -366,14 +376,6 @@ export class QuantChart {
         this.markersPlugin = LW.createSeriesMarkers(this.main, []);
       } catch {
         this.markersPlugin = null;
-      }
-    }
-
-    if (this.drawings && typeof this.main?.attachPrimitive === "function") {
-      try {
-        this.main.attachPrimitive(this.drawings);
-      } catch {
-        /* primitive attachment optional when overlay canvas is active */
       }
     }
   }
@@ -546,6 +548,79 @@ export class QuantChart {
       }
     } catch (err) {
       console.error("[QuantChart] Failed to load candles:", err);
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Registers an external callback function for chart click events.
+   *
+   * 2. How does the specific function work:
+   *    Appends callback function to this.clickListeners array if not already present.
+   *
+   * 3. Concepts used in the function:
+   *    Event listener registration, observer pattern.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by QuantApp bar replay engine in apps/web/js/app.js.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Callback not registered. After: Callback invoked on subsequent chart clicks.
+   */
+  addClickListener(cb) {
+    if (typeof cb === "function" && !this.clickListeners.includes(cb)) {
+      this.clickListeners.push(cb);
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Unregisters an external chart click event listener.
+   *
+   * 2. How does the specific function work:
+   *    Filters out the provided callback function from this.clickListeners.
+   *
+   * 3. Concepts used in the function:
+   *    Event listener deregistration, memory leak prevention.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked when exiting replay mode or dismantling chart observers.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Callback active. After: Callback removed from active subscriber array.
+   */
+  removeClickListener(cb) {
+    this.clickListeners = this.clickListeners.filter((fn) => fn !== cb);
+  }
+
+  /**
+   * 1. The use of function:
+   *    Explicitly assigns and renders an array of OHLCV candles without triggering network fetch.
+   *
+   * 2. How does the specific function work:
+   *    Updates this.rawCandles, executes renderCachedData() to refresh main/volume series,
+   *    re-evaluates active indicators via renderIndicators(), refreshes legend HUD, and updates drawings.
+   *
+   * 3. Concepts used in the function:
+   *    In-memory candle updates, high-throughput simulation replay, indicator re-computation.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by QuantApp bar replay engine in apps/web/js/app.js.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Chart displays previous bar series. After: Chart immediately reflects updated candle slice.
+   */
+  setCandles(candles = [], fit = false) {
+    this.rawCandles = candles || [];
+    this.renderCachedData();
+    this.renderIndicators();
+    this.updateLegend();
+    if (this.drawings) {
+      this.drawings.syncResize();
+      this.drawings.update();
+    }
+    if (fit && this.chart && this.rawCandles.length > 0) {
+      this.chart.timeScale().fitContent();
     }
   }
 
@@ -865,6 +940,52 @@ export class QuantChart {
     }
     if (this.drawings) {
       this.drawings.syncResize();
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Applies visual color theme (light or dark) dynamically to Lightweight Charts options.
+   *
+   * 2. How does the specific function work:
+   *    Updates chart background color, text color, and grid line colors via chart.applyOptions,
+   *    refreshes legend HUD text colors, and triggers drawing overlay repaint.
+   *
+   * 3. Concepts used in the function:
+   *    Chart theming, dynamic styling, canvas color synchronization.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by theme toggle handler in apps/web/js/app.js.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Chart styled with previous theme. After: Chart options updated to match dark or light theme.
+   */
+  setTheme(theme) {
+    this.theme = theme;
+    const isLight = theme === "light";
+    const bg = isLight ? "#ffffff" : "#131722";
+    const textColor = isLight ? "#131722" : "#d1d4dc";
+    const gridColor = isLight ? "#f0f3fa" : "#1e222d";
+
+    if (this.chart) {
+      try {
+        this.chart.applyOptions({
+          layout: {
+            background: { type: "solid", color: bg },
+            textColor: textColor,
+          },
+          grid: {
+            vertLines: { color: gridColor },
+            horzLines: { color: gridColor },
+          },
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+    this.updateLegend();
+    if (this.drawings) {
+      this.drawings.update();
     }
   }
 

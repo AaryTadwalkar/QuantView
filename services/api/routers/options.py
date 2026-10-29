@@ -154,10 +154,12 @@ def get_option_chain(
     5. Final output of the function, before and after:
        Before: Query parameters for expiry, spot, and strike range. After: OptionChainResponse model.
     """
-    canon_symbol, _ = normalize_symbol(underlying)
-    target_expiry = expiry_date.strip() if expiry_date else None
+    underlying_str = underlying if isinstance(underlying, str) else "NIFTY"
+    canon_symbol, _ = normalize_symbol(underlying_str)
+    target_expiry = expiry_date.strip() if isinstance(expiry_date, str) and expiry_date.strip() else None
     snapshot_time = 0
-    resolved_spot: Optional[float] = spot_price
+    resolved_spot: Optional[float] = spot_price if isinstance(spot_price, (int, float)) else None
+    strike_cnt = strike_count if isinstance(strike_count, int) else 15
     quotes_map: Dict[Tuple[float, str], OptionStrikeQuote] = {}
     snapshot_id: Optional[str] = None
 
@@ -179,6 +181,11 @@ def get_option_chain(
             snapshot_id = str(cap[0])
             if hasattr(cap[1], "timestamp"):
                 snapshot_time = int(cap[1].timestamp())
+            elif isinstance(cap[1], str):
+                try:
+                    snapshot_time = int(datetime.fromisoformat(cap[1].replace("Z", "+00:00")).timestamp())
+                except Exception:
+                    snapshot_time = 0
             if not target_expiry:
                 target_expiry = str(cap[2])
             if resolved_spot is None and cap[3] is not None and float(cap[3]) > 0.0:
@@ -407,11 +414,11 @@ def get_option_chain(
 
     if final_spot > 0.0:
         atm_strike = round(final_spot / 50.0) * 50.0
-        target_strikes = [atm_strike + (i * 50.0) for i in range(-strike_count, strike_count + 1)]
+        target_strikes = [atm_strike + (i * 50.0) for i in range(-strike_cnt, strike_cnt + 1)]
     elif quotes_map:
         strikes_present = sorted({k[0] for k in quotes_map.keys()})
         atm_strike = strikes_present[len(strikes_present) // 2]
-        target_strikes = [atm_strike + (i * 50.0) for i in range(-strike_count, strike_count + 1)]
+        target_strikes = [atm_strike + (i * 50.0) for i in range(-strike_cnt, strike_cnt + 1)]
     else:
         atm_strike = 0.0
         target_strikes = []

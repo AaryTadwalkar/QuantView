@@ -33,7 +33,7 @@ import tempfile
 import time
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import duckdb
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -142,6 +142,7 @@ def _extract_lake_bars(
     start_date: str,
     end_date: str,
     strategy_id: str,
+    strike_policy: str = "ATM",
     limit: int = 500,
 ) -> List[Dict[str, Any]]:
     """
@@ -150,12 +151,13 @@ def _extract_lake_bars(
 
     2. How does the specific function work:
        - Inspects strategy identifier to determine target option type (CE or PE).
-       - Executes parameterized SQL against v_candles_options filtering by date range and positive volume.
+       - Resolves strike policy offset (ATM: 0, ITM_1: -50/+50, ITM_2: -100/+100, OTM_1: +50/-50, OTM_2: +100/-100).
+       - Queries underlying spot price to compute strike target, matching against v_candles_options.
        - Converts INR prices to exact integer paise.
        - Returns empty list if view is missing or fewer than 20 bars are returned.
 
     3. Concepts used in the function:
-       Analytical SQL extraction, integer paise quantization, graceful degradation.
+       Analytical SQL extraction, moneyness offset resolution, integer paise quantization.
 
     4. Places where this function is imported and used:
        Called by run_backtest prior to executing BacktestRunner.
@@ -164,7 +166,42 @@ def _extract_lake_bars(
        Before: Database connection and query parameters. After: List of bar dicts or empty list.
     """
     opt_type = "PE" if "PE" in strategy_id else "CE"
-    query = """
+    offset = 0.0
+    pol = (strike_policy or "ATM").upper().replace(" ", "_")
+    if pol in ("ITM_1", "ITM1"):
+        offset = -50.0 if opt_type == "CE" else 50.0
+    elif pol in ("ITM_2", "ITM2"):
+        offset = -100.0 if opt_type == "CE" else 100.0
+    elif pol in ("OTM_1", "OTM1"):
+        offset = 50.0 if opt_type == "CE" else -50.0
+    elif pol in ("OTM_2", "OTM2"):
+        offset = 100.0 if opt_type == "CE" else -100.0
+
+    target_strike: Optional[float] = None
+    try:
+        spot_row = con.execute(
+            "SELECT close FROM v_candles_underlying WHERE bar_start >= ? ORDER BY bar_start ASC LIMIT 1",
+            [f"{start_date} 09:15:00"],
+        ).fetchone()
+        if spot_row and spot_row[0] is not None:
+            atm = round(float(spot_row[0]) / 50.0) * 50.0
+            target_strike = atm + offset
+    except Exception:
+        target_strike = None
+
+    where_conditions = [
+        "bar_start >= ?",
+        "bar_start <= ?",
+        "option_type = ?",
+        "volume > 0",
+    ]
+    params: List[Any] = [f"{start_date} 09:15:00", f"{end_date} 15:30:00", opt_type]
+
+    if target_strike is not None:
+        where_conditions.append("strike = ?")
+        params.append(target_strike)
+
+    query = f"""
         SELECT epoch(bar_start) as ts,
                cast(open * 100 as bigint) as op,
                cast(high * 100 as bigint) as hp,
@@ -174,15 +211,41 @@ def _extract_lake_bars(
                strftime(bar_start, '%H:%M') as t_str,
                contract_id as symbol
         FROM v_candles_options
-        WHERE bar_start >= ? AND bar_start <= ?
-          AND option_type = ? AND volume > 0
+        WHERE {" AND ".join(where_conditions)}
         ORDER BY bar_start ASC
         LIMIT ?
     """
+    params.append(limit)
+
+    rows: list[Any] = []
     try:
-        rows = con.execute(query, [f"{start_date} 09:15:00", f"{end_date} 15:30:00", opt_type, limit]).fetchall()
+        rows = con.execute(query, params).fetchall()
     except Exception:
-        return []
+        rows = []
+
+    if len(rows) < 20 and target_strike is not None:
+        # Fallback to any active strike if target strike had low liquidity
+        fallback_query = """
+            SELECT epoch(bar_start) as ts,
+                   cast(open * 100 as bigint) as op,
+                   cast(high * 100 as bigint) as hp,
+                   cast(low * 100 as bigint) as lp,
+                   cast(close * 100 as bigint) as cp,
+                   volume,
+                   strftime(bar_start, '%H:%M') as t_str,
+                   contract_id as symbol
+            FROM v_candles_options
+            WHERE bar_start >= ? AND bar_start <= ?
+              AND option_type = ? AND volume > 0
+            ORDER BY bar_start ASC
+            LIMIT ?
+        """
+        try:
+            rows = con.execute(
+                fallback_query, [f"{start_date} 09:15:00", f"{end_date} 15:30:00", opt_type, limit]
+            ).fetchall()
+        except Exception:
+            return []
 
     if len(rows) < 20:
         return []
@@ -320,6 +383,7 @@ def run_backtest(
         start_date=request.start_date,
         end_date=request.end_date,
         strategy_id=request.strategy_id,
+        strike_policy=request.strike_policy or "ATM",
     )
     if not bars:
         bars = _generate_synthetic_benchmark_bars(
@@ -342,6 +406,8 @@ def run_backtest(
             mode=mode,
             intrabar_stop_policy=request.intrabar_stop_policy,
             lots=request.lots,
+            stop_loss_pct=request.stop_loss_pct,
+            take_profit_pct=request.target_pct,
             strategy_params=request.strategy_params,
             fee_schedule_version=fee_sched,
             fee_schedule_name=fee_sched,
@@ -385,8 +451,14 @@ def run_backtest(
                 entry_fill = fill_events[2 * idx] if len(fill_events) > 2 * idx else None
                 exit_fill = fill_events[2 * idx + 1] if len(fill_events) > 2 * idx + 1 else None
 
-                entry_time = int(entry_fill.timestamp) if entry_fill else int(bars[0]["timestamp"])
-                exit_time = int(exit_fill.timestamp) if exit_fill else int(bars[-1]["timestamp"])
+                entry_time = int(
+                    trade.get("entry_time_utc")
+                    or (int(entry_fill.event_time) if entry_fill else int(bars[0]["timestamp"]))
+                )
+                exit_time = int(
+                    trade.get("exit_time_utc")
+                    or (int(exit_fill.event_time) if exit_fill else int(bars[-1]["timestamp"]))
+                )
 
                 entry_price = round(trade["entry_price_paise"] / 100.0, 2)
                 exit_price = round(trade["exit_price_paise"] / 100.0, 2)
@@ -396,7 +468,7 @@ def run_backtest(
                 pnl_pct = round(((exit_price - entry_price) / entry_price) * 100.0, 2) if entry_price > 0 else 0.0
                 exit_reason = str(trade.get("reason", "EXIT"))
                 contract = str(trade.get("symbol", request.strategy_id))
-                qty = int(trade.get("quantity", request.lots * 25))
+                qty = int(trade.get("quantity", request.lots * 65))
 
                 trades.append(
                     TradeRecord(

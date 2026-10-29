@@ -52,25 +52,77 @@ class ActivePosition:
         stop_loss_paise: Optional[Paise] = None,
         take_profit_paise: Optional[Paise] = None,
         entry_fees_paise: Paise = Paise(0),
+        entry_time_str: str = "",
     ) -> None:
+        """
+        1. The use of function:
+           Initializes an active single-leg open option position with execution details.
+
+        2. How does the specific function work:
+           Stores contract identifier, side, quantity, fill price in integer paise,
+           entry timestamps (both UtcEpochSec and IST string), protective stop/target levels,
+           and entry transaction fees. Initializes consecutive flat/stale bar counter to 0.
+
+        3. Concepts used in the function:
+           Position tracking, integer-paise accounting, causal timestamp preservation.
+
+        4. Places where this function is imported and used:
+           Instantiated in IntrabarFillEngine.step_1_open() upon BUY order execution.
+
+        5. Final output of the function, before and after:
+           Before: Uninstantiated state. After: ActivePosition instance ready for intrabar evaluation.
+        """
         self.contract = contract
         self.side = side
         self.qty = qty
         self.entry_price_paise = entry_price_paise
         self.entry_time = entry_time
+        self.entry_time_str = entry_time_str
         self.stop_loss_paise = stop_loss_paise
         self.take_profit_paise = take_profit_paise
         self.entry_fees_paise = entry_fees_paise
         self.consecutive_stale_bars = 0
 
     def update_stops(self, new_stop: Optional[Paise], new_target: Optional[Paise]) -> None:
-        """Updates protective stop loss and take profit targets."""
+        """
+        1. The use of function:
+           Updates protective stop-loss and take-profit targets for this open position.
+
+        2. How does the specific function work:
+           Replaces self.stop_loss_paise if new_stop is provided; replaces self.take_profit_paise
+           if new_target is provided.
+
+        3. Concepts used in the function:
+           Trailing stops, bracket target adjustment.
+
+        4. Places where this function is imported and used:
+           Invoked by strategy trailing stop logic or risk policy updates.
+
+        5. Final output of the function, before and after:
+           Before: Previous stop/target levels. After: Updated stop/target trigger levels.
+        """
         if new_stop is not None:
             self.stop_loss_paise = new_stop
         if new_target is not None:
             self.take_profit_paise = new_target
 
     def mark_unrealized_pnl(self, current_price_paise: Paise) -> Paise:
-        """Calculates unrealized mark-to-market gain/loss in Paise."""
+        """
+        1. The use of function:
+           Calculates unrealized mark-to-market gain/loss in Paise for the position.
+
+        2. How does the specific function work:
+           Computes price difference between current price and entry price in Paise,
+           multiplies by open quantity, and returns signed Paise amount.
+
+        3. Concepts used in the function:
+           Mark-to-market valuation, integer arithmetic.
+
+        4. Places where this function is imported and used:
+           Invoked by IntrabarFillEngine.step_3_close() for equity curve tracking.
+
+        5. Final output of the function, before and after:
+           Before: Current mark price. After: Unrealized P&L in Paise.
+        """
         price_diff = int(current_price_paise) - int(self.entry_price_paise)
         return Paise(self.qty * price_diff)
