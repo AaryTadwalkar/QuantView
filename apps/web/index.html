@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QuantView — Algorithmic Trading Terminal</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232962ff'/%3E%3Cpath d='M7 21l6-7 5 4 7-9' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Instrument+Sans:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <!-- Topbar Navigation -->
+    <header class="topbar">
+      <!-- QuantView Brand Logo -->
+      <div class="brand" title="QuantView Algorithmic Workstation">
+        <svg viewBox="0 0 32 32" width="22" height="22">
+          <rect width="32" height="32" rx="7" fill="var(--accent)" />
+          <path
+            d="M7 21l6-7 5 4 7-9"
+            stroke="#fff"
+            stroke-width="3"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span class="brand-text">QuantView</span>
+      </div>
+
+      <!-- Symbol Selector -->
+      <button
+        id="symbolBtn"
+        class="tb symbol-btn"
+        title="Select Instrument Symbol"
+      >
+        <span id="symbolLabel">NIFTY 50</span>
+      </button>
+
+      <div class="sep"></div>
+
+      <!-- Timeframe Buttons Container -->
+      <div id="tfButtons" class="tf-group"></div>
+      <input
+        id="tfCustom"
+        class="tf-custom"
+        placeholder="5m"
+        title="Custom Timeframe (e.g. 1m, 3m, 5m, 15m, 30m, 1h, 4h, 1d)"
+        size="4"
+      />
+
+      <div class="sep"></div>
+
+      <!-- Chart Type Selector -->
+      <select id="chartType" class="tb" title="Chart Display Mode">
+        <option value="candles">Candlestick</option>
+        <option value="heikin">Heikin Ashi</option>
+        <option value="line">Line</option>
+        <option value="area">Area</option>
+      </select>
+
+      <!-- Indicators Modal Trigger -->
+      <button id="indicatorsBtn" class="tb" title="Technical Indicators & Features">
+        <svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 6-8 3 3" /></svg>
+        <span>Indicators</span>
+      </button>
+
+      <!-- Data Health & Coverage Trigger -->
+      <button id="healthBtn" class="tb" title="Analytical Lake Health & Calendar Coverage">
+        <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+        <span>Data Health</span>
+      </button>
+
+      <!-- Replay Mode Trigger -->
+      <button id="replayBtn" class="tb" title="Historical Bar Replay Engine">
+        <svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4" /></svg>
+        <span>Replay</span>
+      </button>
+
+      <div class="sep"></div>
+
+      <!-- Live Spot & VIX Ticker Tapes -->
+      <div id="topbarTickers" class="topbar-tickers">
+        <span class="ticker-badge" id="tickerSpot">NIFTY: <b id="spotVal">—</b></span>
+        <span class="ticker-badge" id="tickerVix">VIX: <b id="vixVal">—</b></span>
+      </div>
+
+      <!-- Operational Status Badges -->
+      <span id="marketBadge" class="status-badge closed" title="NSE Trading Session Status">CLOSED</span>
+      <span id="lakeBadge" class="status-badge ok" title="DuckDB Data Lake Connection Status">LAKE: OK</span>
+
+      <div class="spacer"></div>
+
+      <!-- Utility Controls -->
+      <button id="themeBtn" class="tb icon" title="Toggle Light / Dark Theme">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />
+        </svg>
+      </button>
+      <button id="settingsBtn" class="tb icon" title="Platform Settings & Risk Ceilings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </header>
+
+    <!-- Main Workstation Viewport -->
+    <div class="main">
+      <!-- Left Drawing Toolbar -->
+      <nav class="drawbar" id="drawbar"></nav>
+
+      <!-- Center Chart Canvas & Bottom Dock Container -->
+      <section class="center">
+        <!-- Synthetic Transform Advisory Banner -->
+        <div id="syntheticBanner" class="synthetic-banner hidden">
+          <span class="amber-pill">ADVISORY</span>
+          <span>Heikin Ashi candles are synthetic price transforms and cannot be used for execution levels.</span>
+        </div>
+
+        <!-- Center Chart Canvas -->
+        <div id="grid" class="grid"></div>
+
+        <!-- Collapsible Bottom Dock -->
+        <div id="bottom" class="bottom collapsed">
+          <div class="tabs" id="bottomTabs">
+            <button data-tab="options" class="active">Option Chain</button>
+            <button data-tab="tester">Strategy Tester</button>
+            <button data-tab="paper">Paper Trading</button>
+            <button data-tab="screener">Screener</button>
+            <button data-tab="heatmap">Strategy Heatmap</button>
+            <button data-tab="health">Lake &amp; Coverage</button>
+            <div class="spacer"></div>
+            <button id="bottomToggle" class="icon" title="Toggle Bottom Dock Panel">
+              <svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6" /></svg>
+            </button>
+          </div>
+          <div class="tab-body" id="bottomBody"></div>
+        </div>
+      </section>
+
+      <!-- Right Sidebar -->
+      <aside class="side">
+        <div class="tabs" id="sideTabs">
+          <button data-tab="watchlist" class="active">Watchlist</button>
+          <button data-tab="alerts">Alerts</button>
+          <button data-tab="calendar">Market Calendar</button>
+        </div>
+        <div class="tab-body" id="sideBody"></div>
+      </aside>
+    </div>
+
+    <!-- Generic Modal Container -->
+    <div id="modal" class="modal hidden">
+      <div class="modal-card" id="modalCard"></div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toasts" class="toasts"></div>
+
+    <!-- Vendor Dependencies & Application Bootstrap -->
+    <script src="/vendor/lightweight-charts.standalone.production.js"></script>
+    <script type="module" src="/js/app.js"></script>
+  </body>
+</html>

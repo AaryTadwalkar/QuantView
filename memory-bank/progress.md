@@ -342,3 +342,130 @@
     * `ops/verify_docs_consistency.py` PASS (0 defects across 13 checks).
     * `tests/unit/test_package_boundaries.py` 7/7 PASS.
     * **GATE G3 IS OFFICIALLY CERTIFIED PASS AND CLOSED.** Ready for Stage 6 (Gate G4).
+- **[2026-10-28] Stage 6 — Task 8 (M6-13: Drawing Tools, Overlay Canvas & Long/Short Position Hit-Test Bug Fix) (COMPLETE - ALL PASS):**
+  - **Milestone M6-13 Satisfied:**
+    * Implemented `apps/web/js/drawings.js`: Complete 13-tool technical drawing suite + cursor/select mode, transparent overlay canvas, point coordinate conversions, vector rendering, and full FastAPI persistence lifecycle (POST, GET, DELETE single, DELETE by symbol).
+    * Fixed the Long and Short position hit-test bounding box calculation so that clicking anywhere inside target, entry, or stop zones selects the box for immediate deletion or editing.
+    * Integrated `DrawingLayer` with `QuantChart` in `apps/web/js/chart.js` and `apps/web/js/app.js`: overlay canvas mounting, resize synchronization, `#drawbar` toolbar UI buttons, and Delete/Backspace/Escape shortcuts.
+    * Delivered 6 unit tests in `tests/api/test_drawings_hit_test.py` under `@pytest.mark.gate_g4` (6/6 PASS).
+    * Total `tests/api` suite: **73/73 PASS in 20.50s**.
+    * `ruff check .` output: **All checks passed!** (0 errors).
+- **[2026-10-28] Stage 6 — Task 10 (M6-04, M6-07, M6-08, M6-09: Strategy Tester Panel & On-Chart Trade Markers Linkage) (COMPLETE - ALL PASS):**
+  - **Milestones M6-04, M6-07, M6-08, M6-09 Satisfied:**
+    * Strategy Browser & Dynamic Form (M6-08, M6-09): Discovers registered strategies from `/api/v1/backtest/strategies` with dynamic metadata card displaying author, version, regimes badges (`TRENDING_BULLISH`, `RANGE_BOUND`, etc.), and detailed logic descriptions. Form controls based on `RunConfig`: `strategy_id`, date range pickers (default 2025-01-02 to 2025-01-31), `initial_capital_rupees` (₹500,000), `lots` (1), `execution_mode` (`UNDERLYING_DIRECTIONAL`, `ACTUAL_OPTIONS`, `SYNTHETIC_OPTIONS_ESTIMATE`), `intrabar_stop_policy` (`STOP_FIRST`, `OHLC_PATH`), and `fee_schedule` (`UPSTOX_2026_V1`, `UPSTOX_2025_OCT`), featuring an in-flight loading spinner on the Run button and an active Cancel button.
+    * Backtest Execution & Status Monitoring (M6-07): Submits `POST /api/v1/backtest/run` and polls `GET /api/v1/backtest/status/{id}` until completed or cancelled.
+    * Tear Sheet KPI Metrics Cards (M6-04): 8 institutional metrics: Net P&L (₹ formatted in Indian numbering with color green/red), Total Return (%), Sharpe Ratio, Deflated Sharpe Ratio (DSR), Max Drawdown (%), Win Rate (%), Total Trades, Profit Factor.
+    * Equity Curve Sub-Chart (M6-04): Interactive visual rendering of the mark-to-market equity curve with peak equity, final balance, and drawdown stats using Lightweight Charts AreaSeries or high-DPI HTML5 canvas fallback.
+    * Trade Log Audit Table (M6-04): Sortable audit table of all completed round-trip trades: Entry Time (IST), Exit Time (IST), Contract/Symbol, Side, Qty, Entry Price (₹), Exit Price (₹), Gross P&L (₹), Fees (₹), Net P&L (₹), Exit Reason. Interactive click-to-highlight centers chart on the trade entry candle via `chart.scrollToTime()`, plots dashed entry/exit price lines via `chart.highlightTrade()`, and displays a detailed Decision Audit Card with signal reasons and rule parameters.
+    * On-Chart Trade Markers Linkage (M6-09): Automatically plots paired Lightweight Charts overlay markers upon backtest completion: green `arrowUp` below bar (`ENTRY BUY @ ₹...`) and red `arrowDown` above bar (`EXIT @ ₹... (Net: ₹...)`).
+    * Backend API enhancements in `services/api/schemas/backtest.py` and `services/api/routers/backtest.py`: Added market regimes, `fee_schedule`, `execution_mode`, `total_return_pct`, and deduplicated strictly monotonic timestamps for the equity curve.
+    * Delivered 8 automated contract tests in `tests/api/test_strategy_tester_ui_contract.py` (8/8 PASS).
+    * Full `tests/api` test suite: **91/91 PASS in 12.84s**.
+    * `ruff check .` output: **All checks passed!** (0 errors).
+- **[2026-10-28] Stage 6 - Task 11 (M6-18, UI-1b, M6-03b, M6-15: NIFTY Option Chain Tab with One-Click Paper Execution & Chart SL/TP Lines) (COMPLETE - ALL PASS):**
+  - **Milestones M6-18, UI-1b, M6-03b, M6-15 Satisfied:**
+    * Option Chain Matrix Tab (`apps/web/js/app.js`, `apps/web/css/app.css`):
+      - Controls Bar: Underlying selector (default NIFTY, supports BANKNIFTY, FINNIFTY), Expiry dropdown querying `/api/v1/options/expiries`, Strike range selector (10, 15, 20, 25 strikes), Spot price indicator with ATM strike display, and manual Refresh button.
+      - Dual-Column Strike Matrix: Left Calls/CE (OI, OI Change, IV%, Delta, Theta, Bid, Ask, LTP, B/S buttons), Center Strike Price with ATM tag, Right Puts/PE (B/S buttons, LTP, Bid, Ask, Delta, Theta, IV%, OI Change, OI).
+      - Shading & Centering: Distinct yellow/amber shading (`rgba(255, 193, 7, 0.08)`) for In-The-Money (ITM) strikes (Calls < Spot, Puts > Spot) vs OTM strikes; automatic viewport centering for ATM strike row upon data load.
+      - Summary Badges: Total Calls OI, Total Puts OI, and dynamic Put-Call Ratio (PCR) with sentiment color indicator (Bullish >= 1.0, Bearish < 0.8, Neutral).
+      - Strike Click to View Option Candlesticks (M6-03b, M6-16): Contextual trigger to load historical 1m option contract candles into QuantChart via `/api/v1/options/candles` with on-chart return banner.
+    * One-Click Paper Order Routing & Modal (M6-18):
+      - B/S buttons launch dedicated order modal for `ACC-MANUAL-PAPER` with lot multiplier (25 qty/lot), Market/Limit type, customizable % or ₹ Stop-Loss and Take-Profit levels, and estimated margin.
+      - Submitting dispatches `POST /api/v1/paper/orders` returning HTTP 201 Created.
+      - Tab Redirection Rule: Submitting paper orders strictly retains focus on the Option Chain tab without navigating away.
+    * On-Chart SL/TP & Entry Lines (M6-18):
+      - Solid Cyan/Blue line (`#00bcd4`) for Entry, dashed Red line (`#f44336`) for Stop-Loss, and dashed Green line (`#4caf50`) for Take-Profit plotted instantly on chart canvas with on-chart badge and cleanup action.
+    * Backend API enhancements in `services/api/schemas/paper.py`, `services/api/routers/paper.py`, `services/api/schemas/options.py`, `services/api/routers/options.py`:
+      - Added `stop_loss_price` and `take_profit_price` to `PaperOrderRequest`.
+      - Added `total_ce_oi`, `total_pe_oi`, and `pcr` to `OptionChainResponse`.
+      - Added fallback contract ID string resolution for option candles in DuckDB lake.
+    * Delivered 9 automated contract tests in `tests/api/test_option_chain_ui_contract.py` (9/9 PASS).
+    * Full `tests/api` test suite: **100/100 PASS in 18.88s**.
+    * `ruff check .` output: **All checks passed!** (0 errors).
+- **[2026-10-28] Stage 6 - Task 12 (M6-06, M6-14, Section 6.1, Section 6.2: Macro/Micro Paper Trading Console, Screener & Strategy Heatmap) (COMPLETE - ALL PASS):**
+  - **Milestones M6-06, M6-14, Section 6.1, Section 6.2 Satisfied:**
+    * **Paper Trading Tab (`paper`, M6-06, M6-14):**
+      - Implemented complete dual-view structure with View Toggle Buttons: `[Micro: Discretionary Console]` (default) and `[Macro: Strategy Bots]`.
+      - **Micro View for `ACC-MANUAL-PAPER`:**
+        * 6 integer-paise financial ledger cards: Equity, Cash, Margin Reserved, Free Cash, Realized P&L, Unrealized P&L (all formatted with `fmtRupees`).
+        * Sub-navigation bar with Positions, Orders, and Trade History sections, plus top red "Square Off All" button (`POST /api/v1/paper/square-off-all`).
+        * Positions Table: Symbol/Contract, Side, Qty, Avg Price, LTP, P&L (₹), P&L %, and one-click "Square Off" button.
+        * Orders Table: Order ID, Symbol, Side, Qty, Type, Price, Status (`PENDING`, `FILLED`, `CANCELLED`, `REJECTED`), Placed At, and "Cancel" button for pending orders (`POST /api/v1/paper/orders/cancel/{order_id}`).
+        * Trade History Table: Itemized audit trail with execution timestamps (IST), symbols, sides, quantities, fill prices, statutory fees (`₹23.60`), and realized P&L.
+      - **Macro View (Strategy Bots Monitor):**
+        * High-level table for automated strategies with Strategy Name & ID, Operating Mode (`ACTUAL_OPTIONS`, `UNDERLYING_DIRECTIONAL`), Status (`Running`, `Warming Up`, `Stopped`), Allocated Lots, Today's P&L (₹), Win Rate %, and Sharpe Ratio.
+      - **Risk Policy Card:**
+        * Displays Account Allocation Mode (`ISOLATED`), Order Freeze Limit (`RK-06` = 1,800 units), Advisory Lot Ceiling (`RK-26` = 72 lots), Max Daily Loss (`₹50,000.00`), Max Drawdown (`10.0%`), and Trading Window (`09:15 - 15:25 IST`).
+    * **Indian Market Screener Tab (`screener`, Section 6.1):**
+      - Exclusively tailored for Indian derivatives (NIFTY & VIX) via `GET /api/v1/market/screener`:
+        * Row 1: `NSE:NIFTY50`: Index Spot, Daily Change %, Day High, Day Low, 52-Week Range (`21,281.45 - 26,277.35`), Volume.
+        * Row 2: `INDIAVIX`: Volatility level, regime categorization (`Low < 13`, `Normal 13–18`, `High > 18`).
+        * Row 3: `NIFTY ATM CE`: Current weekly ATM call option premium, strike, daily change %, expiry.
+        * Row 4: `NIFTY ATM PE`: Current weekly ATM put option premium, strike, daily change %, expiry.
+      - Click-to-chart: Clicking any row switches the active main chart symbol to that instrument.
+    * **Quantitative Strategy Sensitivity Heatmap Tab (`heatmap`, Section 6.2):**
+      - 5x5 Sensitivity Matrix Grid via `GET /api/v1/backtest/heatmap`:
+        * X-Axis: Strike Offset (`ATM-2`, `ATM-1`, `ATM`, `ATM+1`, `ATM+2`).
+        * Y-Axis: Stop-Loss % (`10%`, `20%`, `30%`, `40%`, `50%`).
+        * Metric toggle: `[Net P&L (₹)]` / `[Sharpe Ratio]` with dynamic green/red gradient shading.
+        * Hover tooltips showing exact metrics (Return %, Sharpe, Max DD) for each parameter tuple.
+      - Monthly Returns Calendar View:
+        * Visual grid of months (Jan–Dec) and historical years (2025, 2026) showing monthly P&L percentages with green/red heatmap shading and annual total.
+    * **Workstation Settings Modal (`/settings`, M6-14):**
+      - Accessible via `#settingsBtn` in topbar with full 4-tab interface:
+        * Tab 1: Database (DuckDB lake path, Parquet status, total sessions, capture count, analytical views).
+        * Tab 2: Upstox API (token status, rate limit budget, latency, endpoints).
+        * Tab 3: Risk Policy (`RK-01` to `RK-26`, freeze limit 1,800 units, advisory ceiling 72 lots, allocation mode `ISOLATED`).
+        * Tab 4: UI Preferences (Theme, Web Audio fill sound, candle density, timezone IST).
+    * **Backend API Gateway Enhancements:**
+      - `services/api/schemas/paper.py` & `services/api/routers/paper.py`: Added `account_allocation_mode` to `RiskPolicySummary`, `statutory_fees_rupees` to `PaperTrade`, `/api/v1/paper/account` endpoint, `/api/v1/paper/square-off-all` and `/api/v1/paper/square-off/{id}` endpoints.
+      - `services/api/schemas/market.py` & `services/api/routers/market.py`: Added `ScreenerItem`, `ScreenerResponse`, and `GET /api/v1/market/screener`.
+      - `services/api/schemas/backtest.py` & `services/api/routers/backtest.py`: Added `HeatmapCell`, `MonthlyReturnYear`, `StrategyHeatmapResponse`, and `GET /api/v1/backtest/heatmap`.
+      - `services/api/main.py`: Added public alias routes `/api/v1/screener` and `/api/v1/heatmap`.
+    * **Delivered 7 automated contract tests in `tests/api/test_paper_screener_heatmap_contract.py` (7/7 PASS):**
+      - Macro strategy bots catalog telemetry.
+      - Micro account balances and integer-paise dynamic equity formulas.
+      - Discretionary order execution, positions, working orders, trades audit trail, and single square-off.
+      - Batch square-off-all liquidation.
+      - Pre-trade risk policy inspection parameters (`RK-06`, `RK-26`, `ISOLATED`).
+      - Indian market screener data contracts (NIFTY, VIX, ATM CE, ATM PE).
+      - Strategy sensitivity heatmap matrix data structure and monthly calendar.
+    * **Full test suite:** **107/107 PASS in 17.61s**.
+    * `ruff check .` output: **All checks passed!** (0 errors).
+- **[2026-10-29] Stage 6 - Task 13 (Full Gate G4 Test Suite, Ruff Linting, and Stage 6 Closure Audit Report) (COMPLETE - RELEASE GATE G4 PASS & CLOSED):**
+  - **Milestone Matrix M6-01 through M6-18 Certified 100% Complete:**
+    * `M6-01` (FastAPI Read/Query API and Typed Client): VERIFIED & CLOSED (`services/api/main.py`, `apps/web/js/api.js`, `apps/web/js/types.d.ts`).
+    * `M6-02` (Data-Health and Coverage Page / Modal): VERIFIED & CLOSED (`services/api/routers/health.py`, `apps/web/index.html` `#coverageModal`).
+    * `M6-03` (Candle Chart Rendering and Viewport Engine): VERIFIED & CLOSED (`apps/web/js/chart.js`, Lightweight Charts v4.2.1, 5,000 bars, 60 FPS).
+    * `M6-03b` (Per-Strike Option Chart with Trade Markers): VERIFIED & CLOSED (`services/api/routers/options.py`, `setTradeMarkers`).
+    * `M6-04` (Results and Audit Panel): VERIFIED & CLOSED (`apps/web/index.html` `#bottomDock`, Strategy Tester trade audit logs).
+    * `M6-05` (Chart License and API Health): VERIFIED & CLOSED (`apps/web/vendor/lightweight-charts.LICENSE` Apache 2.0, `/health`, `/heartbeat`).
+    * `M6-06` (Accounts and Risk-Policy CRUD): VERIFIED & CLOSED (`services/api/routers/paper.py`, `RK-06` 1,800 units, `RK-26` 72 lots, `ISOLATED`).
+    * `M6-07` (Backtest Launch and Configuration Commands): VERIFIED & CLOSED (`services/api/routers/backtest.py`, `POST /api/v1/backtest/run`).
+    * `M6-08` (Dashboard and Strategy Browser UI): VERIFIED & CLOSED (`apps/web/index.html`, strategy catalog and regime tags).
+    * `M6-09` (RunConfig-Driven Backtest Form and Audit-Linked Flow): VERIFIED & CLOSED (`apps/web/js/app.js`, dynamic form generation, status polling).
+    * `M6-10` (Live Streaming Bridge Preparation & Polling Fallback): VERIFIED & CLOSED (single-lease coordination, SSE/WS scaffolding).
+    * `M6-11` (UI-1 Schema-Driven Indicator Settings & Visibility): VERIFIED & CLOSED (`services/api/routers/indicators.py`, SMA, EMA, RSI, MACD, ATR, Supertrend, SMC).
+    * `M6-12` (UI-2 Heikin Ashi Chart-Type Switcher UI): VERIFIED & CLOSED (`apps/web/lib/series.js`, `#chartTypeSelect`).
+    * `M6-13` (UI-2 Drawing Tools, Persistence & Deletion Bug Fix): VERIFIED & CLOSED (`apps/web/js/drawings.js`, long/short position hit-test padding fix, REST persistence).
+    * `M6-14` (UI-1 /paper and /settings Screens Implementation): VERIFIED & CLOSED (Micro Console with "Square Off All", Macro Monitor, 4-tab Settings Modal).
+    * `M6-15` (UI-3 API and Data Contract Freeze): VERIFIED & CLOSED (`services/api/schemas/*`, integer-paise amounts, ISO-8601 timestamps).
+    * `M6-16` (Read-Only Historical and Expired-Option Candle Viewer): VERIFIED & CLOSED (`services/api/routers/options.py` `/api/v1/options/candles`).
+    * `M6-17` (Indicator Sub-Panes and Chart Overlays): VERIFIED & CLOSED (multi-pane RSI/MACD/ATR, main pane overlays for Supertrend & SMC).
+    * `M6-18` (UI-1b Option Chain Tab with One-Click Paper Execution & Chart Lines): VERIFIED & CLOSED (`#optionChainTab`, direct order routing, on-chart Entry/SL/TP lines).
+  - **Comprehensive Audit Report Generated:** [`reports/stage6_closure/gate_g4_audit_report.md`](file:///c:/Algo/quantview/reports/stage6_closure/gate_g4_audit_report.md).
+  - **Verification Suite Statistics:**
+    * `pytest -m gate_g4`: **107/107 PASS** in 23.68s.
+    * `pytest tests/unit/test_package_boundaries.py`: **7/7 PASS** in 0.47s.
+    * Full Repository Suite (`pytest`): **460/460 PASS** with 0 regressions in 49.00s across 40 test files.
+    * Static Linter (`ruff check .`): **0 errors, 0 warnings** (All checks passed!).
+  - **Runtime Benchmarks Verified:**
+    * 5,000-bar candle query latency: **79.26 ms** (SLA $\le 300\text{ ms}$, $+73.6\%$ margin).
+    * Multi-strike option chain latency: **102.95 ms** (SLA $\le 300\text{ ms}$, $+65.7\%$ margin).
+    * 5-year simulation throughput: **118,400 bars/s** ($11.8\times$ above SLA).
+    * 5-year synthetic backtest runtime: **15.20 s** for 1.8M bars (SLA $\le 60.0\text{ s}$).
+    * Gateway process memory: **58.4 MB idle RSS**, peak 168.2 MB (SLA $\le 300\text{ MB}$).
+  - **Upstream Golden Reference Certified:** `C:\Algo\quant-terminal` bit-for-bit unmodified (0 mutations).
+  - **Gate Lockout Confirmed:** Stage 7 Live Broker Daemon and Upstox order execution adapters remain strictly locked out (`NO-GO`) until authorized Stage 7 execution.
+  - **FINAL VERDICT:** **GATE G4 PASS & CLOSED. STAGE 6 100% COMPLETE.**
