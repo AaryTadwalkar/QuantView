@@ -138,7 +138,11 @@ class DataEligibilityEngine:
         """).fetchall()
 
         # 2. Quarantined snapshot sessions (from quarantine report)
-        q_report_path = Path("staging/lake_preparation_phase3/quarantine/quarantine_report.json")
+        q_report_path = (
+            Path("Data/staging/lake_preparation_phase3/quarantine/quarantine_report.json")
+            if Path("Data/staging/lake_preparation_phase3/quarantine/quarantine_report.json").exists()
+            else Path("staging/lake_preparation_phase3/quarantine/quarantine_report.json")
+        )
         quarantined_dates = set()
         if q_report_path.exists():
             with open(q_report_path, "r", encoding="utf-8") as f:

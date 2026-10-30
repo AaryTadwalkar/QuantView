@@ -2,12 +2,12 @@
 
 - **Gate ID:** `G1` (Data Foundation Gate)
 - **Overall Gate Verdict:** **PASS**
-- **Evaluated At (UTC):** 2026-10-24T18:35:28.972151+00:00
+- **Evaluated At (UTC):** 2026-10-30T17:19:04.158970+00:00
 - **Active Lake Manifest Version:** `3`
 - **Active Production Lake Totals:**
-  * **Total Parquet Partitions:** `784` files
-  * **Total Canonical Lake Records:** `38,753,287` rows
-  * **Total Lake Disk Footprint:** `620.0 MB`
+  * **Total Parquet Partitions:** `801` files
+  * **Total Canonical Lake Records:** `40,310,923` rows
+  * **Total Lake Disk Footprint:** `653.6 MB`
 
 ---
 

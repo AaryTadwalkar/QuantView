@@ -108,7 +108,11 @@ class SnapshotLakePublisher:
         lake_root: Optional[Path] = None,
     ):
         """Initializes SnapshotLakePublisher with paths."""
-        self.staging_root = staging_root or Path("staging/lake_preparation_phase3")
+        self.staging_root = staging_root or (
+            Path("Data/staging/lake_preparation_phase3")
+            if Path("Data/staging/lake_preparation_phase3").exists()
+            else Path("staging/lake_preparation_phase3")
+        )
         self.staging_manifest_path = staging_manifest or (self.staging_root / "manifest_phase3.json")
         self.lake_root = lake_root or Path("Data/lake")
         self.active_manifest_path = self.lake_root / "manifest_active.json"

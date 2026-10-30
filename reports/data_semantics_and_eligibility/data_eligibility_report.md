@@ -1,18 +1,18 @@
 # QuantView — Data Eligibility Matrix & Coverage Report (Task M3-09)
 
-**Report Date:** 2026-10-24 13:07:17 UTC  
+**Report Date:** 2026-10-30 17:44:13 UTC  
 **Status:** AUDITED & ELIGIBILITY DATASET GENERATED (PASS)  
-**Input Lake Manifest Hash:** `7717d875f58fb75b7b0adcf4b517030ad2210a7803017f6bbc8025d72c061dae`  
-**Dataset Location:** [`staging/lake_preparation_phase4/data_eligibility/part-0.parquet`](file:///staging/lake_preparation_phase4/data_eligibility/part-0.parquet)  
+**Input Lake Manifest Hash:** `dff816ef87ba6536bdce0bd3d30c18f4a20bb96d5e15216cdf6c060d22938c3d`  
+**Dataset Location:** [`staging/lake_preparation_phase4/data_eligibility/part-0.parquet`](file:///Data/staging/lake_preparation_phase4/data_eligibility/part-0.parquet)  
 
 ---
 
 ## 1. Executive Summary
 
-Data eligibility evaluation has been executed across **1,161 historical trading sessions** (January 2022 to October 2026). Each session was audited against 9 canonical quality invariants per `QUANTVIEW_DATA_SPEC.md` §8 and §11.1.
+Data eligibility evaluation has been executed across **1,169 historical trading sessions** (January 2022 to October 2026). Each session was audited against 9 canonical quality invariants per `QUANTVIEW_DATA_SPEC.md` §8 and §11.1.
 
-- **Fully Eligible Sessions (`ELIGIBLE`):** 1,144 (98.54%)
-- **Eligible with Advisory Warnings (`ELIGIBLE_WITH_WARNINGS`):** 17 (1.46%)
+- **Fully Eligible Sessions (`ELIGIBLE`):** 1,152 (98.55%)
+- **Eligible with Advisory Warnings (`ELIGIBLE_WITH_WARNINGS`):** 17 (1.45%)
 - **Ineligible Sessions (`INELIGIBLE`):** 0 (0.0%)
 
 ---

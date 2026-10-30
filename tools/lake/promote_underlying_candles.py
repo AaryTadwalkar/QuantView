@@ -185,8 +185,16 @@ class UnderlyingCandlePreparer:
         staged_dir: Optional[Path] = None,
     ):
         """Initializes UnderlyingCandlePreparer with paths."""
-        self.output_prep = output_prep_dir or Path("staging/lake_preparation/underlying_candles")
-        self.staged_dir = staged_dir or Path("staging/underlying_candles")
+        self.output_prep = output_prep_dir or (
+            Path("Data/staging/lake_preparation_phase2a/underlying_candles")
+            if (PROJECT_ROOT / "Data" / "staging" / "lake_preparation_phase2a").exists()
+            else Path("staging/lake_preparation/underlying_candles")
+        )
+        self.staged_dir = staged_dir or (
+            Path("Data/staging/underlying_candles")
+            if (PROJECT_ROOT / "Data" / "staging" / "underlying_candles").exists()
+            else Path("staging/underlying_candles")
+        )
         self.candidate_historical_dirs = [
             Path("Data/historical/candles/index/nifty"),
             Path(r"C:\Old_algo\Algo\Data\historical\candles\index\nifty"),
@@ -211,9 +219,11 @@ class UnderlyingCandlePreparer:
             all_rows.extend(rows)
             all_quarantine.extend(q)
 
-        # Overlay staged October 1m CSV
+        # Overlay staged October 1m CSV (explicitly excluding VIX files)
         if self.staged_dir.exists():
-            for staged_f in self.staged_dir.glob("*1m*.csv"):
+            for staged_f in sorted(self.staged_dir.glob("*1m*.csv")):
+                if "vix" in staged_f.name.lower():
+                    continue
                 s_rows, s_q = parse_underlying_csv_file(staged_f, interval="1m")
                 all_rows.extend(s_rows)
                 all_quarantine.extend(s_q)
@@ -264,9 +274,11 @@ class UnderlyingCandlePreparer:
             all_rows.extend(rows)
             all_quarantine.extend(q)
 
-        # Overlay staged October 1d CSV
+        # Overlay staged October 1d CSV (explicitly excluding VIX files)
         if self.staged_dir.exists():
-            for staged_f in self.staged_dir.glob("*1d*.csv"):
+            for staged_f in sorted(self.staged_dir.glob("*1d*.csv")):
+                if "vix" in staged_f.name.lower():
+                    continue
                 s_rows, s_q = parse_underlying_csv_file(staged_f, interval="1d")
                 all_rows.extend(s_rows)
                 all_quarantine.extend(s_q)

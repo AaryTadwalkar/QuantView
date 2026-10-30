@@ -169,8 +169,16 @@ class OptionCandlePreparer:
         5. Final output of the function, before and after:
            Before: Optional Path arguments. After: Configured OptionCandlePreparer instance.
         """
-        self.staging_source = staging_source_dir or Path("staging/expired_options")
-        self.output_prep = output_prep_dir or Path("staging/lake_preparation/option_candles")
+        self.staging_source = staging_source_dir or (
+            Path("Data/staging/expired_options")
+            if (PROJECT_ROOT / "Data" / "staging" / "expired_options").exists()
+            else Path("staging/expired_options")
+        )
+        self.output_prep = output_prep_dir or (
+            Path("Data/staging/lake_preparation_phase2a/option_candles")
+            if (PROJECT_ROOT / "Data" / "staging" / "lake_preparation_phase2a").exists()
+            else Path("staging/lake_preparation/option_candles")
+        )
 
     def list_staged_expiries(self) -> Dict[str, List[Path]]:
         """
@@ -204,17 +212,24 @@ class OptionCandlePreparer:
             expiry_map[exp] = sorted(expiry_map[exp])
         return dict(sorted(expiry_map.items()))
 
-    def prepare_expiry_partition(self, expiry_str: str, files: List[Path], dry_run: bool = False) -> Dict:
+    def prepare_expiry_partition(
+        self,
+        expiry_str: str,
+        files: List[Path],
+        dry_run: bool = False,
+        skip_existing: bool = False,
+    ) -> Dict:
         """
         1. The use of function:
            Normalizes all daily CSVs for an expiry and writes a partitioned Parquet file.
 
         2. How does the specific function work:
-           Parses each daily CSV into PyArrow tables, concatenates tables, sorts stably,
+           Checks skip_existing; if true and partition exists, skips reading. Otherwise parses
+           each daily CSV into PyArrow tables, concatenates tables, sorts stably,
            and writes part-0.parquet with zstd compression under underlying=NIFTY/expiry=YYYY-MM-DD/.
 
         3. Concepts used in the function:
-           Table concatenation, columnar compression, atomic tmp-file replacement.
+           Table concatenation, columnar compression, atomic tmp-file replacement, caching.
 
         4. Places where this function is imported and used:
            Called by run() for each discovered expiry.
@@ -222,6 +237,23 @@ class OptionCandlePreparer:
         5. Final output of the function, before and after:
            Before: List of daily CSVs. After: Parquet partition file and audit metric dict.
         """
+        partition_dir = self.output_prep / "underlying=NIFTY" / f"expiry={expiry_str}"
+        target_parquet = partition_dir / "part-0.parquet"
+
+        if skip_existing and target_parquet.exists() and target_parquet.stat().st_size > 0:
+            try:
+                meta = pq.read_metadata(target_parquet)
+                return {
+                    "expiry": expiry_str,
+                    "status": "SKIPPED_EXISTING",
+                    "rows": meta.num_rows,
+                    "neg_vol": 0,
+                    "path": str(target_parquet),
+                    "bytes": target_parquet.stat().st_size,
+                }
+            except Exception:
+                pass
+
         tables = []
         total_source_rows = 0
         total_neg_vol = 0
@@ -237,8 +269,6 @@ class OptionCandlePreparer:
             return {"expiry": expiry_str, "status": "EMPTY", "rows": 0, "neg_vol": 0, "path": None}
 
         combined_table = pa.concat_tables(tables)
-        partition_dir = self.output_prep / "underlying=NIFTY" / f"expiry={expiry_str}"
-        target_parquet = partition_dir / "part-0.parquet"
 
         if dry_run:
             return {
@@ -269,7 +299,12 @@ class OptionCandlePreparer:
             "bytes": target_parquet.stat().st_size,
         }
 
-    def run(self, max_expiries: Optional[int] = None, dry_run: bool = False) -> Dict:
+    def run(
+        self,
+        max_expiries: Optional[int] = None,
+        dry_run: bool = False,
+        skip_existing: bool = False,
+    ) -> Dict:
         """
         1. The use of function:
            Executes end-to-end lake staging preparation across all or bounded expiries.
@@ -297,12 +332,12 @@ class OptionCandlePreparer:
 
         print("\n=======================================================")
         print("QUANTVIEW -- OPTION CANDLE LAKE PREPARATION (OFFLINE)")
-        print(f"Expiries Discovered: {len(exp_keys)} | Dry Run: {dry_run}")
+        print(f"Expiries Discovered: {len(exp_keys)} | Dry Run: {dry_run} | Skip Existing: {skip_existing}")
         print(f"Destination: {self.output_prep}")
         print("=======================================================\n")
 
         for idx, exp in enumerate(exp_keys, 1):
-            res = self.prepare_expiry_partition(exp, exp_map[exp], dry_run=dry_run)
+            res = self.prepare_expiry_partition(exp, exp_map[exp], dry_run=dry_run, skip_existing=skip_existing)
             results.append(res)
             total_rows += res["rows"]
             total_neg_vols += res["neg_vol"]
@@ -322,8 +357,8 @@ def main():
        CLI entry point for preparing canonical Option Candle Parquet partitions in staging.
 
     2. How does the specific function work:
-       Parses command-line arguments (--max-expiries, --dry-run, --output-dir), initializes
-       OptionCandlePreparer with the specified or default output destination, and invokes run().
+       Parses command-line arguments (--max-expiries, --dry-run, --skip-existing, --output-dir),
+       initializes OptionCandlePreparer with the specified or default output destination, and invokes run().
 
     3. Concepts used in the function:
        CLI argument parsing via argparse, dependency injection for staging path isolation.
@@ -337,12 +372,13 @@ def main():
     parser = argparse.ArgumentParser(description="Prepare canonical Option Candle Parquet partitions in staging.")
     parser.add_argument("--max-expiries", type=int, default=None, help="Limit number of expiries to prepare.")
     parser.add_argument("--dry-run", action="store_true", help="Simulate preparation without writing Parquet files.")
+    parser.add_argument("--skip-existing", action="store_true", help="Skip expiries whose partition Parquet already exists.")
     parser.add_argument("--output-dir", type=str, default=None, help="Destination staging directory for option candle partitions.")
     args = parser.parse_args()
 
     output_dir = Path(args.output_dir) if args.output_dir else None
     preparer = OptionCandlePreparer(output_prep_dir=output_dir)
-    summary = preparer.run(max_expiries=args.max_expiries, dry_run=args.dry_run)
+    summary = preparer.run(max_expiries=args.max_expiries, dry_run=args.dry_run, skip_existing=args.skip_existing)
     print(f"\nCompleted: {summary['total_expiries']} expiries | {summary['total_rows_prepared']:,} rows | {summary['total_negative_volume_clipped']} negative volumes clipped.")
 
 

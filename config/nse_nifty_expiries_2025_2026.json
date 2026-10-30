@@ -5,8 +5,8 @@
   "retrieved_at_utc": "2026-10-20T14:39:21Z",
   "instrument_key": "NSE_INDEX|Nifty 50",
   "start_date": "2025-01-02",
-  "end_date": "2026-10-19",
-  "total_expiries": 95,
+  "end_date": "2026-11-03",
+  "total_expiries": 97,
   "expiries": [
     {
       "expiry_date": "2025-01-02",
@@ -577,6 +577,18 @@
       "day_of_week": "Monday",
       "year": 2026,
       "month": 10
+    },
+    {
+      "expiry_date": "2026-10-27",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 10
+    },
+    {
+      "expiry_date": "2026-11-03",
+      "day_of_week": "Tuesday",
+      "year": 2026,
+      "month": 11
     }
   ]
 }

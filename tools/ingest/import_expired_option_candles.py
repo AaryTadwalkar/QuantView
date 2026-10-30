@@ -188,8 +188,16 @@ class ExpiredOptionImporter:
                 "Accept": "application/json",
             })
         self.raw_root = raw_root or Path("Data/raw/upstox_rest/expired_api")
-        self.staging_root = staging_root or Path("staging/expired_options")
-        self.checkpoint_dir = checkpoint_dir or Path("staging/checkpoints")
+        self.staging_root = staging_root or (
+            Path("Data/staging/expired_options")
+            if Path("Data/staging/expired_options").exists()
+            else Path("staging/expired_options")
+        )
+        self.checkpoint_dir = checkpoint_dir or (
+            Path("Data/staging/checkpoints")
+            if Path("Data/staging/checkpoints").exists()
+            else Path("staging/checkpoints")
+        )
 
     def get_contracts(self, expiry_date: str) -> List[Dict]:
         """
@@ -746,18 +754,22 @@ class ExpiredOptionImporter:
         spot_map = dict(zip(df_1d["trade_date"], df_1d["open"]))
 
         # Overlay staged underlying 1d candles if present
-        staged_underlying_dir = Path("staging/underlying_candles")
-        if staged_underlying_dir.exists():
-            for staged_f in staged_underlying_dir.glob("*1d*.csv"):
-                try:
-                    s_df = pd.read_csv(staged_f)
-                    s_col = s_df.columns[0]
-                    s_df["trade_date"] = s_df[s_col].astype(str).str[:10]
-                    for _, s_row in s_df.iterrows():
-                        td = str(s_row["trade_date"])
-                        spot_map[td] = float(s_row["open"])
-                except Exception:
-                    pass
+        candidate_underlying_dirs = [
+            Path("Data/staging/underlying_candles"),
+            Path("staging/underlying_candles"),
+        ]
+        for staged_underlying_dir in candidate_underlying_dirs:
+            if staged_underlying_dir.exists():
+                for staged_f in staged_underlying_dir.glob("*1d*.csv"):
+                    try:
+                        s_df = pd.read_csv(staged_f)
+                        s_col = s_df.columns[0]
+                        s_df["trade_date"] = s_df[s_col].astype(str).str[:10]
+                        for _, s_row in s_df.iterrows():
+                            td = str(s_row["trade_date"])
+                            spot_map[td] = float(s_row["open"])
+                    except Exception:
+                        pass
 
         trading_days = [d for d in sorted(list(spot_map.keys())) if from_date <= d <= to_date]
 
@@ -965,19 +977,23 @@ class ExpiredOptionImporter:
         trading_days = [d for d in sorted(df_1d["trade_date"].tolist()) if from_date <= d <= to_date]
 
         # Overlay staged underlying 1d candles if present
-        staged_underlying_dir = Path("staging/underlying_candles")
-        if staged_underlying_dir.exists():
-            for staged_f in staged_underlying_dir.glob("*1d*.csv"):
-                try:
-                    s_df = pd.read_csv(staged_f)
-                    s_col = s_df.columns[0]
-                    s_df["trade_date"] = s_df[s_col].astype(str).str[:10]
-                    for td in s_df["trade_date"].unique():
-                        td_str = str(td)
-                        if from_date <= td_str <= to_date and td_str not in trading_days:
-                            trading_days.append(td_str)
-                except Exception:
-                    pass
+        candidate_underlying_dirs = [
+            Path("Data/staging/underlying_candles"),
+            Path("staging/underlying_candles"),
+        ]
+        for staged_underlying_dir in candidate_underlying_dirs:
+            if staged_underlying_dir.exists():
+                for staged_f in staged_underlying_dir.glob("*1d*.csv"):
+                    try:
+                        s_df = pd.read_csv(staged_f)
+                        s_col = s_df.columns[0]
+                        s_df["trade_date"] = s_df[s_col].astype(str).str[:10]
+                        for td in s_df["trade_date"].unique():
+                            td_str = str(td)
+                            if from_date <= td_str <= to_date and td_str not in trading_days:
+                                trading_days.append(td_str)
+                    except Exception:
+                        pass
         trading_days.sort()
 
         exp_file = Path("config/nse_nifty_expiries_2025_2026.json")
@@ -986,16 +1002,27 @@ class ExpiredOptionImporter:
         all_expiries = sorted([e["expiry_date"] for e in exp_data.get("expiries", [])])
 
         raw_candle_root = self.raw_root / "endpoint=historical_candle"
-        all_manifests = list(raw_candle_root.glob("**/*.json")) if raw_candle_root.exists() else []
-        total_manifests = len(all_manifests)
-        total_raw_bytes = sum(p.stat().st_size for p in raw_candle_root.glob("**/*.json.gz")) if raw_candle_root.exists() else 0
+        target_days_set = set(trading_days)
+        relevant_manifests = []
+        if raw_candle_root.exists():
+            for mf in raw_candle_root.glob("**/*.json"):
+                try:
+                    with open(mf, "r", encoding="utf-8") as f:
+                        m = json.load(f)
+                    p_from = str(m.get("params", {}).get("from_date", ""))
+                    p_to = str(m.get("params", {}).get("to_date", ""))
+                    if (p_from in target_days_set) or (p_to in target_days_set) or (from_date <= p_from <= to_date):
+                        relevant_manifests.append((mf, m))
+                except Exception:
+                    pass
+
+        total_manifests = len(relevant_manifests)
+        total_raw_bytes = sum(Path(m["compressed_path"]).stat().st_size for _, m in relevant_manifests if Path(m.get("compressed_path", "")).exists())
         total_sha_mismatches = 0
 
-        # Verify cryptographic checksums on all manifests
-        for mf in all_manifests:
+        # Verify cryptographic checksums on target manifests
+        for mf, m in relevant_manifests:
             try:
-                with open(mf, "r", encoding="utf-8") as f:
-                    m = json.load(f)
                 gz_p = Path(m.get("compressed_path", ""))
                 if gz_p.exists():
                     with gzip.open(gz_p, "rb") as gz:

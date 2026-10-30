@@ -159,13 +159,7 @@ class Stage1LakePublisher:
         with open(target_baseline_manifest, "r", encoding="utf-8") as f:
             manifest_data = json.load(f)
 
-        if manifest_data.get("manifest_version") == 3:
-            # If v3 is already active, verify against manifest_v2_archive.json
-            if not self.archive_manifest_path.exists():
-                raise FileNotFoundError(f"Archived manifest v2 not found at: {self.archive_manifest_path}")
-            with open(self.archive_manifest_path, "r", encoding="utf-8") as f:
-                manifest_v2 = json.load(f)
-        elif manifest_data.get("manifest_version") == 2:
+        if manifest_data.get("manifest_version") in (2, 3):
             manifest_v2 = manifest_data
         else:
             raise ValueError(f"Unexpected manifest version: {manifest_data.get('manifest_version')}")

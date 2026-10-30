@@ -79,7 +79,11 @@ class Phase4ManifestGenerator:
 
     def __init__(self, prep_root: Optional[Path] = None):
         """Initializes Phase4ManifestGenerator with staging root directory."""
-        self.prep_root = prep_root or Path("staging/lake_preparation_phase4")
+        self.prep_root = prep_root or (
+            Path("Data/staging/lake_preparation_phase4")
+            if (PROJECT_ROOT / "Data" / "staging" / "lake_preparation_phase4").exists()
+            else Path("staging/lake_preparation_phase4")
+        )
 
     def inspect_dataset(self, dataset_name: str, subfolder: str) -> Dict:
         """

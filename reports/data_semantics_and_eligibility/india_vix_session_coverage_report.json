@@ -2,8 +2,8 @@
   "summary_1m": {
     "interval": "1m",
     "partitions": 22,
-    "total_rows": 166939,
-    "unique_sessions": 446,
+    "total_rows": 169939,
+    "unique_sessions": 454,
     "partition_details": {
       "2025-01": 8625,
       "2025-02": 7500,
@@ -26,21 +26,21 @@
       "2026-07": 8625,
       "2026-08": 7875,
       "2026-09": 7875,
-      "2026-10": 4500
+      "2026-10": 7500
     }
   },
   "summary_1d": {
     "interval": "1d",
     "partitions": 2,
-    "total_rows": 446,
+    "total_rows": 454,
     "partition_details": {
       "2025": 249,
-      "2026": 197
+      "2026": 205
     }
   },
   "reconciliation": {
-    "expected_regular_bars": 167250,
-    "actual_bars": 166939,
+    "expected_regular_bars": 170250,
+    "actual_bars": 169939,
     "net_delta_bars": -311,
     "special_sessions": [
       {

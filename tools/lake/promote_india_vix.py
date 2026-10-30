@@ -108,17 +108,33 @@ class IndiaVixPreparer:
         output_prep_dir: Optional[Path] = None,
     ):
         """Initializes IndiaVixPreparer with paths."""
-        self.staging_source = staging_source_dir or Path("staging/india_vix")
-        self.output_prep = output_prep_dir or Path("staging/lake_preparation/india_vix")
+        self.staging_sources = [
+            staging_source_dir or Path("Data/staging/india_vix"),
+            Path("Data/staging/underlying_candles"),
+        ]
+        self.output_prep = output_prep_dir or (
+            Path("Data/staging/lake_preparation_phase2a/india_vix")
+            if (PROJECT_ROOT / "Data" / "staging" / "lake_preparation_phase2a").exists()
+            else Path("staging/lake_preparation/india_vix")
+        )
 
     def prepare_1m_partitions(self, dry_run: bool = False) -> Tuple[Dict, List[Dict]]:
         """Prepares monthly Parquet partitions for India VIX 1m series."""
-        f_1m = list(self.staging_source.glob("*1m*.csv"))
+        f_1m = []
+        for src_dir in self.staging_sources:
+            if src_dir.exists():
+                for p in sorted(src_dir.glob("*1m*.csv")):
+                    if "vix" in p.name.lower():
+                        f_1m.append(p)
+
         if not f_1m:
             return {"interval": "1m", "partitions": 0, "rows": 0}, []
 
-        csv_path = f_1m[0]
-        df = pd.read_csv(csv_path)
+        dfs = [pd.read_csv(p) for p in f_1m]
+        df = pd.concat(dfs, ignore_index=True)
+        df.drop_duplicates(subset=["timestamp"], keep="last", inplace=True)
+        df.sort_values(by=["timestamp"], inplace=True)
+        df.reset_index(drop=True, inplace=True)
 
         session_counts, special_sessions = reconcile_vix_sessions(df)
 
@@ -166,12 +182,21 @@ class IndiaVixPreparer:
 
     def prepare_1d_partitions(self, dry_run: bool = False) -> Dict:
         """Prepares yearly Parquet partitions for India VIX 1d series."""
-        f_1d = list(self.staging_source.glob("*1d*.csv"))
+        f_1d = []
+        for src_dir in self.staging_sources:
+            if src_dir.exists():
+                for p in sorted(src_dir.glob("*1d*.csv")):
+                    if "vix" in p.name.lower():
+                        f_1d.append(p)
+
         if not f_1d:
             return {"interval": "1d", "partitions": 0, "rows": 0}
 
-        csv_path = f_1d[0]
-        df = pd.read_csv(csv_path)
+        dfs = [pd.read_csv(p) for p in f_1d]
+        df = pd.concat(dfs, ignore_index=True)
+        df.drop_duplicates(subset=["timestamp"], keep="last", inplace=True)
+        df.sort_values(by=["timestamp"], inplace=True)
+        df.reset_index(drop=True, inplace=True)
 
         ts_start = pd.to_datetime(df["timestamp"], utc=True)
         # Daily availability: 15:30 Asia/Kolkata = 10:00 UTC on trade date

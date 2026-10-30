@@ -117,7 +117,11 @@ class ActiveLakePublisher:
         5. Final output of the function, before and after:
            Before: Optional path parameters. After: Configured ActiveLakePublisher instance.
         """
-        self.staging_root = staging_root or Path("staging/lake_preparation_phase2a")
+        self.staging_root = staging_root or (
+            Path("Data/staging/lake_preparation_phase2a")
+            if (PROJECT_ROOT / "Data" / "staging" / "lake_preparation_phase2a").exists()
+            else Path("staging/lake_preparation_phase2a")
+        )
         self.staging_manifest_path = staging_manifest or (self.staging_root / "manifest_phase2a.json")
         self.lake_root = lake_root or Path("Data/lake")
         self.active_manifest_path = self.lake_root / "manifest_active.json"
@@ -256,15 +260,37 @@ class ActiveLakePublisher:
         now_utc = datetime.now(timezone.utc).isoformat()
         staging_manifest_sha = compute_file_sha256(self.staging_manifest_path)
 
+        existing_manifest = {}
+        if self.active_manifest_path.exists():
+            try:
+                with open(self.active_manifest_path, "r", encoding="utf-8") as f:
+                    existing_manifest = json.load(f)
+            except Exception:
+                pass
+
+        active_datasets = dict(existing_manifest.get("datasets", {}))
+        for ds_name, ds_info in staging_manifest.get("datasets", {}).items():
+            if ds_info.get("file_count", 0) > 0:
+                active_datasets[ds_name] = ds_info
+
+        tot_files = sum(d["file_count"] for d in active_datasets.values())
+        tot_rows = sum(d["total_rows"] for d in active_datasets.values())
+        tot_bytes = sum(d["total_bytes"] for d in active_datasets.values())
+
         active_manifest = {
             "manifest_type": "QUANTVIEW_ACTIVE_LAKE_MANIFEST",
-            "manifest_version": 1,
+            "manifest_version": max(2, existing_manifest.get("manifest_version", 1)),
             "activated_at_utc": now_utc,
             "is_active": True,
             "lake_root": str(self.lake_root).replace("\\", "/"),
             "source_staging_manifest_sha256": staging_manifest_sha,
-            "datasets": staging_manifest.get("datasets", {}),
-            "aggregate_totals": staging_manifest.get("aggregate_totals", {}),
+            "datasets": active_datasets,
+            "aggregate_totals": {
+                "total_files": tot_files,
+                "total_rows": tot_rows,
+                "total_bytes": tot_bytes,
+                "total_mb": round(tot_bytes / (1024 * 1024), 2),
+            },
         }
 
         if dry_run:

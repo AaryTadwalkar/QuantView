@@ -1,16 +1,16 @@
 {
   "report_name": "QuantView Gate G1 Acceptance Verification (Stage 1 Completion)",
-  "generated_at_utc": "2026-10-24T18:35:28.973152+00:00",
+  "generated_at_utc": "2026-10-30T17:19:04.163970+00:00",
   "overall_verdict": "PASS",
   "gate_evaluation": {
     "gate_id": "G1",
     "gate_name": "Data Foundation Gate",
     "verdict": "PASS",
-    "evaluated_at_utc": "2026-10-24T18:35:28.972151+00:00",
+    "evaluated_at_utc": "2026-10-30T17:19:04.158970+00:00",
     "active_manifest_version": 3,
-    "total_lake_files": 784,
-    "total_lake_rows": 38753287,
-    "total_lake_mb": 620.0,
+    "total_lake_files": 801,
+    "total_lake_rows": 40310923,
+    "total_lake_mb": 653.6,
     "milestones_evaluated": 12,
     "milestones_passed": 12,
     "tasks": {
@@ -131,18 +131,18 @@
       "data_eligibility": {
         "file_path": "Data/lake/data_eligibility/part-0.parquet",
         "num_row_groups": 1,
-        "total_rows": 1161,
+        "total_rows": 1168,
         "compression": "ZSTD",
         "num_columns": 9
       }
     },
     "benchmarks": {
-      "v_candles_underlying_slice_ms": 38.49,
-      "v_candles_derived_5m_slice_ms": 49.84,
-      "v_candles_options_contract_ms": 15.38,
-      "v_snapshots_captures_slice_ms": 13.03,
-      "v_snapshots_rows_greeks_ms": 13.86,
-      "v_data_eligibility_grouping_ms": 4.59
+      "v_candles_underlying_slice_ms": 31.63,
+      "v_candles_derived_5m_slice_ms": 48.86,
+      "v_candles_options_contract_ms": 14.59,
+      "v_snapshots_captures_slice_ms": 21.78,
+      "v_snapshots_rows_greeks_ms": 29.12,
+      "v_data_eligibility_grouping_ms": 2.0
     }
   },
   "m3_11_strategy_spike": {
@@ -185,8 +185,8 @@
       "status": "CANONICALIZED_AND_ACTIVE",
       "table_name": "india_vix",
       "view_name": "v_candles_vix",
-      "total_rows": 167385,
-      "date_range": "2025-01-01 00:00:00+05:30 to 2026-10-19 15:30:00+05:30",
+      "total_rows": 170017,
+      "date_range": "2025-01-01 00:00:00+05:30 to 2026-10-29 15:30:00+05:30",
       "range_min_max": [
         8.72,
         28.91

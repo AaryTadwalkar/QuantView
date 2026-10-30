@@ -1,7 +1,7 @@
 """
 1. What this file does:
-   Compacts raw live option chain snapshot CSV captures (from Data/live/option_chain/nifty/) into
-   daily Parquet partitions in staging lake preparation (staging/lake_preparation_phase3/)
+   Compacts raw live option chain snapshot CSV captures (from Data/live/option_chain/nifty/ or external drives) into
+   daily Parquet partitions in staging lake preparation (Data/staging/lake_preparation_phase3/)
    strictly preserving capture boundaries, individual capture identity, decimal strike precision,
    float64 observed Greeks, field-presence metadata, and deterministic sorting per QUANTVIEW_DATA_SPEC §4.3 and §4.4.
 
@@ -16,25 +16,27 @@
      - Localizes naive timestamps to Asia/Kolkata (IST) and converts to UTC per QUANTVIEW_DATA_SPEC §11.
      - Sorts Parquet rows by canonical keys (captures: received_at, expiry; rows: received_at, expiry, strike, option_type)
        before serialization for binary reproducibility and predicate pushdown.
-     - Enforces non-destructive execution: outputs strictly to staging/lake_preparation_phase3/ before active lake promotion.
+     - Enforces non-destructive execution: outputs strictly to Data/staging/lake_preparation_phase3/ before active lake promotion.
+     - Supports incremental skip-existing mode to bypass already compacted sessions instantly.
 
 3. Elements in the file:
-   - safe_float, safe_int, safe_decimal_strike: Robust numerical conversion helpers.
+   - safe_float, safe_int, safe_decimal_strike: High-throughput numerical conversion helpers avoiding pandas isna overhead.
    - classify_and_parse_snapshot: Helper parsing a single snapshot CSV into capture header and strike rows.
    - SnapshotCompactor: Main workflow class coordinating capture discovery, schema classification,
-     and daily Parquet table generation.
-   - main: CLI entry point supporting source/output overrides, session limits, and dry-run mode.
+     and daily Parquet table generation with skip-existing caching.
+   - main: CLI entry point supporting source/output overrides, session limits, skip-existing, and dry-run mode.
 
 4. Final output of the file:
-   - Captures table: staging/lake_preparation_phase3/option_snapshot_captures/trade_date=YYYY-MM-DD/part-0.parquet
-   - Rows table: staging/lake_preparation_phase3/option_snapshot_rows/trade_date=YYYY-MM-DD/part-0.parquet
-   - Quarantine report: staging/lake_preparation_phase3/quarantine/quarantine_report.json
+   - Captures table: Data/staging/lake_preparation_phase3/option_snapshot_captures/trade_date=YYYY-MM-DD/part-0.parquet
+   - Rows table: Data/staging/lake_preparation_phase3/option_snapshot_rows/trade_date=YYYY-MM-DD/part-0.parquet
+   - Quarantine report: Data/staging/lake_preparation_phase3/quarantine/quarantine_report.json
    - Compaction and quarantine reconciliation summary dictionary.
 """
 
 import argparse
 import hashlib
 import json
+import math
 import os
 import sys
 import time
@@ -67,10 +69,11 @@ def safe_float(val: Any) -> Optional[float]:
        Safely converts an arbitrary input value to a float or None.
 
     2. How does the specific function work:
-       Checks for None or NaN; parses via float(); catches ValueError and TypeError returning None.
+       Checks for None, empty strings, and string sentinels; parses via float(); uses math.isnan
+       for fast non-dispatching NaN detection, avoiding pandas isna overhead; catches ValueError and TypeError.
 
     3. Concepts used in the function:
-       Defensive numerical conversion, null preservation.
+       Defensive numerical conversion, null preservation, loop performance optimization.
 
     4. Places where this function is imported and used:
        Called during strike row dictionary construction in classify_and_parse_snapshot.
@@ -78,10 +81,11 @@ def safe_float(val: Any) -> Optional[float]:
     5. Final output of the function, before and after:
        Before: Raw value (float, int, string, NaN). After: Valid float or None.
     """
-    if val is None or pd.isna(val):
+    if val is None or val == "" or val == "None" or val == "nan":
         return None
     try:
-        return float(val)
+        f = float(val)
+        return None if math.isnan(f) else f
     except (ValueError, TypeError):
         return None
 
@@ -92,10 +96,11 @@ def safe_int(val: Any) -> Optional[int]:
        Safely converts an arbitrary input value to an integer or None.
 
     2. How does the specific function work:
-       Checks for None or NaN; parses via int(float(val)); catches ValueError and TypeError returning None.
+       Checks for None or empty strings; parses float first to handle string floats like '100.0',
+       validates against math.isnan, then casts to int; catches ValueError and TypeError returning None.
 
     3. Concepts used in the function:
-       Defensive integer conversion, null preservation.
+       Defensive integer conversion, null preservation, loop performance optimization.
 
     4. Places where this function is imported and used:
        Called during strike row dictionary construction in classify_and_parse_snapshot.
@@ -103,10 +108,11 @@ def safe_int(val: Any) -> Optional[int]:
     5. Final output of the function, before and after:
        Before: Raw value. After: Valid int or None.
     """
-    if val is None or pd.isna(val):
+    if val is None or val == "" or val == "None" or val == "nan":
         return None
     try:
-        return int(float(val))
+        f = float(val)
+        return None if math.isnan(f) else int(f)
     except (ValueError, TypeError):
         return None
 
@@ -304,6 +310,7 @@ class SnapshotCompactor:
         source_dir: Optional[Path] = None,
         output_prep_dir: Optional[Path] = None,
         quarantine_dir: Optional[Path] = None,
+        skip_existing: bool = False,
     ):
         """Initializes SnapshotCompactor with source and output directories."""
         self.candidate_source_dirs = [
@@ -311,8 +318,9 @@ class SnapshotCompactor:
             Path(r"D:\Algo_Data_Final\Data\live\option_chain\nifty"),
         ]
         self.source_dir = source_dir or self._find_existing_source()
-        self.output_prep = output_prep_dir or Path("staging/lake_preparation_phase3")
+        self.output_prep = output_prep_dir or Path("Data/staging/lake_preparation_phase3")
         self.quarantine_dir = quarantine_dir or (self.output_prep / "quarantine")
+        self.skip_existing = skip_existing
 
     def _find_existing_source(self) -> Path:
         """Finds first existing source directory from candidate paths."""
@@ -368,25 +376,54 @@ class SnapshotCompactor:
         trade_date_str: str,
         file_tuples: List[Tuple[date, date, Path]],
         dry_run: bool = False,
+        skip_existing: bool = False,
     ) -> Dict:
         """
         1. The use of function:
            Compacts all captures for one session into daily captures and rows Parquet files.
 
         2. How does the specific function work:
-           Parses each snapshot file; aggregates headers and strike rows; sorts headers by
-           (received_at, expiry) and rows by (received_at, expiry, strike, option_type);
-           writes to daily Parquet partitions with zstd compression and row groups of 250,000.
+           If skip_existing is enabled and target Parquets already exist, reads row counts from
+           metadata in microseconds and skips parsing; otherwise parses each snapshot file;
+           aggregates headers and strike rows; sorts headers by (received_at, expiry) and
+           rows by (received_at, expiry, strike, option_type); writes to daily Parquet partitions
+           with zstd compression and row groups of 250,000.
 
         3. Concepts used in the function:
-           Columnar Parquet serialization, stable query key sorting (DATA Spec §2.2).
+           Columnar Parquet serialization, stable query key sorting (DATA Spec §2.2), incremental skip caching.
 
         4. Places where this function is imported and used:
            Called by run() for each session date.
 
         5. Final output of the function, before and after:
-           Before: Raw CSVs. After: Daily Parquet files and session metrics dictionary.
+           Before: Raw CSVs or existing Parquets. After: Daily Parquet files and session metrics dictionary.
         """
+        # Canonical directory layout per DATA SPEC §2
+        captures_dir = self.output_prep / "option_snapshot_captures" / f"trade_date={trade_date_str}"
+        rows_dir = self.output_prep / "option_snapshot_rows" / f"trade_date={trade_date_str}"
+
+        target_captures = captures_dir / "part-0.parquet"
+        target_rows = rows_dir / "part-0.parquet"
+
+        should_skip = self.skip_existing or skip_existing
+        if should_skip and target_captures.exists() and target_rows.exists():
+            if target_captures.stat().st_size > 0 and target_rows.stat().st_size > 0:
+                try:
+                    c_count = pq.read_metadata(target_captures).num_rows
+                    r_count = pq.read_metadata(target_rows).num_rows
+                    return {
+                        "trade_date": trade_date_str,
+                        "status": "SKIPPED",
+                        "captures_count": c_count,
+                        "rows_count": r_count,
+                        "quarantined_count": 0,
+                        "quarantined_items": [],
+                        "captures_file": str(target_captures).replace("\\", "/"),
+                        "rows_file": str(target_rows).replace("\\", "/"),
+                    }
+                except Exception:
+                    pass
+
         captures_list = []
         rows_list = []
         quarantined = []
@@ -404,13 +441,6 @@ class SnapshotCompactor:
                 if header:
                     captures_list.append(header)
                 rows_list.extend(s_rows)
-
-        # Canonical directory layout per DATA SPEC §2
-        captures_dir = self.output_prep / "option_snapshot_captures" / f"trade_date={trade_date_str}"
-        rows_dir = self.output_prep / "option_snapshot_rows" / f"trade_date={trade_date_str}"
-
-        target_captures = captures_dir / "part-0.parquet"
-        target_rows = rows_dir / "part-0.parquet"
 
         if dry_run or not captures_list:
             return {
@@ -446,17 +476,23 @@ class SnapshotCompactor:
             "rows_file": str(target_rows).replace("\\", "/"),
         }
 
-    def run(self, max_sessions: Optional[int] = None, dry_run: bool = False) -> Dict:
+    def run(
+        self,
+        max_sessions: Optional[int] = None,
+        dry_run: bool = False,
+        skip_existing: Optional[bool] = None,
+    ) -> Dict:
         """
         1. The use of function:
            Runs compaction across discovered snapshot sessions.
 
         2. How does the specific function work:
            Discovers sessions, iterates sequentially through each trade date, compacts session files,
+           skips sessions whose Parquet partitions already exist when skip_existing is enabled,
            records metrics and quarantined items, and serializes the quarantine audit JSON.
 
         3. Concepts used in the function:
-           Batch workflow orchestration, comprehensive quarantine audit persistence.
+           Batch workflow orchestration, comprehensive quarantine audit persistence, skip caching.
 
         4. Places where this function is imported and used:
            Invoked via CLI main() or integration pipeline scripts.
@@ -464,6 +500,9 @@ class SnapshotCompactor:
         5. Final output of the function, before and after:
            Before: Uncompacted CSVs. After: Staged daily Parquets, quarantine JSON, summary dictionary.
         """
+        if skip_existing is not None:
+            self.skip_existing = skip_existing
+
         sessions = self.discover_sessions()
         session_dates = sorted(list(sessions.keys()))
         if max_sessions:
@@ -472,7 +511,7 @@ class SnapshotCompactor:
         print("\n=======================================================", flush=True)
         print("QUANTVIEW -- OPTION SNAPSHOT COMPACTION (OFFLINE)", flush=True)
         print(f"Source Directory: {self.source_dir}", flush=True)
-        print(f"Sessions Discovered: {len(session_dates)} | Dry Run: {dry_run}", flush=True)
+        print(f"Sessions Discovered: {len(session_dates)} | Dry Run: {dry_run} | Skip Existing: {self.skip_existing}", flush=True)
         print(f"Destination: {self.output_prep}", flush=True)
         print("=======================================================\n", flush=True)
 
@@ -486,7 +525,7 @@ class SnapshotCompactor:
 
         for idx, td in enumerate(session_dates, 1):
             t0 = time.perf_counter()
-            res = self.compact_session(td, sessions[td], dry_run=dry_run)
+            res = self.compact_session(td, sessions[td], dry_run=dry_run, skip_existing=self.skip_existing)
             t_session = (time.perf_counter() - t0) * 1000
 
             results.append(res)
@@ -495,11 +534,12 @@ class SnapshotCompactor:
             total_quarantined += res["quarantined_count"]
             all_quarantined.extend(res.get("quarantined_items", []))
 
+            status_note = " (Skipped - already staged)" if res.get("status") == "SKIPPED" else f" | {t_session:>6.1f}ms"
             print(
                 f"  [{idx:03d}/{len(session_dates):03d}] Date {td} | "
                 f"Captures: {res['captures_count']:>4} | "
                 f"Rows: {res['rows_count']:>7,} | "
-                f"Quarantined: {res['quarantined_count']} | {t_session:>6.1f}ms",
+                f"Quarantined: {res['quarantined_count']}{status_note}",
                 flush=True,
             )
 
@@ -543,10 +583,11 @@ def main():
        CLI entry point for snapshot compaction.
 
     2. How does the specific function work:
-       Parses command line arguments, instantiates SnapshotCompactor, and executes run().
+       Parses command line arguments, instantiates SnapshotCompactor with output defaulting
+       to Data/staging/lake_preparation_phase3, and executes run().
 
     3. Concepts used in the function:
-       Command-line interface argument parsing.
+       Command-line interface argument parsing, incremental compaction control.
 
     4. Places where this function is imported and used:
        Executed when compact_option_snapshots.py is called from shell or scripts.
@@ -556,9 +597,15 @@ def main():
     """
     parser = argparse.ArgumentParser(description="Compact option snapshot CSVs into daily Parquet tables in staging.")
     parser.add_argument("--source-dir", type=Path, default=None, help="Root path of raw option chain snapshots.")
-    parser.add_argument("--output-dir", type=Path, default=None, help="Destination staging root directory.")
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("Data/staging/lake_preparation_phase3"),
+        help="Destination staging root directory (default: Data/staging/lake_preparation_phase3).",
+    )
     parser.add_argument("--quarantine-dir", type=Path, default=None, help="Directory for quarantine audit json.")
     parser.add_argument("--max-sessions", type=int, default=None, help="Limit number of sessions to compact.")
+    parser.add_argument("--skip-existing", action="store_true", help="Skip sessions whose target Parquets already exist in output directory.")
     parser.add_argument("--dry-run", action="store_true", help="Simulate compaction without writing Parquet files.")
     args = parser.parse_args()
 
@@ -566,6 +613,7 @@ def main():
         source_dir=args.source_dir,
         output_prep_dir=args.output_dir,
         quarantine_dir=args.quarantine_dir,
+        skip_existing=args.skip_existing,
     )
     compactor.run(max_sessions=args.max_sessions, dry_run=args.dry_run)
 

@@ -1,7 +1,15 @@
 # Progress — QuantView (`c:\Algo\quantview`)
 
 ## Completed Milestones
-- **[2026-10-29] Stage 6 Post-Verification Systematic Debugging & Live Terminal UX Hardening (14/14 RESOLVED):**
+- **[2026-10-30] Data Lake Pipeline 2-Week Refresh, Stage 1 Extension & Gate G1 Recertification (COMPLETED & VERIFIED):**
+  - **Underlying Series Extension**: Ingested NIFTY 50 and India VIX 1m and 1d bars from 2026-10-19 to 2026-10-30; lake updated to 439,640 NIFTY 1m bars and 170,017 VIX 1m bars with continuous session alignment.
+  - **PC B Live Snapshot Compaction**: Compacted 8 new sessions (87,248 captures, 18,734,084 order book rows across 134 total sessions) using high-speed `--skip-existing` caching and promoted to `Data/lake/option_snapshot_{captures,rows}/`.
+  - **Historical Expired Options**: Ingested expired cycle `2026-10-27` from Upstox (140 contracts, 257,310 rows across 5 trading days); added `2026-10-27` and `2026-11-03` to `config/nse_nifty_expiries_2025_2026.json`.
+  - **Multi-Timeframe Resampling**: Derived higher timeframes (3m, 5m, 15m, 30m, 1h, 4h) into 289,035 bars across 348 partitions in `Data/lake/derived_candles/`.
+  - **Data Eligibility**: Recomputed data eligibility matrix across 1,168 historical session records.
+  - **Production Manifest v3 Activated**: Unified 801 files and 40,310,923 total rows across all 7 lake datasets in `Data/lake/manifest_active.json`.
+  - **DuckDB Views & Gate G1 Recertification**: All 8 canonical views registered in `Data/lake/quantview.duckdb` (`v_candles_underlying`, `v_candles_options`, `v_candles_vix`, `v_candles_derived`, `v_data_eligibility`, `v_snapshots_captures`, `v_snapshots_rows`, `v_snapshots_reconstructed_chain`), all sub-50ms query benchmarks verified, Gate G1 12/12 milestones PASSED, and 21/21 scaffolding unit tests passed.
+  - **Deliverable**: Authored comprehensive operational runbook [`docs/DATA_UPDATE_RUNBOOK.md`](file:///c:/Algo/quantview/docs/DATA_UPDATE_RUNBOOK.md).
   - **Bug 1 (Candle Date Range)**: Market router subqueries newest 5,000 bars DESC then sorts ASC; queries across all timeframes (1m, 5m, 15m, 1h, 1d) now return data up to latest session (`2026-10-19 15:25:00 IST`).
   - **Bug 2 (Indicator Settings & Visibility)**: Added persistent hover discovery for RSI/indicator settings gear, eye toggle, and remove buttons.
   - **Bug 3 (TradingView Watermark Link)**: Suppressed external TradingView anchor links via CSS.

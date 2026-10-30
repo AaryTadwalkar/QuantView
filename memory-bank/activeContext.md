@@ -45,6 +45,17 @@
 - **NEXT STAGE: STAGE 7 — Live Broker Daemon, Real-Time Market Data Bridge & Live Execution Adapters (Gate G5):**
   - Scope: `M7-01` through `M7-14`.
   - Focus: Upstox WebSocket market stream subscriber, live quote ring buffer, order routing adapter with Three-Lock live arming (`ADR-026`), zero-drift ledger reconciliation ($\le 1\text{ paise}$).
+- **DATA LAKE PIPELINE REFRESH & GATE G1 RECERTIFICATION COMPLETED (2026-10-30):**
+  - Updated all market data across the 2-week horizon (2026-10-19 to 2026-10-30):
+    * Underlying NIFTY 50 & India VIX (1m and 1d) ingested through 2026-10-29 session close (439,640 NIFTY rows, 170,017 VIX rows).
+    * PC B live option chain snapshots compacted & published across all 134 trading sessions (87,248 captures, 18,734,084 order book rows).
+    * Historical expired option candles acquired from Upstox for cycle 2026-10-27 (140 contracts, 257,310 rows across 5 trading days). Expiry 2026-11-03 tracked live in PC B snapshots.
+    * Multi-timeframe underlying candles re-derived for 3m, 5m, 15m, 30m, 1h, 4h (289,035 bars, 348 partitions).
+    * Data eligibility matrix recomputed (1,168 records across historical sessions).
+    * Active Lake Manifest Version 3 activated with 801 files, 40,310,923 rows.
+    * All 8 canonical DuckDB views registered in `Data/lake/quantview.duckdb` and verified (< 50ms query latency).
+    * Gate G1 Recertification: **PASS (12/12 Milestones Passed)**. Unit tests: **21/21 PASS**. Boundaries: **7/7 PASS**. Lint: **0 defects**.
+    * Comprehensive runbook created: [`docs/DATA_UPDATE_RUNBOOK.md`](file:///c:/Algo/quantview/docs/DATA_UPDATE_RUNBOOK.md).
 
 ## Canonical Architectural Contracts & Modes
 - **Timeframe & Parameter Relativity:** All features parameter-configurable and TF-relative via `compute_param_hash`; causal availability strictly enforced (`available_at <= decision_time`).

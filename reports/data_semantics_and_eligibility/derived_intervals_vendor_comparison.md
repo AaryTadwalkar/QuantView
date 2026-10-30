@@ -1,9 +1,9 @@
 # QuantView — Multi-Timeframe Derivation & Vendor Comparison Report (Task M3-07)
 
-**Report Date:** 2026-10-24 13:05:02 UTC  
+**Report Date:** 2026-10-30 17:44:12 UTC  
 **Status:** COMPLETED — ALL INTERVALS VERIFIED (PASS)  
-**Input Lake Manifest Hash:** `7717d875f58fb75b7b0adcf4b517030ad2210a7803017f6bbc8025d72c061dae`  
-**Staged Parquets Root:** [`staging/lake_preparation_phase4/derived_candles/`](file:///staging/lake_preparation_phase4/derived_candles/)  
+**Input Lake Manifest Hash:** `dff816ef87ba6536bdce0bd3d30c18f4a20bb96d5e15216cdf6c060d22938c3d`  
+**Staged Parquets Root:** [`staging/lake_preparation_phase4/derived_candles/`](file:///Data/staging/lake_preparation_phase4/derived_candles/)  
 
 ---
 
@@ -11,7 +11,7 @@
 
 All 6 canonical intraday intervals (`3m`, `5m`, `15m`, `30m`, `1h`, `4h`) were derived from canonical 1-minute underlying candles (`underlying_candles`). Aggregation strictly enforces the Asia/Kolkata session boundary (`09:15` to `15:30`), guaranteeing zero cross-session data leakage and full causal availability (`available_at = ts_end`).
 
-A total of **287,306 derived bars** across **348 Parquet partitions (13.72 MB)** were staged into `staging/lake_preparation_phase4/`. Mathematical verification against vendor CSV series confirms **100.00% match rate** across all overlapping historical bars.
+A total of **289,282 derived bars** across **348 Parquet partitions (13.79 MB)** were staged into `staging/lake_preparation_phase4/`. Mathematical verification against vendor CSV series confirms **100.00% match rate** across all overlapping historical bars.
 
 ---
 
@@ -19,12 +19,12 @@ A total of **287,306 derived bars** across **348 Parquet partitions (13.72 MB)**
 
 | Interval | Bucket Duration | Total Derived Bars | Partial Session-Close Bars | Parquet Partitions | Compressed Size | Derivation ID |
 | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **3m** | 3 mins | 145,387 | 307 | 58 | 5.84 MB | `71a590319987c4c5b2721906` |
-| **5m** | 5 mins | 87,253 | 222 | 58 | 3.24 MB | `9f3d9d6c23f0407211a81d0f` |
-| **15m** | 15 mins | 29,119 | 184 | 58 | 1.6 MB | `98ed71cb94b285072693602f` |
-| **30m** | 30 mins | 15,098 | 1,255 | 58 | 1.2 MB | `51a0a286d3a64dae48ad7097` |
-| **1h** | 60 mins | 8,127 | 1,250 | 58 | 1.0 MB | `bd553ce031c978d9718f4bab` |
-| **4h** | 240 mins | 2,322 | 1,250 | 58 | 0.84 MB | `d4d805c4f4d767a48949c778` |
+| **3m** | 3 mins | 146,387 | 307 | 58 | 5.88 MB | `05f49adbe6ea370c2f8f9ebe` |
+| **5m** | 5 mins | 87,853 | 222 | 58 | 3.26 MB | `506695b96cf31cf98d9e7e0b` |
+| **15m** | 15 mins | 29,319 | 184 | 58 | 1.6 MB | `3fb645e77218af2ebba52cda` |
+| **30m** | 30 mins | 15,202 | 1,263 | 58 | 1.21 MB | `5bdb909c2576c30956056418` |
+| **1h** | 60 mins | 8,183 | 1,258 | 58 | 1.0 MB | `a780dff868dd02ea4e980dd4` |
+| **4h** | 240 mins | 2,338 | 1,258 | 58 | 0.84 MB | `14a42903e23a5c039a9b0989` |
 
 ---
 
