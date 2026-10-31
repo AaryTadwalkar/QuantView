@@ -392,6 +392,25 @@ export const api = {
 
   /**
    * 1. The use of function:
+   *    Updates Stop-Loss and Take-Profit price brackets on an active open paper derivative position.
+   *
+   * 2. How does the specific function work:
+   *    Dispatches PATCH request to /api/v1/paper/positions/{position_id}/brackets with updated price levels.
+   *
+   * 3. Concepts used in the function:
+   *    REST PATCH mutation, interactive bracket adjustment, 5-paise tick snapping.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by on-chart draggable SL/TP line drop handlers in apps/web/js/app.js.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Position ID and bracket levels payload. After: Promise resolving to updated PaperPosition.
+   */
+  updatePositionBrackets: (positionId, brackets) =>
+    req("PATCH", `/api/v1/paper/positions/${encodeURIComponent(positionId)}/brackets`, brackets),
+
+  /**
+   * 1. The use of function:
    *    Retrieves automated strategy monitoring records for macro dashboard view.
    *
    * 2. How does the specific function work:

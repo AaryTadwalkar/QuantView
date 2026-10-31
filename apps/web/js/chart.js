@@ -182,6 +182,9 @@ export class QuantChart {
     this.chartType = options.chartType || "candles";
     this.rawCandles = [];
     this.priceLines = [];
+    this.draggableLines = [];
+    this._draggingLine = null;
+    this._dragTooltipEl = null;
     this.tradeHighlightLines = [];
     this.markersPlugin = null;
     this.onSymbolChange = options.onSymbolChange || null;
@@ -275,6 +278,8 @@ export class QuantChart {
 
     this.drawings = new DrawingLayer(this);
     this.drawings.mount(this.container);
+
+    this._initDraggableLines();
 
     this.chart.subscribeCrosshairMove((p) => {
       this.drawings?.onCrosshair(p);
@@ -1018,6 +1023,9 @@ export class QuantChart {
    *    Before: Active price lines on canvas. After: All price lines removed.
    */
   clearPriceLines() {
+    this._hideDragTooltip();
+    this._draggingLine = null;
+    this.draggableLines = [];
     if (!this.main) {
       this.priceLines = [];
       this.tradeHighlightLines = [];
@@ -1041,6 +1049,398 @@ export class QuantChart {
       }
       this.tradeHighlightLines = [];
     }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Initializes DOM pointer event listeners for interactive SL/TP price line dragging.
+   *
+   * 2. How does the specific function work:
+   *    Attaches pointermove and pointerdown handlers to this.container and prepares bound window handlers.
+   *
+   * 3. Concepts used in the function:
+   *    DOM event delegation, pointer capture lifecycle.
+   *
+   * 4. Places where this function is imported and used:
+   *    Called by QuantChart.initChart().
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Container without drag listeners. After: Container configured for price line dragging.
+   */
+  _initDraggableLines() {
+    this._onPointerMoveBound = (e) => this._handleLinePointerMove(e);
+    this._onPointerDownBound = (e) => this._handleLinePointerDown(e);
+    this._onWindowPointerMoveBound = (e) => this._handleWindowPointerMove(e);
+    this._onWindowPointerUpBound = (e) => this._handleWindowPointerUp(e);
+
+    if (this.container) {
+      this.container.addEventListener("pointermove", this._onPointerMoveBound);
+      this.container.addEventListener("pointerdown", this._onPointerDownBound);
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Hit-tests draggable price lines to find if pointer Y coordinate intersects a registered line.
+   *
+   * 2. How does the specific function work:
+   *    Iterates over this.draggableLines, converts each price to pixel Y via this.priceToY(),
+   *    and returns the first line within an 8-pixel hit threshold.
+   *
+   * 3. Concepts used in the function:
+   *    Spatial hit-testing, tolerance thresholding.
+   *
+   * 4. Places where this function is imported and used:
+   *    Internal helper called by pointer event handlers in apps/web/js/chart.js.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Coordinate Y. After: Matched line descriptor or null.
+   */
+  _findDraggableLineAtY(y) {
+    if (!this.draggableLines || this.draggableLines.length === 0) return null;
+    for (const item of this.draggableLines) {
+      if (!item.draggable) continue;
+      const lineY = this.priceToY(item.price);
+      if (lineY != null && Math.abs(y - lineY) <= 8) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 1. The use of function:
+   *    Tracks hover state over chart lines to update the cursor to vertical-resize styling.
+   *
+   * 2. How does the specific function work:
+   *    Checks pointer Y against registered draggable lines and applies "ns-resize" cursor when hovered.
+   *
+   * 3. Concepts used in the function:
+   *    Interactive hover feedback, CSS cursor management.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by container pointermove listener.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Default cursor. After: Cursor updated to indicate draggable line affordance.
+   */
+  _handleLinePointerMove(e) {
+    if (this._draggingLine) return;
+    const rect = this.container.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const match = this._findDraggableLineAtY(y);
+    if (match) {
+      this.container.style.cursor = "ns-resize";
+    } else if (this.container.style.cursor === "ns-resize") {
+      this.container.style.cursor = "";
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Activates dragging mode when pointer is pressed down directly on an SL or TP line.
+   *
+   * 2. How does the specific function work:
+   *    - Intercepts event and prevents chart panning.
+   *    - Sets _draggingLine and records initial price and title.
+   *    - Displays real-time floating risk tooltip.
+   *    - Binds window move and drop listeners.
+   *
+   * 3. Concepts used in the function:
+   *    Drag initiation, pointer event cancellation, window capture.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by container pointerdown listener.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Idle state. After: Active drag mode enabled with window tracking.
+   */
+  _handleLinePointerDown(e) {
+    const rect = this.container.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const target = this._findDraggableLineAtY(y);
+    if (!target) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    this._draggingLine = target;
+    this._dragInitialPrice = target.price;
+    this._dragInitialTitle = target.title;
+    this.container.style.cursor = "ns-resize";
+
+    this._showDragTooltip(e.clientX, e.clientY, target.type, target.price);
+
+    window.addEventListener("pointermove", this._onWindowPointerMoveBound);
+    window.addEventListener("pointerup", this._onWindowPointerUpBound);
+    window.addEventListener("pointercancel", this._onWindowPointerUpBound);
+  }
+
+  /**
+   * 1. The use of function:
+   *    Updates line position and floating risk tooltip in real time during drag movement.
+   *
+   * 2. How does the specific function work:
+   *    - Translates pointer Y to price via coordinateToPrice(y).
+   *    - Snaps price to 5-paise tick multiples (Math.round(raw * 20) / 20).
+   *    - Calculates rupee PnL difference and percentage relative to position entry price.
+   *    - Updates Lightweight Charts price line and updates floating tooltip DOM coordinates.
+   *
+   * 3. Concepts used in the function:
+   *    5-paise tick quantization, real-time Rupee risk calculation, dynamic tooltip positioning.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by window pointermove listener while dragging.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Previous line position. After: Line snapped to new tick with updated risk telemetry.
+   */
+  _handleWindowPointerMove(e) {
+    if (!this._draggingLine) return;
+    e.preventDefault();
+
+    const rect = this.container.getBoundingClientRect();
+    const y = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+    const rawPrice = this.coordinateToPrice(y);
+    if (rawPrice == null || !Number.isFinite(rawPrice) || rawPrice <= 0) return;
+
+    // 1. Snaps line price to 5-paise tick intervals (₹0.05)
+    const snappedPrice = Math.round(rawPrice * 20.0) / 20.0;
+    this._draggingLine.price = snappedPrice;
+
+    // 2. Computes real-time Rupee difference and return percentage
+    const entry = this._draggingLine.entryPrice || snappedPrice;
+    const qty = this._draggingLine.quantity || 1;
+    const isBuy = (this._draggingLine.side || "BUY").toUpperCase() === "BUY";
+    const deltaPrice = isBuy ? (snappedPrice - entry) : (entry - snappedPrice);
+    const rupeeDiff = deltaPrice * qty;
+    const pctDiff = entry > 0 ? (deltaPrice / entry) * 100.0 : 0.0;
+
+    const sign = rupeeDiff >= 0 ? "+" : "-";
+    const rupeeStr = `${sign}₹${Math.abs(rupeeDiff).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const pctStr = `${pctDiff >= 0 ? "+" : ""}${pctDiff.toFixed(1)}%`;
+    const formattedTitle = `${this._draggingLine.type}: ₹${snappedPrice.toFixed(2)} (${rupeeStr} / ${pctStr})`;
+
+    try {
+      this._draggingLine.handle.applyOptions({
+        price: snappedPrice,
+        title: formattedTitle,
+      });
+    } catch {
+      /* ignore */
+    }
+
+    this._updateDragTooltip(e.clientX, e.clientY, this._draggingLine.type, snappedPrice, rupeeStr, pctStr, rupeeDiff >= 0);
+  }
+
+  /**
+   * 1. The use of function:
+   *    Concludes drag interaction on pointerup, dispatches update callback or reverts on failure.
+   *
+   * 2. How does the specific function work:
+   *    - Cleans up window event listeners and hides tooltip.
+   *    - Constructs revert closure that restores the line to pre-drag coordinates.
+   *    - Dispatches onDrop(newPrice, revertFn) callback to persist changes via REST API.
+   *
+   * 3. Concepts used in the function:
+   *    Drag termination, optimistic UI update with atomic revert capability.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by window pointerup listener.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Active dragging line. After: Settled line state with persistence triggered.
+   */
+  _handleWindowPointerUp(e) {
+    if (!this._draggingLine) return;
+    window.removeEventListener("pointermove", this._onWindowPointerMoveBound);
+    window.removeEventListener("pointerup", this._onWindowPointerUpBound);
+    window.removeEventListener("pointercancel", this._onWindowPointerUpBound);
+
+    this._hideDragTooltip();
+    this.container.style.cursor = "";
+
+    const target = this._draggingLine;
+    const initialPrice = this._dragInitialPrice;
+    const initialTitle = this._dragInitialTitle;
+    this._draggingLine = null;
+
+    if (target.price === initialPrice) {
+      return;
+    }
+
+    const revert = () => {
+      target.price = initialPrice;
+      target.title = initialTitle;
+      try {
+        target.handle.applyOptions({
+          price: initialPrice,
+          title: initialTitle,
+        });
+      } catch {
+        /* ignore */
+      }
+    };
+
+    if (typeof target.onDrop === "function") {
+      target.onDrop(target.price, revert);
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Renders and positions the floating real-time Rupee risk tooltip during line drag.
+   *
+   * 2. How does the specific function work:
+   *    Creates tooltip element on document.body if not present, styles it with high z-index,
+   *    and positions it beside the cursor.
+   *
+   * 3. Concepts used in the function:
+   *    Floating DOM overlay, real-time spatial positioning.
+   *
+   * 4. Places where this function is imported and used:
+   *    Called by _handleLinePointerDown.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Tooltip hidden. After: Tooltip displayed near cursor.
+   */
+  _showDragTooltip(clientX, clientY, type, price) {
+    if (!this._dragTooltipEl) {
+      this._dragTooltipEl = document.createElement("div");
+      this._dragTooltipEl.className = "chart-drag-risk-tooltip";
+      this._dragTooltipEl.style.position = "fixed";
+      this._dragTooltipEl.style.zIndex = "99999";
+      this._dragTooltipEl.style.pointerEvents = "none";
+      this._dragTooltipEl.style.background = "rgba(19, 23, 34, 0.95)";
+      this._dragTooltipEl.style.border = "1px solid rgba(255, 255, 255, 0.18)";
+      this._dragTooltipEl.style.borderRadius = "4px";
+      this._dragTooltipEl.style.padding = "4px 8px";
+      this._dragTooltipEl.style.fontSize = "11px";
+      this._dragTooltipEl.style.fontFamily = "var(--mono, monospace)";
+      this._dragTooltipEl.style.boxShadow = "0 4px 14px rgba(0, 0, 0, 0.5)";
+      this._dragTooltipEl.style.color = "#fff";
+      document.body.appendChild(this._dragTooltipEl);
+    }
+    this._dragTooltipEl.style.display = "block";
+    this._dragTooltipEl.innerHTML = `<b>${type}:</b> ₹${price.toFixed(2)}`;
+    this._dragTooltipEl.style.left = `${clientX + 16}px`;
+    this._dragTooltipEl.style.top = `${clientY - 28}px`;
+  }
+
+  /**
+   * 1. The use of function:
+   *    Updates text and coordinates of the active drag risk tooltip.
+   *
+   * 2. How does the specific function work:
+   *    Injects updated price, rupee delta, and percentage return with color-coded typography.
+   *
+   * 3. Concepts used in the function:
+   *    Dynamic DOM update, color-coded PnL styling.
+   *
+   * 4. Places where this function is imported and used:
+   *    Called by _handleWindowPointerMove.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Prior price tooltip. After: Updated tooltip showing real-time rupee difference.
+   */
+  _updateDragTooltip(clientX, clientY, type, price, rupeeStr, pctStr, isPositive) {
+    if (!this._dragTooltipEl) return;
+    const color = isPositive ? "#26a69a" : "#ef5350";
+    this._dragTooltipEl.innerHTML = `<b>${type}:</b> ₹${price.toFixed(2)} <span style="color:${color};font-weight:600;">(${rupeeStr} / ${pctStr})</span>`;
+    this._dragTooltipEl.style.left = `${clientX + 16}px`;
+    this._dragTooltipEl.style.top = `${clientY - 28}px`;
+  }
+
+  /**
+   * 1. The use of function:
+   *    Hides the floating drag risk tooltip upon drag completion or cancellation.
+   *
+   * 2. How does the specific function work:
+   *    Sets display style to none.
+   *
+   * 3. Concepts used in the function:
+   *    DOM visibility toggle.
+   *
+   * 4. Places where this function is imported and used:
+   *    Called by _handleWindowPointerUp, clearPriceLines, and destroy.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Tooltip visible. After: Tooltip hidden.
+   */
+  _hideDragTooltip() {
+    if (this._dragTooltipEl) {
+      this._dragTooltipEl.style.display = "none";
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Registers an interactive draggable Stop-Loss or Take-Profit horizontal price line.
+   *
+   * 2. How does the specific function work:
+   *    - Calls this.main.createPriceLine with price level, color, title, and styling options.
+   *    - Registers descriptor in this.draggableLines with entry price, quantity, side, and onDrop callback.
+   *    - Returns price line handle.
+   *
+   * 3. Concepts used in the function:
+   *    Interactive chart overlays, position bracket management.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by renderOnChartOrderLines in apps/web/js/app.js.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: No bracket line. After: Interactive draggable price line rendered and tracked.
+   */
+  addDraggablePriceLine({
+    id,
+    type = "SL",
+    price,
+    color = "#f44336",
+    title = "",
+    lineStyle = 2,
+    lineWidth = 1,
+    positionId = null,
+    entryPrice = null,
+    quantity = 1,
+    side = "BUY",
+    draggable = true,
+    onDrop = null,
+  }) {
+    if (!this.main || price == null || !Number.isFinite(price)) return null;
+
+    const handle = this.main.createPriceLine({
+      price,
+      color,
+      lineWidth: lineWidth || 1,
+      lineStyle,
+      axisLabelVisible: true,
+      title: title || "",
+    });
+
+    this.priceLines.push(handle);
+
+    const record = {
+      handle,
+      id: id || `${type.toLowerCase()}-${Date.now()}`,
+      type: type.toUpperCase(),
+      price,
+      initialPrice: price,
+      title: title || "",
+      initialTitle: title || "",
+      color,
+      lineStyle,
+      lineWidth,
+      positionId,
+      entryPrice: entryPrice != null ? entryPrice : price,
+      quantity: quantity || 1,
+      side: side || "BUY",
+      draggable: Boolean(draggable),
+      onDrop,
+    };
+
+    if (!this.draggableLines) this.draggableLines = [];
+    this.draggableLines.push(record);
+    return handle;
   }
 
   /**
@@ -1801,6 +2201,20 @@ export class QuantChart {
    *    Before: Active chart holding DOM and canvas resources. After: Cleanly released instance.
    */
   destroy() {
+    this._hideDragTooltip();
+    if (this._dragTooltipEl && this._dragTooltipEl.parentNode) {
+      this._dragTooltipEl.parentNode.removeChild(this._dragTooltipEl);
+      this._dragTooltipEl = null;
+    }
+    if (this._onPointerMoveBound && this.container) {
+      this.container.removeEventListener("pointermove", this._onPointerMoveBound);
+      this.container.removeEventListener("pointerdown", this._onPointerDownBound);
+    }
+    if (this._onWindowPointerMoveBound) {
+      window.removeEventListener("pointermove", this._onWindowPointerMoveBound);
+      window.removeEventListener("pointerup", this._onWindowPointerUpBound);
+      window.removeEventListener("pointercancel", this._onWindowPointerUpBound);
+    }
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
     }

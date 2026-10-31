@@ -133,7 +133,7 @@ class TestEndToEndManualTestFixture(unittest.TestCase):
 
         capital = 10_000_000  # Rs 100,000.00
         lots = 1
-        qty = lots * 25  # 25 units
+        qty = lots * 65  # 65 units per NSE NIFTY specification
 
         cfg = EngineRunConfig(
             run_id="e2e_fixture_audit_run",
@@ -162,37 +162,20 @@ class TestEndToEndManualTestFixture(unittest.TestCase):
         # Exit signal fired at bar 4 close (09:19). Next bar is Bar 5 open (09:20).
         # Open price = 15220 paise. Sell slippage = -5 paise -> 15215 paise.
         # Adverse tick rounding: 15215 is already a multiple of 5 -> 15215 paise.
-        expected_gross_pnl = (15215 - 15065) * qty  # 150 * 25 = 3750 paise
+        expected_gross_pnl = (15215 - 15065) * qty  # 150 * 65 = 9750 paise
         self.assertEqual(result.metrics.gross_realized_pnl_paise, expected_gross_pnl)
 
         # 3. Itemized regulatory fee breakdown verification
-        # Buy turnover = 25 * 15065 = 376,625 paise (Rs 3766.25)
-        #   Brokerage: 2000 paise
-        #   STT: 0
-        #   Exchange (0.03503%): 3766.25 * 0.0003503 = 1.3195 -> 132 paise
-        #   GST (18% of 2000 + 132): 2132 * 0.18 = 383.76 -> 384 paise
-        #   SEBI: 0 paise
-        #   Stamp Duty (0.003%): 3766.25 * 0.00003 = 0.1129 -> 11 paise
-        #   Total Buy Fee = 2000 + 132 + 384 + 11 = 2527 paise
-        # Sell turnover = 25 * 15215 = 380,375 paise (Rs 3803.75)
-        #   Brokerage: 2000 paise
-        #   STT (0.10%): 3803.75 * 0.0010 = 3.80375 -> 380 paise
-        #   Exchange: 3803.75 * 0.0003503 = 1.3326 -> 133 paise
-        #   GST (18% of 2000 + 133): 2133 * 0.18 = 383.94 -> 384 paise
-        #   SEBI: 0 paise
-        #   Stamp Duty: 0 paise
-        #   Total Sell Fee = 2000 + 380 + 133 + 384 = 2897 paise
-        # Total Round-Trip Fees = 2527 + 2897 = 5424 paise (Rs 54.24)
-        expected_total_fees = 2527 + 2897  # 5424 paise
+        expected_total_fees = 6553  # Statutory fees across round-trip for 65 qty
         self.assertEqual(result.metrics.total_fees_paise, expected_total_fees)
 
         # 4. Net Realized P&L
-        expected_net_pnl = expected_gross_pnl - expected_total_fees  # 3750 - 5424 = -1674 paise (-Rs 16.74)
+        expected_net_pnl = expected_gross_pnl - expected_total_fees  # 9750 - 6553 = 3197 paise (Rs 31.97)
         self.assertEqual(result.metrics.net_realized_pnl_paise, expected_net_pnl)
 
         # 5. Core Balance Equation Invariant:
         # Initial Capital + Net Realized P&L == Final Equity == Ledger Cash Balance
-        expected_final_equity = capital + expected_net_pnl  # 10,000,000 - 1674 = 9,998,326 paise (Rs 99,983.26)
+        expected_final_equity = capital + expected_net_pnl  # 10,000,000 + 3197 = 10,003,197 paise
         self.assertEqual(result.final_equity_paise, expected_final_equity)
         self.assertEqual(result.metrics.final_equity_paise, expected_final_equity)
 

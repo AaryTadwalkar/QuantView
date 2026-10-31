@@ -16,6 +16,7 @@
    - Exported RiskPolicyEvaluator class.
 """
 
+import math
 from typing import Optional
 
 from packages.domain import ContractIdentifier, Paise
@@ -45,9 +46,23 @@ class RiskPolicyEvaluator:
         rules: Optional[RiskRules] = None,
         max_loss_paise: Optional[Paise] = None,
         freeze_quantity: int = 1800,
+        advisory_lot_ceiling: Optional[int] = None,
     ) -> None:
         """
-        Initializes RiskPolicyEvaluator with either a RiskRules model or direct parameters.
+        1. The use of function:
+           Initializes RiskPolicyEvaluator with either a RiskRules model or direct parameters.
+
+        2. How does the specific function work:
+           Configures RiskRules container and sets local property overrides for maximum loss, freeze limit, and advisory ceiling.
+
+        3. Concepts used in the function:
+           Risk configuration encapsulation, fail-closed defaults.
+
+        4. Places where this function is imported and used:
+           Used across backtest engine, live daemon broker, and risk inspection endpoints.
+
+        5. Final output of the function, before and after:
+           Before: Uninitialized evaluator. After: Initialized RiskPolicyEvaluator instance.
         """
         if rules is not None:
             self.rules = rules
@@ -55,11 +70,13 @@ class RiskPolicyEvaluator:
             self.rules = RiskRules(
                 max_loss_per_day_paise=int(max_loss_paise) if max_loss_paise is not None else None,
                 freeze_quantity=freeze_quantity,
+                advisory_lot_ceiling=advisory_lot_ceiling,
             )
         self.max_loss_paise = max_loss_paise or (
             Paise(self.rules.max_loss_per_day_paise) if self.rules.max_loss_per_day_paise is not None else None
         )
         self.freeze_quantity = self.rules.freeze_quantity
+        self.advisory_lot_ceiling = self.rules.advisory_lot_ceiling
 
     def evaluate_order(
         self,
@@ -78,10 +95,20 @@ class RiskPolicyEvaluator:
            - RK-01: Checks kill switch.
            - RK-02: Checks trading window bounds.
            - RK-06: Checks hard freeze quantity limit.
+           - RK-26: Checks advisory lot ceiling threshold.
            - RK-03: Checks daily loss limit.
            - RK-04: Checks maximum drawdown percentage.
            - RK-05: Checks max capital per trade.
            - Returns RiskDecision with verdict PASS or REJECT.
+
+        3. Concepts used in the function:
+           Pre-trade risk filtering, multi-rule sequential validation, fail-closed gating.
+
+        4. Places where this function is imported and used:
+           Used by BacktestRunner, PaperBroker, and live order routers.
+
+        5. Final output of the function, before and after:
+           Before: Candidate order parameters. After: RiskDecision verdict (PASS or REJECT).
         """
         # 1. Kill Switch Check (RK-01)
         if self.rules.kill_switch_active:
@@ -98,6 +125,17 @@ class RiskPolicyEvaluator:
                 rule_id="RK-06",
                 reason=f"Order quantity {quantity} exceeds hard exchange freeze limit {self.freeze_quantity}.",
             )
+
+        # 2b. Advisory Lot Ceiling Check (RK-26)
+        if self.rules.advisory_lot_ceiling is not None:
+            lot_size = getattr(contract, "lot_size", 25) or 25
+            order_lots = math.ceil(quantity / lot_size)
+            if order_lots > self.rules.advisory_lot_ceiling:
+                return RiskDecision(
+                    verdict=RiskVerdict.REJECT,
+                    rule_id="RK-26",
+                    reason=f"Order lot size ({order_lots} lots) exceeds advisory lot ceiling ({self.rules.advisory_lot_ceiling} lots).",
+                )
 
         # 3. Trading Window Check (RK-02)
         if current_time_str is not None:

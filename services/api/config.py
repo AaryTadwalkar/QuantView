@@ -45,6 +45,7 @@ class ApiConfig:
     port: int = 8000
     lake_path: str = "Data/lake/quantview.duckdb"
     web_static_dir: str = "apps/web"
+    daemon_url: str = "http://127.0.0.1:8001"
     cors_origins: List[str] = field(
         default_factory=lambda: ["http://localhost:8000", "http://127.0.0.1:8000"]
     )
@@ -58,6 +59,7 @@ def get_api_config(
     port: Optional[int] = None,
     lake_path: Optional[str] = None,
     web_static_dir: Optional[str] = None,
+    daemon_url: Optional[str] = None,
     cors_origins: Optional[List[str]] = None,
     reset: bool = False,
 ) -> ApiConfig:
@@ -92,6 +94,7 @@ def get_api_config(
 
     env_lake = os.getenv("QV_LAKE_PATH", "Data/lake/quantview.duckdb")
     env_web = os.getenv("QV_WEB_STATIC_DIR", "apps/web")
+    env_daemon = os.getenv("QV_DAEMON_URL", "http://127.0.0.1:8001")
     env_cors = os.getenv("QV_CORS_ORIGINS")
 
     resolved_cors: List[str]
@@ -107,6 +110,7 @@ def get_api_config(
         port=port if port is not None else env_port,
         lake_path=lake_path or env_lake,
         web_static_dir=web_static_dir or env_web,
+        daemon_url=daemon_url or env_daemon,
         cors_origins=resolved_cors,
     )
 

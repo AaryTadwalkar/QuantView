@@ -1,16 +1,17 @@
 """
 1. What this file does:
    Defines Pydantic data schemas and response containers for manual paper trading,
-   discretionary execution, risk policy inspection, and macro automated strategy monitoring
-   (Milestones M6-06, M6-14, M6-18, and Release Gate G4).
+   discretionary execution, risk policy inspection, macro automated strategy monitoring,
+   and interactive bracket updates (Milestones M6-06, M6-14, M6-18, M7-08, and Release Gates G4/G5).
 
 2. Overall design:
    Provides strongly typed request models and immutable response containers:
      - PaperAccount: Account financial ledger snapshot with dynamic equity and margin balances.
-     - PaperPosition: Real-time open derivative position with mark-to-market PnL metrics.
+     - PaperPosition: Real-time open derivative position with mark-to-market PnL metrics and SL/TP brackets.
+     - UpdateBracketsRequest: Request payload for updating Stop-Loss and Take-Profit bracket levels.
      - ChartPriceLines: Visual entry price, stop-loss, and take-profit chart overlay coordinates.
      - PaperOrderRequest: Validated payload for discretionary or one-click paper order submission.
-     - PaperOrderResponse: Immediate fill confirmation payload containing computed chart lines.
+     - PaperOrderResponse: Immediate fill confirmation payload containing computed chart lines and position ID.
      - PaperOrder: Historical and working order state container.
      - PaperTrade: Executed trade audit record.
      - PaperStrategyMacro: High-level automated strategy monitoring record for macro dashboard view.
@@ -18,7 +19,8 @@
 
 3. Elements in the file:
    - PaperAccount: Account ledger summary schema.
-   - PaperPosition: Derivative position tracking schema.
+   - PaperPosition: Derivative position tracking schema with bracket price levels.
+   - UpdateBracketsRequest: Bracket modification request schema for SL/TP adjustments.
    - ChartPriceLines: Lightweight Charts price lines schema.
    - PaperOrderRequest: Discretionary order submission schema.
    - PaperOrderResponse: Order execution and fill confirmation schema.
@@ -101,7 +103,7 @@ class PaperAccount(BaseModel):
 class PaperPosition(BaseModel):
     """
     1. The use of class:
-       Represents an active open derivative paper position with real-time mark-to-market PnL.
+       Represents an active open derivative paper position with real-time mark-to-market PnL and brackets.
 
     2. What the class contains:
        - position_id: Unique position identifier.
@@ -118,12 +120,14 @@ class PaperPosition(BaseModel):
        - pnl_rupees: Net open profit or loss in INR.
        - pnl_pct: Percentage return on investment relative to entry value.
        - entry_time: Unix epoch timestamp seconds of initial position fill.
+       - stop_loss_price: Optional Stop-Loss bracket price level in INR.
+       - take_profit_price: Optional Take-Profit bracket price level in INR.
 
     3. Technologies used and why:
-       Pydantic BaseModel with ConfigDict for micro console table rendering.
+       Pydantic BaseModel with ConfigDict for micro console table rendering and bracket tracking.
 
     4. Key design and overall design of the class:
-       Encapsulates all attributes required for one-click square-off and risk monitoring.
+       Encapsulates all attributes required for one-click square-off, chart SL/TP dragging, and risk monitoring.
     """
     model_config = ConfigDict(extra="ignore")
 
@@ -141,6 +145,29 @@ class PaperPosition(BaseModel):
     pnl_rupees: float = Field(default=0.0, description="Unrealized mark-to-market PnL in INR")
     pnl_pct: float = Field(default=0.0, description="Unrealized PnL percentage")
     entry_time: int = Field(..., description="Entry timestamp in UTC epoch seconds")
+    stop_loss_price: Optional[float] = Field(default=None, description="Stop-loss price in INR")
+    take_profit_price: Optional[float] = Field(default=None, description="Take-profit price in INR")
+
+
+class UpdateBracketsRequest(BaseModel):
+    """
+    1. The use of class:
+       Request payload for modifying Stop-Loss and Take-Profit bracket levels on an active paper position.
+
+    2. What the class contains:
+       - stop_loss_price: Optional updated Stop-Loss price level in INR.
+       - take_profit_price: Optional updated Take-Profit price level in INR.
+
+    3. Technologies used and why:
+       Pydantic v2 BaseModel with ConfigDict for strict JSON request payload parsing.
+
+    4. Key design and overall design of the class:
+       Provides decoupled bracket modification coordinates for interactive chart-level dragging.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    stop_loss_price: Optional[float] = Field(default=None, description="Updated stop-loss price in INR")
+    take_profit_price: Optional[float] = Field(default=None, description="Updated take-profit price in INR")
 
 
 class PaperOrderRequest(BaseModel):
@@ -264,6 +291,7 @@ class PaperOrderResponse(BaseModel):
        - order_id: Unique assigned order identifier string.
        - account_id: Associated account identifier string.
        - contract_id: Executed contract identifier string.
+       - position_id: Optional assigned position identifier for bracket tracking.
        - status: Execution state ('FILLED', 'PENDING', 'REJECTED').
        - side: Order side direction ('BUY' | 'SELL').
        - quantity: Filled contract quantity.
@@ -276,13 +304,14 @@ class PaperOrderResponse(BaseModel):
        Pydantic BaseModel for deterministic JSON API serialization.
 
     4. Key design and overall design of the class:
-       Returns chart price lines directly so the UI can plot markers without second round-trip.
+       Returns chart price lines and position ID directly so the UI can plot interactive markers.
     """
     model_config = ConfigDict(extra="ignore")
 
     order_id: str = Field(..., description="Unique order identifier")
     account_id: str = Field(..., description="Target account identifier")
     contract_id: str = Field(..., description="Contract identifier")
+    position_id: Optional[str] = Field(default=None, description="Position identifier for bracket tracking")
     status: str = Field(..., description="Order execution status ('FILLED' | 'PENDING' | 'REJECTED')")
     side: str = Field(..., description="Order side ('BUY' | 'SELL')")
     quantity: int = Field(..., description="Executed order quantity")

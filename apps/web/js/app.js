@@ -860,7 +860,7 @@ export class QuantApp {
         try {
           const msg = JSON.parse(evt.data);
           if (msg.type === "tick" || (msg.symbol && msg.symbol.includes("NIFTY"))) {
-            const price = Number(msg.price || msg.last_price || msg.close);
+            const price = Number(msg.price || msg.last_price || msg.close || msg.data?.ltp || msg.data?.last_price || msg.data?.close);
             if (Number.isFinite(price) && price > 0) {
               this.currentSpot = price;
               const spotEl = document.getElementById("spotVal");
@@ -872,8 +872,8 @@ export class QuantApp {
               if (this.chart) {
                 this.chart.updateLiveBar({
                   price: price,
-                  time: msg.time || Math.floor(Date.now() / 1000),
-                  volume: msg.volume || 0,
+                  time: msg.time || (msg.data?.timestamp_ns ? Math.floor(msg.data.timestamp_ns / 1_000_000_000) : Math.floor(Date.now() / 1000)),
+                  volume: msg.volume || msg.data?.volume || 0,
                 });
               }
               const chainSpotText = document.getElementById("chainSpotText");
@@ -881,6 +881,19 @@ export class QuantApp {
                 const atm = Math.round(price / 50) * 50;
                 chainSpotText.textContent = `₹${fmtPrice(price)} (ATM: ${atm})`;
               }
+            }
+          } else if (msg.type === "candle" || msg.type === "candle_finalized") {
+            if (msg.data && this.chart) {
+              const c = msg.data;
+              this.chart.updateLiveBar({
+                price: Number(c.close || c.ltp),
+                time: c.bar_start || c.time,
+                open: c.open,
+                high: c.high,
+                low: c.low,
+                close: c.close,
+                volume: c.volume || 0,
+              });
             }
           } else if (msg.type === "option_tick") {
             this.updateOptionChainLiveTick(msg);
@@ -2004,6 +2017,10 @@ export class QuantApp {
 
     this.chart.clearPriceLines();
 
+    const isBuy = (side || "BUY").toUpperCase() === "BUY";
+    const qty = resp.quantity || 65;
+    const posId = resp.position_id || null;
+
     // 1. Entry price line (Cyan/Blue solid line #00bcd4)
     if (resp.fill_price && resp.fill_price > 0) {
       this.chart.addPriceLine({
@@ -2015,29 +2032,93 @@ export class QuantApp {
       });
     }
 
-    // 2. Stop-loss line (Red dashed line #f44336)
+    // 2. Stop-loss line (Red dashed line #f44336) - Interactive Draggable
     if (resp.chart_lines?.stop_loss) {
       const sl = resp.chart_lines.stop_loss;
-      const slPct = resp.fill_price > 0 ? (((sl - resp.fill_price) / resp.fill_price) * 100) : 0;
-      this.chart.addPriceLine({
+      const slDelta = isBuy ? (sl - resp.fill_price) : (resp.fill_price - sl);
+      const slPct = resp.fill_price > 0 ? (slDelta / resp.fill_price) * 100 : 0;
+      const slRupees = slDelta * qty;
+      const slRupeeStr = (slRupees >= 0 ? "+₹" : "-₹") + Math.abs(slRupees).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const slPctStr = (slPct >= 0 ? "+" : "") + slPct.toFixed(1) + "%";
+
+      this.chart.addDraggablePriceLine({
+        id: "sl",
+        type: "SL",
         price: sl,
         color: "#f44336",
-        title: `SL: ₹${sl.toFixed(2)} (${slPct < 0 ? "" : "+"}${slPct.toFixed(1)}%)`,
+        title: `SL: ₹${sl.toFixed(2)} (${slRupeeStr} / ${slPctStr})`,
         lineStyle: 2, // Dashed
         lineWidth: 1,
+        positionId: posId,
+        entryPrice: resp.fill_price,
+        quantity: qty,
+        side: side,
+        draggable: Boolean(posId),
+        onDrop: async (newPrice, revert) => {
+          try {
+            if (!posId) {
+              throw new Error("No active position ID for bracket modification");
+            }
+            await api.updatePositionBrackets(posId, {
+              stop_loss_price: newPrice,
+            });
+            if (!resp.chart_lines) resp.chart_lines = {};
+            resp.chart_lines.stop_loss = newPrice;
+            this.toast(`Stop-Loss updated to ₹${newPrice.toFixed(2)}`, "ok");
+            const paperContainer = document.getElementById("paperTab");
+            if (paperContainer && this.activeTab === "paper") {
+              this.renderPaperTrading(paperContainer);
+            }
+          } catch (err) {
+            revert();
+            this.toast(`Failed to update Stop-Loss: ${err.message}`, "err");
+          }
+        },
       });
     }
 
-    // 3. Take-profit line (Green dashed line #4caf50)
+    // 3. Take-profit line (Green dashed line #4caf50) - Interactive Draggable
     if (resp.chart_lines?.take_profit) {
       const tp = resp.chart_lines.take_profit;
-      const tpPct = resp.fill_price > 0 ? (((tp - resp.fill_price) / resp.fill_price) * 100) : 0;
-      this.chart.addPriceLine({
+      const tpDelta = isBuy ? (tp - resp.fill_price) : (resp.fill_price - tp);
+      const tpPct = resp.fill_price > 0 ? (tpDelta / resp.fill_price) * 100 : 0;
+      const tpRupees = tpDelta * qty;
+      const tpRupeeStr = (tpRupees >= 0 ? "+₹" : "-₹") + Math.abs(tpRupees).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const tpPctStr = (tpPct >= 0 ? "+" : "") + tpPct.toFixed(1) + "%";
+
+      this.chart.addDraggablePriceLine({
+        id: "tp",
+        type: "TP",
         price: tp,
         color: "#4caf50",
-        title: `TP: ₹${tp.toFixed(2)} (+${Math.abs(tpPct).toFixed(1)}%)`,
+        title: `TP: ₹${tp.toFixed(2)} (${tpRupeeStr} / ${tpPctStr})`,
         lineStyle: 2, // Dashed
         lineWidth: 1,
+        positionId: posId,
+        entryPrice: resp.fill_price,
+        quantity: qty,
+        side: side,
+        draggable: Boolean(posId),
+        onDrop: async (newPrice, revert) => {
+          try {
+            if (!posId) {
+              throw new Error("No active position ID for bracket modification");
+            }
+            await api.updatePositionBrackets(posId, {
+              take_profit_price: newPrice,
+            });
+            if (!resp.chart_lines) resp.chart_lines = {};
+            resp.chart_lines.take_profit = newPrice;
+            this.toast(`Take-Profit updated to ₹${newPrice.toFixed(2)}`, "ok");
+            const paperContainer = document.getElementById("paperTab");
+            if (paperContainer && this.activeTab === "paper") {
+              this.renderPaperTrading(paperContainer);
+            }
+          } catch (err) {
+            revert();
+            this.toast(`Failed to update Take-Profit: ${err.message}`, "err");
+          }
+        },
       });
     }
 
@@ -2065,6 +2146,43 @@ export class QuantApp {
         });
       }
     }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Renders on-chart interactive draggable Entry, SL, and TP lines for an active open PaperPosition.
+   *
+   * 2. How does the specific function work:
+   *    Extracts position fill price, calculates default or registered SL/TP levels,
+   *    and delegates to renderOnChartOrderLines with positionId attached for interactive dragging.
+   *
+   * 3. Concepts used in the function:
+   *    Chart overlay synchronization, interactive bracket manipulation.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by clicking a position row in the paper trading micro console.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Bare chart. After: Chart overlaid with interactive draggable SL/TP bracket lines.
+   */
+  renderOnChartPositionLines(pos) {
+    if (!pos || !this.chart) return;
+    const isBuy = pos.side === "BUY";
+    const defaultSl = isBuy ? Number((pos.entry_price * 0.90).toFixed(2)) : Number((pos.entry_price * 1.10).toFixed(2));
+    const defaultTp = isBuy ? Number((pos.entry_price * 1.15).toFixed(2)) : Number((pos.entry_price * 0.85).toFixed(2));
+
+    const fakeResp = {
+      position_id: pos.position_id,
+      fill_price: pos.entry_price,
+      quantity: pos.quantity,
+      chart_lines: {
+        entry: pos.entry_price,
+        stop_loss: pos.stop_loss_price != null ? pos.stop_loss_price : defaultSl,
+        take_profit: pos.take_profit_price != null ? pos.take_profit_price : defaultTp,
+      },
+    };
+    this.renderOnChartOrderLines(fakeResp, pos.contract_id || pos.symbol, pos.side);
+    this.toast(`Viewing draggable brackets for ${pos.contract_id || pos.symbol}`, "info");
   }
 
   /**
@@ -3234,6 +3352,17 @@ export class QuantApp {
         });
       });
 
+      // Event Listeners: Position Row Click -> View & Drag Brackets on Chart
+      container.querySelectorAll(".position-interactive-row").forEach((row) => {
+        row.addEventListener("click", (e) => {
+          if (e.target.closest(".btn-square-off")) return;
+          const pos = posList.find((item) => item.position_id === row.dataset.id);
+          if (pos) {
+            this.renderOnChartPositionLines(pos);
+          }
+        });
+      });
+
       // Event Listeners: Working Order Cancellation
       container.querySelectorAll(".btn-cancel-order").forEach((btn) => {
         btn.addEventListener("click", async () => {
@@ -3291,7 +3420,7 @@ export class QuantApp {
             ${posList
               .map(
                 (p) => `
-              <tr>
+              <tr class="position-interactive-row" data-id="${p.position_id}" style="cursor:pointer;" title="Click to view &amp; drag SL/TP brackets on chart">
                 <td><b>${esc(p.contract_id || p.symbol)}</b></td>
                 <td><span class="status-pill ${p.side === "BUY" ? "filled" : "rejected"}">${p.side}</span></td>
                 <td><b>${p.quantity}</b></td>

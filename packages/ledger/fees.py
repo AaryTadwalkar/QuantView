@@ -294,6 +294,20 @@ UPSTOX_2026_APR = FeeSchedule(
     stamp_duty_rate_sell=Decimal("0"),
 )
 
+UPSTOX_2026_V1 = FeeSchedule(
+    name="UPSTOX_2026_V1",
+    effective_from=date(2026, 1, 1),
+    effective_to=None,  # Standard 2026 regulatory schedule
+    brokerage_per_order_paise=Paise(2000),
+    stt_rate_sell=Decimal("0.0015"),  # 0.15% (15 bps)
+    stt_rate_buy=Decimal("0"),
+    exchange_turnover_rate=Decimal("0.0003553"),  # 0.03553%
+    gst_rate=Decimal("0.18"),
+    sebi_turnover_rate=Decimal("0.000001"),
+    stamp_duty_rate_buy=Decimal("0.00003"),
+    stamp_duty_rate_sell=Decimal("0"),
+)
+
 
 class FeeScheduleEngine:
     """
@@ -385,22 +399,27 @@ class FeeScheduleEngine:
     def resolve_schedule(self, trade_date: Union[date, datetime, str]) -> FeeSchedule:
         """
         1. The use of function:
-           Resolves the effective statutory fee schedule for a given trade date.
+           Resolves the effective statutory fee schedule for a given trade date or schedule name.
 
         2. How does the specific function work:
-           Normalizes trade_date and iterates through registered schedules in order.
+           If trade_date matches a registered schedule's name, returns that schedule directly.
+           Otherwise normalizes trade_date and iterates through registered schedules in order.
            Returns the first matching schedule where schedule.is_effective(d) is True.
            If no schedule matches, raises ValueError (fail-closed).
 
         3. Concepts used in the function:
-           Point-in-time regulatory resolution, fail-closed security.
+           Point-in-time regulatory resolution, schedule name aliasing, fail-closed security.
 
         4. Places where this function is imported and used:
            Called during fill evaluation and order fee accounting.
 
         5. Final output of the function, before and after:
-           Before: Target trade date. After: Active FeeSchedule instance.
+           Before: Target trade date or name. After: Active FeeSchedule instance.
         """
+        if isinstance(trade_date, str):
+            for sched in self._schedules:
+                if sched.name == trade_date:
+                    return sched
         d = self._normalize_date(trade_date)
         for sched in self._schedules:
             if sched.is_effective(d):

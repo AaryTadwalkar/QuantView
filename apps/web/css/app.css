@@ -1681,6 +1681,23 @@ table.chain-table td.itm-pe {
   color: #fff;
 }
 
+.chart-drag-risk-tooltip {
+  position: fixed;
+  z-index: 99999;
+  pointer-events: none;
+  background: rgba(19, 23, 34, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: var(--mono, monospace);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  user-select: none;
+}
+
 .chart-option-return-bar {
   position: absolute;
   top: 12px;

@@ -47,6 +47,7 @@ class RiskRules(BaseModel):
        - max_loss_per_day_paise: Daily maximum net loss ceiling in Paise.
        - max_drawdown_pct: Peak-to-trough equity drawdown limit percentage.
        - freeze_quantity: Exchange hard ceiling per single order (RK-06, default 1,800 for NIFTY).
+       - advisory_lot_ceiling: Advisory lot warning/rejection ceiling (RK-26, default None or 72).
        - max_capital_per_trade_paise: Maximum premium allowed on a single trade.
        - max_active_orders: Maximum concurrent pending orders allowed.
        - trading_window_start: Opening time for trade entry ('09:15').
@@ -55,12 +56,16 @@ class RiskRules(BaseModel):
 
     3. Technologies used and why:
        Pydantic v2 BaseModel with frozen configuration for strict validation.
+
+    4. Key design and overall design of the class:
+       Provides immutable risk parameter structures with cryptographic SHA-256 fingerprinting.
     """
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     max_loss_per_day_paise: Optional[int] = None
     max_drawdown_pct: Optional[float] = None
     freeze_quantity: int = 1800
+    advisory_lot_ceiling: Optional[int] = None
     max_capital_per_trade_paise: Optional[int] = None
     max_active_orders: int = 10
     trading_window_start: str = "09:15"

@@ -32,6 +32,7 @@ from packages.ledger.fees import (
     UPSTOX_2025_OCT,
     UPSTOX_2026_APR,
     UPSTOX_2026_MAR,
+    UPSTOX_2026_V1,
     FeeBreakdown,
     FeeSchedule,
     FeeScheduleEngine,
@@ -76,5 +77,6 @@ __all__ = [
     "UPSTOX_2025_OCT",
     "UPSTOX_2026_MAR",
     "UPSTOX_2026_APR",
+    "UPSTOX_2026_V1",
     "get_default_fee_engine",
 ]

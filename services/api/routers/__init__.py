@@ -15,11 +15,12 @@
    - market: Market data, symbol catalog, and historical/real-time OHLCV candle query endpoints.
    - options: Option chain matrix, expiry catalog, and per-contract option candle query endpoints.
    - paper: Paper trading accounts, positions, orders, trades, and risk policy endpoints.
+   - daemon: Live broker daemon inspection, deployment orchestration, and kill-switch endpoints.
 
 4. Final output of the file:
    - Exported route controllers for services.api.
 """
 
-from services.api.routers import backtest, drawings, health, indicators, market, options, paper
+from services.api.routers import backtest, daemon, drawings, health, indicators, market, options, paper
 
-__all__ = ["backtest", "drawings", "health", "indicators", "market", "options", "paper"]
+__all__ = ["backtest", "daemon", "drawings", "health", "indicators", "market", "options", "paper"]

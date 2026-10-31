@@ -1,15 +1,18 @@
 """
 1. What this file does:
-   Implements the Paper Trading, Risk Policy Inspection, and Macro Automated Strategy REST API endpoints
-   for the QuantView FastAPI Gateway (Milestones M6-06, M6-14, M6-18, and Release Gate G4).
+   Implements the Paper Trading, Risk Policy Inspection, Macro Automated Strategy REST API endpoints,
+   and Interactive Position SL/TP Bracket Management for the QuantView FastAPI Gateway
+   (Milestones M6-06, M6-14, M6-18, M7-08, and Release Gates G4/G5).
 
 2. Overall design:
-   Coordinates in-memory thread-safe simulation state for manual discretionary paper trading
-   and macro automated strategy monitoring:
+   Coordinates in-memory thread-safe simulation state for manual discretionary paper trading,
+   draggable chart bracket management, and macro automated strategy monitoring:
      - GET /api/v1/paper/accounts: Returns accounts with dynamic equity (cash + unrealized PnL) and free cash.
      - GET /api/v1/paper/risk-policy: Returns active risk limit boundaries (RK-01 to RK-26, RK-06 freeze 1800).
      - GET /api/v1/paper/strategies: Returns automated strategy performance records for macro dashboard view.
      - GET /api/v1/paper/positions: Returns open derivative positions with mark-to-market valuations.
+     - PATCH /api/v1/paper/positions/{position_id}/brackets: Updates Stop-Loss and Take-Profit brackets with
+       5-paise tick snapping and directional boundary validation (LONG: SL < LTP < TP; SHORT: TP < LTP < SL).
      - POST /api/v1/paper/positions/square-off/{position_id}: Closes single position, computes realized PnL,
        releases margin collateral, and logs audit trade.
      - POST /api/v1/paper/positions/square-off-all: Liquidates all open derivative positions in batch.
@@ -27,11 +30,13 @@
    - _resolve_contract_fill_price: Helper extracting execution price from lake candles or fallback.
    - _parse_contract_details: Helper resolving symbol, strike, option type, and expiry from contract ID.
    - _update_position_pnl: Helper computing mark-to-market PnL and return percentages.
+   - _snap_to_tick: Helper quantizing price to nearest canonical 5-paise tick interval.
    - get_paper_accounts: Endpoint handler for account balance summaries.
    - get_paper_account: Endpoint handler for single account balance query.
    - get_paper_risk_policy: Endpoint handler for active risk policy parameters.
    - get_paper_strategies: Endpoint handler for macro strategy telemetry.
    - get_paper_positions: Endpoint handler for active derivative positions.
+   - update_position_brackets: Endpoint handler updating position SL/TP brackets with tick snapping and validation.
    - square_off_position: Endpoint handler closing an individual position.
    - square_off_all_positions: Endpoint handler liquidating all open positions.
    - get_paper_orders: Endpoint handler for order history and working orders.
@@ -64,6 +69,7 @@ from services.api.schemas.paper import (
     PaperStrategyMacro,
     PaperTrade,
     RiskPolicySummary,
+    UpdateBracketsRequest,
 )
 
 router = APIRouter(prefix="/api/v1/paper", tags=["paper"])
@@ -395,6 +401,27 @@ def _update_position_pnl(pos: PaperPosition) -> None:
         pos.pnl_pct = round(((pos.entry_price - pos.current_price) / pos.entry_price) * 100.0, 2) if pos.entry_price > 0 else 0.0
 
 
+def _snap_to_tick(price: float) -> float:
+    """
+    1. The use of function:
+       Snaps a numerical price level to the nearest 5-paise (₹0.05) exchange tick multiple.
+
+    2. How does the specific function work:
+       Multiplies price by 20.0, rounds to the nearest whole integer tick, divides by 20.0,
+       and returns float rounded to two decimal places.
+
+    3. Concepts used in the function:
+       Tick size quantization, exchange tick increment alignment.
+
+    4. Places where this function is imported and used:
+       Internal helper used by update_position_brackets in services.api.routers.paper.
+
+    5. Final output of the function, before and after:
+       Before: Raw price level. After: 5-paise tick aligned price level.
+    """
+    return round(round(price * 20.0) / 20.0, 2)
+
+
 @router.get(
     "/accounts",
     response_model=List[PaperAccount],
@@ -592,6 +619,114 @@ def get_paper_positions(
             _update_position_pnl(pos)
             positions_out.append(pos.model_copy())
         return positions_out
+
+
+@router.patch(
+    "/positions/{position_id}/brackets",
+    response_model=PaperPosition,
+    summary="Update Open Position Brackets",
+    description="Updates Stop-Loss and Take-Profit price brackets with 5-paise tick snapping and directional validation.",
+)
+def update_position_brackets(
+    position_id: str,
+    req: UpdateBracketsRequest,
+) -> PaperPosition:
+    """
+    1. The use of function:
+       FastAPI endpoint updating stop-loss and take-profit bracket coordinates for an active open derivative position.
+
+    2. How does the specific function work:
+       - Acquires thread lock on simulation state.
+       - Looks up target position by position_id; raises HTTP 404 if not found.
+       - Refreshes mark-to-market PnL and resolves current reference price (current_price or entry_price).
+       - Validates that non-null bracket prices are positive (> 0.0) and snaps to 5-paise tick multiples.
+       - Enforces directional logic:
+         * LONG: Stop-Loss must be strictly below reference price; Take-Profit must be strictly above.
+         * SHORT: Stop-Loss must be strictly above reference price; Take-Profit must be strictly below.
+       - Enforces cross-bracket consistency if both SL and TP are specified (SL < TP for LONG, SL > TP for SHORT).
+       - Persists updated bracket levels on the position instance.
+       - Returns copy of updated PaperPosition model.
+
+    3. Concepts used in the function:
+       Directional risk boundary enforcement, 5-paise tick quantization, atomic state mutation.
+
+    4. Places where this function is imported and used:
+       Mounted under PATCH /api/v1/paper/positions/{position_id}/brackets.
+
+    5. Final output of the function, before and after:
+       Before: Existing position brackets. After: Validated, tick-aligned PaperPosition model.
+    """
+    state = get_paper_state()
+    with state._lock:
+        pos = state.positions.get(position_id)
+        if not pos:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Position '{position_id}' not found",
+            )
+
+        _update_position_pnl(pos)
+        ref_price = pos.current_price if (pos.current_price is not None and pos.current_price > 0.0) else pos.entry_price
+
+        sl: Optional[float] = None
+        if req.stop_loss_price is not None:
+            if req.stop_loss_price <= 0.0:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Stop-loss price must be positive",
+                )
+            sl = _snap_to_tick(req.stop_loss_price)
+            if pos.side == "BUY" and sl >= ref_price:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Stop-loss price ({sl}) for LONG position must be below entry/market price ({ref_price})",
+                )
+            if pos.side == "SELL" and sl <= ref_price:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Stop-loss price ({sl}) for SHORT position must be above entry/market price ({ref_price})",
+                )
+
+        tp: Optional[float] = None
+        if req.take_profit_price is not None:
+            if req.take_profit_price <= 0.0:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Take-profit price must be positive",
+                )
+            tp = _snap_to_tick(req.take_profit_price)
+            if pos.side == "BUY" and tp <= ref_price:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Take-profit price ({tp}) for LONG position must be above entry/market price ({ref_price})",
+                )
+            if pos.side == "SELL" and tp >= ref_price:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Take-profit price ({tp}) for SHORT position must be below entry/market price ({ref_price})",
+                )
+
+        # Cross-bracket consistency check
+        effective_sl = sl if sl is not None else pos.stop_loss_price
+        effective_tp = tp if tp is not None else pos.take_profit_price
+        if effective_sl is not None and effective_tp is not None:
+            if pos.side == "BUY" and effective_sl >= effective_tp:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Stop-loss price ({effective_sl}) must be strictly below take-profit price ({effective_tp}) for LONG position",
+                )
+            if pos.side == "SELL" and effective_sl <= effective_tp:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Stop-loss price ({effective_sl}) must be strictly above take-profit price ({effective_tp}) for SHORT position",
+                )
+
+        if req.stop_loss_price is not None:
+            pos.stop_loss_price = sl
+        if req.take_profit_price is not None:
+            pos.take_profit_price = tp
+
+        return pos.model_copy()
 
 
 @router.post(
@@ -982,6 +1117,8 @@ def place_paper_order(
             pnl_rupees=0.0,
             pnl_pct=0.0,
             entry_time=now_ts,
+            stop_loss_price=sl,
+            take_profit_price=tp,
         )
         state.positions[pos_id] = new_position
 
@@ -1016,6 +1153,7 @@ def place_paper_order(
         order_id=order_id,
         account_id=order_req.account_id,
         contract_id=order_req.contract_id,
+        position_id=pos_id,
         status="FILLED",
         side=order_req.side,
         quantity=order_req.quantity,
