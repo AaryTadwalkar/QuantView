@@ -1248,6 +1248,58 @@ body.has-ribbon .main { height: calc(100% - 90px); }
   text-transform: uppercase;
 }
 
+/* Historical Slice / Trade Inspection Navigation Banner */
+.historical-banner {
+  background: rgba(20, 24, 35, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(234, 179, 8, 0.35);
+  padding: 5px 12px;
+  font-size: 11px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
+  flex: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.gold-pill {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.btn-return-latest {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(41, 98, 255, 0.15);
+  border: 1px solid rgba(41, 98, 255, 0.4);
+  color: #2962ff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.15s ease;
+}
+
+.btn-return-latest:hover {
+  background: #2962ff;
+  color: #ffffff;
+  border-color: #2962ff;
+  box-shadow: 0 0 8px rgba(41, 98, 255, 0.4);
+}
+
 /* Option Chain View & Matrix */
 .option-chain-container {
   display: flex;

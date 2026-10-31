@@ -123,6 +123,16 @@
           <span>Heikin Ashi candles are synthetic price transforms and cannot be used for execution levels.</span>
         </div>
 
+        <!-- Historical Slice / Trade Inspection Navigation Banner -->
+        <div id="historicalBanner" class="historical-banner hidden">
+          <span class="gold-pill">HISTORICAL INSPECTION</span>
+          <span id="historicalDateRangeText">Viewing historical backtest slice</span>
+          <button id="returnToLatestBtn" class="tb btn-return-latest" title="Return to latest live market candles">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <span>Return to Latest</span>
+          </button>
+        </div>
+
         <!-- Center Chart Canvas -->
         <div id="grid" class="grid"></div>
 

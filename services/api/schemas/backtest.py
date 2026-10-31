@@ -45,6 +45,7 @@ class BacktestRequest(BaseModel):
     2. What the class contains:
        - strategy_id: Strategy identifier registered in StrategyRegistry.
        - start_date, end_date: ISO 8601 calendar date bounds (YYYY-MM-DD).
+       - timeframe: Simulation candle timeframe resolution (1m, 3m, 5m, 15m, 30m, 1h, 4h, 1d).
        - initial_capital_rupees: Starting portfolio capital in INR (strictly > 0).
        - mode: Backtest execution mode.
        - execution_mode: Execution mode alias for mode.
@@ -64,6 +65,10 @@ class BacktestRequest(BaseModel):
     strategy_id: str = Field(..., description="Unique registered strategy identifier")
     start_date: str = Field(default="2025-01-01", description="Backtest start date (YYYY-MM-DD)")
     end_date: str = Field(default="2025-01-10", description="Backtest end date (YYYY-MM-DD)")
+    timeframe: str = Field(
+        default="1m",
+        description="Simulation candle timeframe resolution (1m, 3m, 5m, 15m, 30m, 1h, 4h, 1d)",
+    )
     initial_capital_rupees: float = Field(
         default=500000.0,
         gt=0.0,

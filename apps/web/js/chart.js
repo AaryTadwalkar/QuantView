@@ -3,7 +3,8 @@
  *    TradingView Lightweight Charts v5 integration wrapper for QuantView (apps/web/js/chart.js).
  *    Manages the primary chart canvas, candlestick and volume series, chart type transforms (Candles,
  *    Heikin Ashi, Line, Area), time scale projection in Indian Standard Time (IST, UTC+05:30),
- *    backtest entry/exit trade markers, on-chart SL/TP price lines, and viewport resizing
+ *    backtest entry/exit trade markers, on-chart SL/TP price lines, viewport resizing, and historical
+ *    slice inspection navigation with return-to-latest banner controls
  *    (Milestones M6-01, M6-03, M6-03b, M6-07, M6-09, M6-12, M6-18, and Gate G4).
  *
  * 2. Overall design:
@@ -13,6 +14,7 @@
  *    - Manages main price series and sub-scale volume histogram overlay.
  *    - Supports instant switching between Candlestick, Heikin Ashi, Line, and Area series.
  *    - Displays an amber advisory banner when synthetic Heikin Ashi transforms are active.
+ *    - Displays a gold advisory banner with return-to-latest button when inspecting historical trade slices.
  *    - Provides high-level methods for marker overlays, dynamic price lines, and container resize observation.
  *
  * 3. Elements in the file:
@@ -134,7 +136,7 @@ function histData(vals, colors, timeAt, n) {
 /**
  * 1. The use of class:
  *    Primary chart controller managing canvas rendering, price series, volume overlays,
- *    synthetic transforms, trade markers, and price lines using Lightweight Charts v5.
+ *    synthetic transforms, trade markers, price lines, and historical slice navigation using Lightweight Charts v5.
  *
  * 2. What the class contains:
  *    - container: HTML DOM element mounting the chart.
@@ -147,6 +149,7 @@ function histData(vals, colors, timeAt, n) {
  *    - rawCandles: Immutable cache of downloaded OHLCV bars.
  *    - priceLines: Active price line handles for SL/TP and entry prices.
  *    - markersPlugin: Lightweight Charts series markers plugin instance.
+ *    - _isHistoricalSlice: Boolean flag indicating if currently viewing an isolated historical backtest slice.
  *
  * 3. Technologies used and why:
  *    TradingView Lightweight Charts v5 for 60-120 FPS hardware-accelerated canvas rendering
@@ -154,7 +157,8 @@ function histData(vals, colors, timeAt, n) {
  *
  * 4. Key design and overall design of the class:
  *    Provides clean lifecycle encapsulation: setSymbol, setTimeframe, setChartType,
- *    loadCandles, setMarkers, addPriceLine, clearPriceLines, and syncResize.
+ *    loadCandles, setMarkers, addPriceLine, clearPriceLines, syncResize, navigateToTimestamp,
+ *    returnToLatest, showHistoricalBanner, and hideHistoricalBanner.
  */
 export class QuantChart {
   /**
@@ -163,7 +167,8 @@ export class QuantChart {
    *
    * 2. How does the specific function work:
    *    Stores configuration options, instantiates Lightweight Charts with dark theme tokens,
-   *    creates the main candlestick and volume series, and binds resize observer.
+   *    creates the main candlestick and volume series, binds historical slice navigation state,
+   *    and binds resize observer.
    *
    * 3. Concepts used in the function:
    *    Constructor initialization, canvas container binding, theme configuration.
@@ -201,6 +206,7 @@ export class QuantChart {
     this.indicatorMarkers = [];
     this.extraMarkers = [];
     this.clickListeners = [];
+    this._isHistoricalSlice = false;
 
     this.initChart();
   }
@@ -316,6 +322,12 @@ export class QuantChart {
       }
     }
 
+    const returnLatestBtn = document.getElementById("returnToLatestBtn");
+    if (returnLatestBtn && !returnLatestBtn._chartBound) {
+      returnLatestBtn._chartBound = true;
+      returnLatestBtn.addEventListener("click", () => this.returnToLatest());
+    }
+
     // Resize observer for container responsiveness
     if (window.ResizeObserver) {
       this.resizeObserver = new ResizeObserver(() => this.syncResize());
@@ -427,23 +439,25 @@ export class QuantChart {
 
   /**
    * 1. The use of function:
-   *    Sets the active instrument symbol and triggers candle reloading.
+   *    Sets the active instrument symbol, resets historical inspection slice, and triggers candle reloading.
    *
    * 2. How does the specific function work:
-   *    Updates this.symbol and executes loadCandles().
+   *    Clears _isHistoricalSlice flag, hides historical banner, updates this.symbol, and executes loadCandles().
    *
    * 3. Concepts used in the function:
-   *    Symbol state transition, data pipeline trigger.
+   *    Symbol state transition, data pipeline trigger, historical slice state reset.
    *
    * 4. Places where this function is imported and used:
    *    Invoked by symbol picker buttons and watchlist items.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Previous symbol. After: Chart reloaded with candles for new symbol.
+   *    Before: Previous symbol. After: Chart reloaded with candles for new symbol and historical slice cleared.
    */
   async setSymbol(symbol) {
-    if (!symbol || symbol === this.symbol) return;
+    if (!symbol || (symbol === this.symbol && !this._isHistoricalSlice)) return;
     this.symbol = symbol;
+    this._isHistoricalSlice = false;
+    this.hideHistoricalBanner();
     if (typeof this.onSymbolChange === "function") {
       this.onSymbolChange(symbol);
     }
@@ -455,23 +469,26 @@ export class QuantChart {
 
   /**
    * 1. The use of function:
-   *    Sets the active timeframe resolution and triggers candle reloading.
+   *    Sets the active timeframe resolution, resets historical slice state, and triggers candle reloading.
    *
    * 2. How does the specific function work:
-   *    Updates this.timeframe and executes loadCandles().
+   *    Clears _isHistoricalSlice flag, hides historical banner, updates this.timeframe, and executes loadCandles().
+   *    Allows re-fetching current candles even if clicked timeframe equals current timeframe when on historical slice.
    *
    * 3. Concepts used in the function:
-   *    Multi-timeframe resolution switching.
+   *    Multi-timeframe resolution switching, historical slice state reset.
    *
    * 4. Places where this function is imported and used:
    *    Invoked by topbar timeframe buttons (1m, 3m, 5m, 15m, 30m, 1h, 4h, 1d).
    *
    * 5. Final output of the function, before and after:
-   *    Before: Old timeframe. After: Chart reloaded with bars at new timeframe.
+   *    Before: Old timeframe or historical slice. After: Chart reloaded with bars at specified timeframe.
    */
   async setTimeframe(tf) {
-    if (!tf || tf === this.timeframe) return;
+    if (!tf || (tf === this.timeframe && !this._isHistoricalSlice)) return;
     this.timeframe = tf;
+    this._isHistoricalSlice = false;
+    this.hideHistoricalBanner();
     if (typeof this.onTimeframeChange === "function") {
       this.onTimeframeChange(tf);
     }
@@ -520,6 +537,7 @@ export class QuantChart {
    *    Fetches candles from FastAPI /api/v1/market/candles or /api/v1/options/candles and renders them.
    *
    * 2. How does the specific function work:
+   *    - Resets _isHistoricalSlice to false and hides historical navigation banner.
    *    - Queries appropriate endpoint based on symbol format.
    *    - Caches returned candles in this.rawCandles if non-empty, preserving existing valid cache on empty returns.
    *    - Formats candles according to active chartType (e.g. calculates Heikin Ashi).
@@ -528,15 +546,17 @@ export class QuantChart {
    *    - Calls timeScale().fitContent() to display full series cleanly.
    *
    * 3. Concepts used in the function:
-   *    Data ingestion, point-in-time candle caching, client-side transformation.
+   *    Data ingestion, point-in-time candle caching, client-side transformation, historical banner clearing.
    *
    * 4. Places where this function is imported and used:
-   *    Invoked during initial bootstrap, symbol changes, and interval changes.
+   *    Invoked during initial bootstrap, symbol changes, interval changes, and returnToLatest.
    *
    * 5. Final output of the function, before and after:
    *    Before: Previous candles. After: Updated series rendered on chart, preserving state on empty responses.
    */
   async loadCandles() {
+    this._isHistoricalSlice = false;
+    this.hideHistoricalBanner();
     this._historicalGeneration = (this._historicalGeneration || 0) + 1;
     try {
       let resp;
@@ -706,24 +726,120 @@ export class QuantChart {
 
   /**
    * 1. The use of function:
-   *    Resets horizontal time scale, vertical price scale, and indicator sub-pane scales to default layout.
+   *    Displays the historical inspection navigation banner above the chart canvas with date details.
    *
    * 2. How does the specific function work:
-   *    Calls resetTimeScale(), scrollToRealtime(), enables autoScale on right price scale, resets
-   *    indicator series price scales, re-renders drawings, and refreshes the legend.
+   *    Extracts target timestamp, formats the date in Indian Standard Time (IST) into a human-readable
+   *    descriptor (e.g. "Viewing 02 Jan 2025 historical backtest slice"), updates #historicalDateRangeText,
+   *    and removes the 'hidden' class from #historicalBanner.
    *
    * 3. Concepts used in the function:
-   *    Time scale normalization, auto-scaling reset, viewport realignment.
+   *    DOM class manipulation, temporal projection, contextual banner notification.
    *
    * 4. Places where this function is imported and used:
-   *    Invoked by #resetChartBtn click handler in apps/web/js/app.js.
+   *    Invoked by QuantChart.navigateToTimestamp when jumping to trade entry points outside the current window.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Zoomed/panned or disproportional chart layout. After: Centered on latest bar with default proportions.
+   *    Before: Historical banner hidden. After: Historical banner visible with formatted date descriptor.
    */
-  resetView() {
+  showHistoricalBanner(fromTs, toTs, ts) {
+    const banner = document.getElementById("historicalBanner");
+    const textEl = document.getElementById("historicalDateRangeText");
+    const targetTs = ts || fromTs;
+    if (textEl && targetTs) {
+      const d = new Date((Number(targetTs) + 19800) * 1000);
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const m = months[d.getUTCMonth()];
+      const y = d.getUTCFullYear();
+      const day = String(d.getUTCDate()).padStart(2, "0");
+      textEl.textContent = `Viewing ${day} ${m} ${y} historical backtest slice`;
+    } else if (textEl) {
+      textEl.textContent = "Viewing historical backtest slice";
+    }
+    if (banner) {
+      banner.classList.remove("hidden");
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Hides the historical inspection navigation banner above the chart canvas.
+   *
+   * 2. How does the specific function work:
+   *    Adds the 'hidden' class to the #historicalBanner DOM element.
+   *
+   * 3. Concepts used in the function:
+   *    DOM class manipulation, UI state synchronization.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by QuantChart.returnToLatest, setSymbol, setTimeframe, and loadCandles.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Banner potentially visible. After: Banner hidden via 'hidden' class.
+   */
+  hideHistoricalBanner() {
+    const banner = document.getElementById("historicalBanner");
+    if (banner) {
+      banner.classList.add("hidden");
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Restores chart view from a historical backtest slice to the latest live market candles.
+   *
+   * 2. How does the specific function work:
+   *    Resets _isHistoricalSlice flag to false, hides the historical banner, queries the latest 5000
+   *    bars from the analytical lake via loadCandles(), and resets time and price scales to realtime.
+   *
+   * 3. Concepts used in the function:
+   *    Asynchronous data reloading, view restoration, state flag clearing.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by clicking #returnToLatestBtn or resetView when on a historical slice.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Historical candle slice loaded with banner visible.
+   *    After: Live realtime market candles rendered with time scale pinned to current bar.
+   */
+  async returnToLatest() {
+    this._isHistoricalSlice = false;
+    this.hideHistoricalBanner();
+    await this.loadCandles();
+    await this.resetView(true);
+  }
+
+  /**
+   * 1. The use of function:
+   *    Resets the time scale zoom, scrolls to realtime, auto-scales price scales, and restores view.
+   *
+   * 2. How does the specific function work:
+   *    Checks if chart is viewing a historical slice (either _isHistoricalSlice is true or latest loaded
+   *    candle is older than 30 days). If so, delegates to returnToLatest(). Otherwise, invokes resetTimeScale(),
+   *    scrollToRealtime(), and enables autoScale across primary and indicator price scales.
+   *
+   * 3. Concepts used in the function:
+   *    Lightweight Charts viewport manipulation, historical slice detection, price scale auto-scaling.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by #resetChartBtn click handler in apps/web/js/app.js and returnToLatest.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Zoomed, panned, or viewing historical slice. After: Centered on latest live bar with default proportions.
+   */
+  async resetView(skipHistoricalCheck = false) {
     if (!this.chart) return;
     try {
+      if (!skipHistoricalCheck) {
+        const n = this.rawCandles ? this.rawCandles.length : 0;
+        const maxTs = n > 0 ? this.rawCandles[n - 1].time : 0;
+        const nowSec = Date.now() / 1000;
+        const isHistorical = this._isHistoricalSlice || (maxTs > 0 && maxTs < (nowSec - 86400 * 30));
+        if (isHistorical) {
+          await this.returnToLatest();
+          return;
+        }
+      }
       this.chart.timeScale().resetTimeScale();
       this.chart.timeScale().scrollToRealtime();
       this.chart.priceScale("right").applyOptions({ autoScale: true });
@@ -1043,22 +1159,24 @@ export class QuantChart {
   /**
    * 1. The use of function:
    *    Navigates the chart to a specific historical epoch timestamp, loading surrounding historical candles
-   *    from the analytical lake if the target timestamp is outside currently loaded rawCandles.
+   *    from the analytical lake if the target timestamp is outside currently loaded rawCandles, and triggers
+   *    historical slice inspection banner notification.
    *
    * 2. How does the specific function work:
    *    Checks if timestamp is within [rawCandles[0].time, rawCandles[n-1].time].
-   *    If within range, calls scrollToTime(timestamp).
+   *    If within range, calls scrollToTime(timestamp) and updates historical banner if active.
    *    If outside range, fetches candles centered on timestamp (-2 days to +5 days) via api.getCandles,
-   *    re-populates rawCandles via setCandles(), and centers view on timestamp.
+   *    re-populates rawCandles via setCandles(), marks _isHistoricalSlice = true, surfaces historical banner
+   *    via showHistoricalBanner(fromTs, toTs, ts), and centers view on timestamp.
    *
    * 3. Concepts used in the function:
-   *    Point-in-time historical navigation, on-demand chunk loading, time scale centering.
+   *    Point-in-time historical navigation, on-demand chunk loading, time scale centering, historical banner alerting.
    *
    * 4. Places where this function is imported and used:
    *    Invoked by trade log row click and runBacktest in apps/web/js/app.js.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Chart displaying current bars. After: Historical window loaded and centered on trade execution.
+   *    Before: Chart displaying current bars. After: Historical window loaded and centered on trade execution with historical banner active.
    */
   async navigateToTimestamp(timestamp) {
     if (!timestamp || !this.chart) return;
@@ -1070,6 +1188,9 @@ export class QuantChart {
 
     if (isInRange) {
       this.scrollToTime(ts);
+      if (this._isHistoricalSlice) {
+        this.showHistoricalBanner(minTime, maxTime, ts);
+      }
       return;
     }
 
@@ -1086,6 +1207,8 @@ export class QuantChart {
       if (resp && resp.candles && resp.candles.length > 0) {
         this.setCandles(resp.candles, false);
         this.scrollToTime(ts);
+        this._isHistoricalSlice = true;
+        this.showHistoricalBanner(fromTs, toTs, ts);
       }
     } catch (err) {
       console.warn("[QuantChart] Failed to navigate to timestamp:", err);

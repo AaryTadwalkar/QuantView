@@ -15,6 +15,7 @@
      - GET /api/v1/backtest/heatmap: Returns 2D sensitivity matrix and monthly calendar returns.
 
 3. Elements in the file:
+   - BACKTEST_TIMEFRAME_MAP: Mapping of timeframe strings to DuckDB interval strings.
    - _RUN_STORE: In-memory tracker mapping run_id to lifecycle state and completed response payloads.
    - get_backtest_job_store: Accessor function for the module-level run store.
    - _generate_synthetic_benchmark_bars: Generates deterministic 5-minute benchmark bars.
@@ -58,6 +59,16 @@ from services.api.schemas.backtest import (
 )
 
 router = APIRouter(prefix="/api/v1/backtest", tags=["backtest"])
+
+BACKTEST_TIMEFRAME_MAP: Dict[str, str] = {
+    "3m": "3 minutes",
+    "5m": "5 minutes",
+    "15m": "15 minutes",
+    "30m": "30 minutes",
+    "1h": "1 hour",
+    "4h": "4 hours",
+    "1d": "1 day",
+}
 
 _RUN_STORE: Dict[str, Dict[str, Any]] = {}
 
@@ -144,7 +155,8 @@ def _extract_lake_bars(
     end_date: str,
     strategy_id: str,
     strike_policy: str = "ATM",
-    limit: int = 500,
+    timeframe: str = "1m",
+    limit: int = 100_000,
 ) -> List[Dict[str, Any]]:
     """
     1. The use of function:
@@ -154,11 +166,15 @@ def _extract_lake_bars(
        - Inspects strategy identifier to determine target option type (CE or PE).
        - Resolves strike policy offset (ATM: 0, ITM_1: -50/+50, ITM_2: -100/+100, OTM_1: +50/-50, OTM_2: +100/-100).
        - Queries underlying spot price to compute strike target, matching against v_candles_options.
+       - If timeframe is in BACKTEST_TIMEFRAME_MAP (3m, 5m, 15m, 30m, 1h, 4h, 1d), performs on-the-fly SQL
+         aggregation using DuckDB time_bucket(), arg_min(), max(), min(), arg_max(), and sum(COALESCE(volume, 0)).
+       - Otherwise, executes standard 1m resolution extraction query.
+       - If primary query returns fewer than 20 bars, executes fallback query across any active strike.
        - Converts INR prices to exact integer paise.
        - Returns empty list if view is missing or fewer than 20 bars are returned.
 
     3. Concepts used in the function:
-       Analytical SQL extraction, moneyness offset resolution, integer paise quantization.
+       Analytical SQL extraction, on-the-fly multi-timeframe aggregation, moneyness offset resolution, integer paise quantization.
 
     4. Places where this function is imported and used:
        Called by run_backtest prior to executing BacktestRunner.
@@ -202,20 +218,40 @@ def _extract_lake_bars(
         where_conditions.append("strike = ?")
         params.append(target_strike)
 
-    query = f"""
-        SELECT epoch(bar_start) as ts,
-               cast(open * 100 as bigint) as op,
-               cast(high * 100 as bigint) as hp,
-               cast(low * 100 as bigint) as lp,
-               cast(close * 100 as bigint) as cp,
-               volume,
-               strftime(bar_start, '%H:%M') as t_str,
-               contract_id as symbol
-        FROM v_candles_options
-        WHERE {" AND ".join(where_conditions)}
-        ORDER BY bar_start ASC
-        LIMIT ?
-    """
+    is_aggregated = timeframe in BACKTEST_TIMEFRAME_MAP
+    interval_str = BACKTEST_TIMEFRAME_MAP.get(timeframe, "")
+
+    if is_aggregated:
+        query = f"""
+            SELECT epoch(time_bucket(INTERVAL '{interval_str}', bar_start)) as ts,
+                   cast(arg_min(open, bar_start) * 100 as bigint) as op,
+                   cast(max(high) * 100 as bigint) as hp,
+                   cast(min(low) * 100 as bigint) as lp,
+                   cast(arg_max(close, bar_start) * 100 as bigint) as cp,
+                   cast(sum(COALESCE(volume, 0)) as bigint) as volume,
+                   strftime(time_bucket(INTERVAL '{interval_str}', bar_start), '%H:%M') as t_str,
+                   contract_id as symbol
+            FROM v_candles_options
+            WHERE {" AND ".join(where_conditions)}
+            GROUP BY time_bucket(INTERVAL '{interval_str}', bar_start), contract_id
+            ORDER BY ts ASC
+            LIMIT ?
+        """
+    else:
+        query = f"""
+            SELECT epoch(bar_start) as ts,
+                   cast(open * 100 as bigint) as op,
+                   cast(high * 100 as bigint) as hp,
+                   cast(low * 100 as bigint) as lp,
+                   cast(close * 100 as bigint) as cp,
+                   volume,
+                   strftime(bar_start, '%H:%M') as t_str,
+                   contract_id as symbol
+            FROM v_candles_options
+            WHERE {" AND ".join(where_conditions)}
+            ORDER BY bar_start ASC
+            LIMIT ?
+        """
     params.append(limit)
 
     rows: list[Any] = []
@@ -226,21 +262,39 @@ def _extract_lake_bars(
 
     if len(rows) < 20 and target_strike is not None:
         # Fallback to any active strike if target strike had low liquidity
-        fallback_query = """
-            SELECT epoch(bar_start) as ts,
-                   cast(open * 100 as bigint) as op,
-                   cast(high * 100 as bigint) as hp,
-                   cast(low * 100 as bigint) as lp,
-                   cast(close * 100 as bigint) as cp,
-                   volume,
-                   strftime(bar_start, '%H:%M') as t_str,
-                   contract_id as symbol
-            FROM v_candles_options
-            WHERE bar_start >= ? AND bar_start <= ?
-              AND option_type = ? AND volume > 0
-            ORDER BY bar_start ASC
-            LIMIT ?
-        """
+        if is_aggregated:
+            fallback_query = f"""
+                SELECT epoch(time_bucket(INTERVAL '{interval_str}', bar_start)) as ts,
+                       cast(arg_min(open, bar_start) * 100 as bigint) as op,
+                       cast(max(high) * 100 as bigint) as hp,
+                       cast(min(low) * 100 as bigint) as lp,
+                       cast(arg_max(close, bar_start) * 100 as bigint) as cp,
+                       cast(sum(COALESCE(volume, 0)) as bigint) as volume,
+                       strftime(time_bucket(INTERVAL '{interval_str}', bar_start), '%H:%M') as t_str,
+                       contract_id as symbol
+                FROM v_candles_options
+                WHERE bar_start >= ? AND bar_start <= ?
+                  AND option_type = ? AND volume > 0
+                GROUP BY time_bucket(INTERVAL '{interval_str}', bar_start), contract_id
+                ORDER BY ts ASC
+                LIMIT ?
+            """
+        else:
+            fallback_query = """
+                SELECT epoch(bar_start) as ts,
+                       cast(open * 100 as bigint) as op,
+                       cast(high * 100 as bigint) as hp,
+                       cast(low * 100 as bigint) as lp,
+                       cast(close * 100 as bigint) as cp,
+                       volume,
+                       strftime(bar_start, '%H:%M') as t_str,
+                       contract_id as symbol
+                FROM v_candles_options
+                WHERE bar_start >= ? AND bar_start <= ?
+                  AND option_type = ? AND volume > 0
+                ORDER BY bar_start ASC
+                LIMIT ?
+            """
         try:
             rows = con.execute(
                 fallback_query, [f"{start_date} 09:15:00", f"{end_date} 15:30:00", opt_type, limit]
@@ -385,6 +439,8 @@ def run_backtest(
         end_date=request.end_date,
         strategy_id=request.strategy_id,
         strike_policy=request.strike_policy or "ATM",
+        timeframe=request.timeframe,
+        limit=100_000,
     )
     if not bars:
         bars = _generate_synthetic_benchmark_bars(
@@ -689,6 +745,7 @@ def get_strategy_heatmap(
         end_date="2026-10-19",
         strategy_id=strat_key,
         strike_policy="ATM",
+        limit=1000,
     )
     if not bars:
         bars = _generate_synthetic_benchmark_bars(start_date="2026-01-01", strategy_id=strat_key)

@@ -7,6 +7,7 @@ import sys
 import tempfile
 import time
 import urllib.request
+
 import websocket
 
 if sys.stdout.encoding != "utf-8":
@@ -89,20 +90,20 @@ def run_test():
             // 1a. In cursor mode, pointerEvents must be 'none'
             window.quantApp.setTool('cursor');
             const peCursor = dl.canvas.style.pointerEvents;
-            
+
             // 1b. Selecting tool sets pointerEvents to 'auto'
             window.quantApp.setTool('hline');
             const peHline = dl.canvas.style.pointerEvents;
-            
+
             // 1c. Hit testing beyond plotWidth must return null (price scale isolated)
             const w = dl.canvas.clientWidth || 800;
             const plotWidth = w - 65;
             const hitInScale = dl.hitTest(plotWidth + 20, 200);
-            
+
             // 1d. Reset to cursor
             window.quantApp.setTool('cursor');
             const peReset = dl.canvas.style.pointerEvents;
-            
+
             return { peCursor, peHline, hitInScale, peReset, plotWidth };
         })()
         """)
@@ -120,32 +121,32 @@ def run_test():
         (async () => {
             const app = window.quantApp;
             const chart = app.chart;
-            
+
             // Switch to option contract
             await app.setSymbol('NIFTY_2026-02-03_24150.00_PE');
-            
+
             // Add indicator sub-panes via standard addIndicator API
             while (chart.indicators.length > 0) {
                 chart.removeIndicator(chart.indicators[0].uid);
             }
             chart.addIndicator('rsi');
             chart.addIndicator('stoch');
-            
+
             // Test 1m
             await chart.setTimeframe('1m');
             const bars1m = chart.rawCandles.length;
             const panes1m = chart.chart.panes ? chart.chart.panes().length : 0;
-            
+
             // Test 5m (aggregates on the fly)
             await chart.setTimeframe('5m');
             const bars5m = chart.rawCandles.length;
             const panes5m = chart.chart.panes ? chart.chart.panes().length : 0;
-            
+
             // Test 15m (aggregates on the fly)
             await chart.setTimeframe('15m');
             const bars15m = chart.rawCandles.length;
             const panes15m = chart.chart.panes ? chart.chart.panes().length : 0;
-            
+
             return { bars1m, panes1m, bars5m, panes5m, bars15m, panes15m };
         })()
         """)
@@ -190,7 +191,7 @@ def run_test():
             const firstRowCells = rows.length > 0 ? Array.from(rows[0].querySelectorAll('td')).map(c => c.textContent.trim()) : [];
             const firstRowStrikeBadge = rows.length > 0 ? rows[0].querySelector('.strike-badge')?.textContent.trim() : null;
             const firstRowReasonBadge = rows.length > 0 ? rows[0].querySelector('.badge-reason')?.textContent.trim() : null;
-            
+
             return {
                 subnavBtns,
                 rowCount: rows.length,
@@ -218,14 +219,14 @@ def run_test():
             const rawCandles = chart.rawCandles;
             const minTime = rawCandles.length > 0 ? rawCandles[0].time : 0;
             const maxTime = rawCandles.length > 0 ? rawCandles[rawCandles.length - 1].time : 0;
-            
+
             // Check if any markers are out of candle range
             const outOfRange = markers.filter(m => m.time < minTime || m.time > maxTime);
-            
+
             // Check if markers are stacked on first candle
             const firstTime = rawCandles[0]?.time;
             const markersOnFirstBar = markers.filter(m => m.time === firstTime);
-            
+
             return {
                 symbol: chart.symbol,
                 activeMarkersCount: markers.length,

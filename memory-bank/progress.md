@@ -2,6 +2,7 @@
 
 ## Completed Milestones
 - **[2026-10-31] Stage 7 — Live Broker Daemon, Real-Time Market Data Bridge & Production Parity (GATE G5 CERTIFIED & CLOSED):**
+  - **Task 1 Multi-Timeframe Backtest Query Aggregation & Limit Expansion (CERTIFIED)**: Added `timeframe` resolution to `BacktestRequest` schema, `BACKTEST_TIMEFRAME_MAP`, on-the-fly SQL aggregation (`time_bucket`, `arg_min(open)`, `max(high)`, `min(low)`, `arg_max(close)`, `sum(volume)`), expanded limit to 100,000 bars (eliminating 500-bar limit), and certified 8/8 dedicated tests in `tests/api/test_backtest_timeframe.py` (538/538 repository tests passing).
   - **Milestone Scope**: M7-01 through M7-09 fully implemented, tested, and certified.
   - **M7-01 (Transport)**: Multicast circular ring buffer FrameBus (68k frames/s throughput, 0.042ms p95 latency) and 24/7 ReplayPlayer.
   - **M7-02 (Market Data)**: StreamingCandleBuilder (1m assembly, intrabar updates, causal finalized_at = bar_end + grace, late-tick quarantine).

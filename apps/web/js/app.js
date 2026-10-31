@@ -3,7 +3,8 @@
  *    Central application orchestrator and state manager for the QuantView Web Workstation (apps/web/js/app.js).
  *    Boots the TradingView UI shell, initializes topbar controls, timeframes, chart type selectors,
  *    Lightweight Charts v5 integration, market quote polling, bottom dock tabs (Option Chain,
- *    Strategy Tester, Paper Trading, Screener, Heatmap, Lake Health), drawing bar, and modal dialogues
+ *    Strategy Tester, Paper Trading, Screener, Heatmap, Lake Health), drawing bar, modal dialogues,
+ *    and historical slice trade inspection navigation banner controls
  *    (Milestones M6-01, M6-02, M6-03, M6-03b, M6-04, M6-05, M6-06, M6-07, M6-08, M6-09, M6-11, M6-13,
  *    M6-14, M6-15, M6-16, M6-18, and Gate G4).
  *
@@ -14,7 +15,8 @@
  *    - Manages bottom dock tab switching with Option Chain as primary default tab.
  *    - Enables one-click paper trading order placement from the Option Chain directly to ACC-MANUAL-PAPER
  *      without dock tab redirection, instantly plotting Entry, SL, and TP lines on the candlestick chart.
- *    - Manages Strategy Tester Python backtest execution, dual-tab performance overview, and dedicated full-height audit trade log table.
+ *    - Manages Strategy Tester Python backtest execution with timeframe forwarding, dual-tab performance overview, and dedicated full-height audit trade log table.
+ *    - Manages historical slice trade inspection banner allowing 1-click return to latest live market candles.
  *    - Manages modal overlays for Lake Health, Indicators, and Symbol lookup.
  *
  * 3. Elements in the file:
@@ -63,7 +65,7 @@ export function isIndianMarketOpen(timestampSec = null) {
 /**
  * 1. The use of class:
  *    Main workstation controller coordinating topbar, chart viewport, bottom dock panels,
- *    order placement, backtesting, and live market quotes.
+ *    order placement, backtesting, historical slice inspection navigation, and live market quotes.
  *
  * 2. What the class contains:
  *    - chart: QuantChart instance.
@@ -78,7 +80,7 @@ export function isIndianMarketOpen(timestampSec = null) {
  *    Native ES6 class with event-driven architecture for high-performance sub-50ms execution.
  *
  * 4. Key design and overall design of the class:
- *    Decoupled panel renderers, reactive ticker updates, on-chart price line hooks.
+ *    Decoupled panel renderers, reactive ticker updates, on-chart price line hooks, Strategy Tester timeframe forwarding, and historical slice navigation.
  */
 export class QuantApp {
   /**
@@ -254,20 +256,21 @@ export class QuantApp {
 
   /**
    * 1. The use of function:
-   *    Binds topbar click handlers for Symbol lookup, Indicators, Data Health, Replay, Theme, and Settings.
+   *    Binds topbar click handlers for Symbol lookup, Indicators, Data Health, Replay, Reset View,
+   *    Historical Return to Latest, Theme, and Settings.
    *
    * 2. How does the specific function work:
-   *    Queries DOM for action buttons (#symbolBtn, #healthBtn, #indicatorsBtn, #replayBtn, #themeBtn, #settingsBtn)
-   *    and attaches respective click callback listeners.
+   *    Queries DOM for action buttons (#symbolBtn, #healthBtn, #indicatorsBtn, #replayBtn, #resetChartBtn,
+   *    #returnToLatestBtn, #themeBtn, #settingsBtn) and attaches respective click callback listeners.
    *
    * 3. Concepts used in the function:
-   *    Event listener registration, modal trigger delegation, theme toggling via data-theme attribute.
+   *    Event listener registration, modal trigger delegation, chart viewport reset, theme toggling.
    *
    * 4. Places where this function is imported and used:
    *    Invoked by init() during workstation bootstrap.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Unwired topbar buttons. After: Interactive buttons opening modals or toggling theme.
+   *    Before: Unwired topbar buttons. After: Interactive buttons opening modals, resetting views, or toggling theme.
    */
   bindTopbarActions() {
     const symbolBtn = document.getElementById("symbolBtn");
@@ -292,10 +295,20 @@ export class QuantApp {
 
     const resetChartBtn = document.getElementById("resetChartBtn");
     if (resetChartBtn) {
-      resetChartBtn.addEventListener("click", () => {
+      resetChartBtn.addEventListener("click", async () => {
         if (this.chart && typeof this.chart.resetView === "function") {
-          this.chart.resetView();
+          await this.chart.resetView();
           this.toast("Chart & indicator scales reset to default", "info");
+        }
+      });
+    }
+
+    const returnToLatestBtn = document.getElementById("returnToLatestBtn");
+    if (returnToLatestBtn) {
+      returnToLatestBtn.addEventListener("click", async () => {
+        if (this.chart && typeof this.chart.returnToLatest === "function") {
+          await this.chart.returnToLatest();
+          this.toast("Returned to latest market candles", "info");
         }
       });
     }
@@ -1145,19 +1158,25 @@ export class QuantApp {
    *    Callback invoked when timeframe interval changes in the chart.
    *
    * 2. How does the specific function work:
-   *    Updates this.timeframe property to maintain synchronization across panels.
+   *    Updates this.timeframe property and updates active styling across topbar #tfButtons.
    *
    * 3. Concepts used in the function:
-   *    State synchronization, observer callback.
+   *    State synchronization, observer callback, topbar button state synchronization.
    *
    * 4. Places where this function is imported and used:
-   *    Passed as onTimeframeChange callback to QuantChart constructor.
+   *    Passed as onTimeframeChange callback to QuantChart constructor and called during backtest navigation.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Old timeframe in state. After: Synchronized timeframe property.
+   *    Before: Old timeframe in state. After: Synchronized timeframe property and highlighted topbar button.
    */
   onTimeframeChanged(tf) {
     this.timeframe = tf;
+    const container = document.getElementById("tfButtons");
+    if (container && tf) {
+      container.querySelectorAll("button").forEach((b) => {
+        b.classList.toggle("active", b.textContent.trim().toLowerCase() === tf.toLowerCase());
+      });
+    }
   }
 
   /**
@@ -2356,12 +2375,13 @@ export class QuantApp {
    *
    * 2. How does the specific function work:
    *    Populates strategy list from api.getStrategies(), builds RunConfig form (date pickers, capital, lots,
-   *    execution mode, intrabar stop policy, fee schedule), displays reactive strategy metadata (author, regimes,
-   *    description), binds Run and Cancel actions with loading spinner and status polling, displays 8 tear-sheet KPI
-   *    metric cards, mounts equity curve sub-chart, populates sortable trade log with on-chart linkage, and plots markers.
+   *    execution mode, intrabar stop policy, fee schedule, timeframe resolution), displays reactive strategy
+   *    metadata (author, regimes, description), binds Run and Cancel actions with loading spinner and status
+   *    polling, displays 8 tear-sheet KPI metric cards, mounts equity curve sub-chart, populates sortable
+   *    trade log with on-chart linkage, and plots markers.
    *
    * 3. Concepts used in the function:
-   *    RunConfig dynamic form, asynchronous backtest polling, performance KPI tear sheets, trade marker overlays.
+   *    RunConfig dynamic form, timeframe resolution forwarding, asynchronous backtest polling, performance KPI tear sheets, trade marker overlays.
    *
    * 4. Places where this function is imported and used:
    *    Invoked by switchTab("tester") in apps/web/js/app.js.
@@ -2435,6 +2455,19 @@ export class QuantApp {
                 <select id="stratFeeSchedule" class="tb" style="width:100%;">
                   <option value="UPSTOX_2026_V1" selected>UPSTOX_2026_V1</option>
                   <option value="UPSTOX_2025_OCT">UPSTOX_2025_OCT</option>
+                </select>
+              </label>
+            </div>
+            <div style="margin-top:2px;">
+              <label>Timeframe Resolution:
+                <select id="stratTimeframe" class="tb" style="width:100%;">
+                  <option value="auto" selected>Auto (Follow Chart)</option>
+                  <option value="1m">1 Minute (1m)</option>
+                  <option value="3m">3 Minutes (3m)</option>
+                  <option value="5m">5 Minutes (5m)</option>
+                  <option value="15m">15 Minutes (15m)</option>
+                  <option value="30m">30 Minutes (30m)</option>
+                  <option value="1h">1 Hour (1h)</option>
                 </select>
               </label>
             </div>
@@ -2562,11 +2595,15 @@ export class QuantApp {
           return;
         }
 
+        const tfVal = container.querySelector("#stratTimeframe")?.value;
+        const activeTf = (tfVal && tfVal !== "auto") ? tfVal : (this.chart?.timeframe || "1m");
+
         const reqPayload = {
           strategy_id: stratSel.value || "LongCETrendFollowing",
           symbol: "NSE:NIFTY50",
           start_date: startVal,
           end_date: endVal,
+          timeframe: activeTf,
           initial_capital_rupees: capVal,
           lots: lotsVal,
           execution_mode: modeVal,
@@ -2626,6 +2663,12 @@ export class QuantApp {
           const stratSymbol = reqPayload.symbol || "NSE:NIFTY50";
           if (this.symbol !== stratSymbol) {
             await this.setSymbol(stratSymbol);
+          }
+
+          // Ensure active timeframe matches strategy timeframe if explicitly chosen
+          if (this.chart && reqPayload.timeframe && this.chart.timeframe !== reqPayload.timeframe) {
+            this.chart.timeframe = reqPayload.timeframe;
+            this.onTimeframeChanged(reqPayload.timeframe);
           }
 
           // Automatically navigate chart to the first trade's execution window
@@ -2902,7 +2945,7 @@ export class QuantApp {
           <span style="color:var(--muted);font-size:11px;margin-left:8px;"><code>${esc(res.run_id)}</code></span>
         </div>
         <div style="font-size:11px;color:var(--muted);">
-          Latency: <b style="color:var(--text);">${res.execution_time_ms.toFixed(1)}ms</b> | Mode: <b style="color:var(--text);">${esc(res.mode)}</b>
+          Latency: <b style="color:var(--text);">${res.execution_time_ms.toFixed(1)}ms</b> | Mode: <b style="color:var(--text);">${esc(res.mode)}</b> | Timeframe: <b style="color:var(--text);">${esc(reqPayload.timeframe || (this.chart?.timeframe || "1m"))}</b>
         </div>
       </div>
 
