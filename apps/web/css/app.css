@@ -762,12 +762,12 @@ table.t tbody tr:hover {
 }
 .tester .right {
   min-width: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 10px 12px;
+  height: 100%;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  padding: 10px 12px;
+  gap: 8px;
 }
 .rules {
   display: flex;
@@ -2464,28 +2464,108 @@ table.chain-table td.itm-pe {
   border-left: 2px solid var(--accent);
 }
 
-/* Trade Log Audit Table (M6-04) */
+/* Strategy Tester Sub-Navigation Tabs & Layout Overhaul (Task 4) */
+.tester-subnav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.tester-subnav-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.tester-subnav-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.tester-subnav-btn.active {
+  background: rgba(41, 98, 255, 0.15);
+  color: var(--accent);
+  border-color: rgba(41, 98, 255, 0.4);
+}
+
+.tester-subnav-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tester-subnav-btn.active .tester-subnav-badge {
+  background: var(--accent);
+  color: #fff;
+}
+
+.tester-panes-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tester-subtab-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tester-subtab-pane.scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
+.tester-subtab-pane.hidden {
+  display: none !important;
+}
+
+/* Trade Log Audit Table (M6-04, Task 4 Overhaul) */
 .trade-log-wrap {
   border: 1px solid var(--border);
   border-radius: 6px;
+  flex: 1;
+  min-height: 0;
   overflow: auto;
-  max-height: 280px;
+  background: var(--bg);
 }
 
 table.trade-log-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11.5px;
+  font-size: 11px;
 }
 
 table.trade-log-table th {
   background: var(--panel);
-  padding: 6px 10px;
+  padding: 6px 8px;
   color: var(--muted);
   font-size: 10px;
   text-transform: uppercase;
   position: sticky;
   top: 0;
+  z-index: 2;
   text-align: left;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
@@ -2508,7 +2588,7 @@ table.trade-log-table th .sort-icon {
 }
 
 table.trade-log-table td {
-  padding: 5px 10px;
+  padding: 5px 8px;
   border-top: 1px solid var(--border);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -2520,12 +2600,38 @@ table.trade-log-table tr.trade-row {
 }
 
 table.trade-log-table tr.trade-row:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 table.trade-log-table tr.trade-row.selected {
-  background: rgba(41, 98, 255, 0.2) !important;
+  background: rgba(41, 98, 255, 0.22) !important;
   border-left: 3px solid var(--accent);
+}
+
+/* Badges: Strike, Side, Exit Reason */
+.strike-badge {
+  font-family: "Fragment Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  letter-spacing: 0.02em;
+  background: var(--hover);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.strike-badge.ce {
+  color: var(--up);
+  background: rgba(8, 153, 129, 0.12);
+  border-color: rgba(8, 153, 129, 0.35);
+}
+
+.strike-badge.pe {
+  color: var(--down);
+  background: rgba(242, 54, 69, 0.12);
+  border-color: rgba(242, 54, 69, 0.35);
 }
 
 .side-badge {
@@ -2535,16 +2641,50 @@ table.trade-log-table tr.trade-row.selected {
   border-radius: 3px;
   display: inline-block;
   text-align: center;
+  letter-spacing: 0.03em;
 }
 
 .side-badge.buy {
   background: rgba(8, 153, 129, 0.2);
   color: var(--up);
+  border: 1px solid rgba(8, 153, 129, 0.3);
 }
 
 .side-badge.sell {
   background: rgba(242, 54, 69, 0.2);
   color: var(--down);
+  border: 1px solid rgba(242, 54, 69, 0.3);
+}
+
+.badge-reason, .badge.tp, .badge.sl, .badge.time {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  display: inline-block;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  background: var(--hover);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.badge-reason.tp, .badge.tp {
+  background: rgba(8, 153, 129, 0.18);
+  color: var(--up);
+  border: 1px solid rgba(8, 153, 129, 0.4);
+}
+
+.badge-reason.sl, .badge.sl {
+  background: rgba(242, 54, 69, 0.18);
+  color: var(--down);
+  border: 1px solid rgba(242, 54, 69, 0.4);
+}
+
+.badge-reason.time, .badge.time {
+  background: rgba(232, 185, 73, 0.18);
+  color: #e8b949;
+  border: 1px solid rgba(232, 185, 73, 0.4);
 }
 
 /* Health Modal Summary */

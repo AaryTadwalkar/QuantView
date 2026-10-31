@@ -14,7 +14,7 @@
  *    - Manages bottom dock tab switching with Option Chain as primary default tab.
  *    - Enables one-click paper trading order placement from the Option Chain directly to ACC-MANUAL-PAPER
  *      without dock tab redirection, instantly plotting Entry, SL, and TP lines on the candlestick chart.
- *    - Manages Strategy Tester Python backtest execution and renders institutional tear-sheet KPIs.
+ *    - Manages Strategy Tester Python backtest execution, dual-tab performance overview, and dedicated full-height audit trade log table.
  *    - Manages modal overlays for Lake Health, Indicators, and Symbol lookup.
  *
  * 3. Elements in the file:
@@ -1085,12 +1085,58 @@ export class QuantApp {
    */
   onSymbolChanged(symbol) {
     this.symbol = symbol;
+    this.updateSymbolLabel(symbol);
+    if (this.chart?.drawings) {
+      this.chart.drawings.loadDrawingsFromBackend(symbol);
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Switches active instrument symbol across application, updating chart and UI headers.
+   *
+   * 2. How does the specific function work:
+   *    Sets this.symbol, invokes this.chart.setSymbol(symbol) to load new bars and drawings,
+   *    and synchronizes the topbar symbol button label.
+   *
+   * 3. Concepts used in the function:
+   *    Instrument switching, reactive chart synchronization, state management.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by Strategy Tester auto-alignment, symbol selector modal, and option chain return bar.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Previous instrument active. After: Chart and workstation synchronized to new symbol.
+   */
+  async setSymbol(symbol) {
+    if (!symbol) return;
+    this.symbol = symbol;
+    if (this.chart) {
+      await this.chart.setSymbol(symbol);
+    }
+    this.updateSymbolLabel(symbol);
+  }
+
+  /**
+   * 1. The use of function:
+   *    Updates topbar instrument label button text based on active symbol.
+   *
+   * 2. How does the specific function work:
+   *    Locates #symbolLabel in the DOM and updates its textContent to a friendly name (e.g. NIFTY 50).
+   *
+   * 3. Concepts used in the function:
+   *    DOM text synchronization, UI header status.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by onSymbolChanged, setSymbol, and Option Chain view handlers.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Old symbol text in topbar. After: Active symbol text displayed in topbar.
+   */
+  updateSymbolLabel(symbol) {
     const label = document.getElementById("symbolLabel");
     if (label) {
       label.textContent = symbol === "NSE:NIFTY50" ? "NIFTY 50" : symbol;
-    }
-    if (this.chart?.drawings) {
-      this.chart.drawings.loadDrawingsFromBackend(symbol);
     }
   }
 
@@ -2430,7 +2476,9 @@ export class QuantApp {
         stratSel.appendChild(opt);
       });
       if (this.cachedStrategies.length > 0) {
-        this.updateStrategyMeta(this.cachedStrategies[0], container);
+        const defaultStrat = this.cachedStrategies.find((s) => s.id === "LongCETrendFollowing") || this.cachedStrategies[0];
+        stratSel.value = defaultStrat.id;
+        this.updateStrategyMeta(defaultStrat, container);
       }
     } catch {
       stratSel.innerHTML = `<option value="LongCETrendFollowing">LongCETrendFollowing</option>`;
@@ -2516,6 +2564,7 @@ export class QuantApp {
 
         const reqPayload = {
           strategy_id: stratSel.value || "LongCETrendFollowing",
+          symbol: "NSE:NIFTY50",
           start_date: startVal,
           end_date: endVal,
           initial_capital_rupees: capVal,
@@ -2573,13 +2622,29 @@ export class QuantApp {
 
           const finalRes = statusRes.result || res;
 
-          // Render comprehensive tear sheet, metrics, equity curve, and trade log
-          this.renderBacktestResults(resultsEl, finalRes, reqPayload);
+          // Align chart symbol with strategy symbol if different (e.g., if user was viewing an option contract)
+          const stratSymbol = reqPayload.symbol || "NSE:NIFTY50";
+          if (this.symbol !== stratSymbol) {
+            await this.setSymbol(stratSymbol);
+          }
+
+          // Automatically navigate chart to the first trade's execution window
+          if (this.chart && finalRes.trades && finalRes.trades.length > 0 && finalRes.trades[0].entry_time) {
+            await this.chart.navigateToTimestamp(finalRes.trades[0].entry_time);
+          }
 
           // Plot markers on candlestick chart (M6-09)
           if (this.chart && finalRes.chart_markers) {
             this.chart.setMarkers(finalRes.chart_markers);
           }
+
+          // Highlight the first trade on chart if available
+          if (this.chart && finalRes.trades && finalRes.trades.length > 0) {
+            this.chart.highlightTrade(finalRes.trades[0]);
+          }
+
+          // Render comprehensive tear sheet, metrics, equity curve, and trade log
+          this.renderBacktestResults(resultsEl, finalRes, reqPayload);
 
           this.toast(
             `Backtest completed in ${finalRes.execution_time_ms.toFixed(1)}ms (${finalRes.trades.length} trades)`,
@@ -2646,21 +2711,169 @@ export class QuantApp {
 
   /**
    * 1. The use of function:
-   *    Renders the complete institutional tear sheet, KPI cards, equity curve, and trade log table.
+   *    Parses raw instrument or option contract strings into human-readable strike, type, and formatted expiry.
+   *
+   * 2. How does the specific function work:
+   *    - Uses regex pattern matching to extract underlying, expiry date, strike price, and option type (CE/PE).
+   *    - Strips floating point zeroes from strike prices (e.g. 23800.00 -> 23800).
+   *    - Converts ISO expiry date (YYYY-MM-DD) into institutional format (DD MMM YYYY).
+   *    - Returns structured object: { strikeType, optTypeClass, expiryFormatted, expiryIso }.
+   *
+   * 3. Concepts used in the function:
+   *    Regex parsing, date string formatting, institutional derivatives taxonomy.
+   *
+   * 4. Places where this function is imported and used:
+   *    Used by renderBacktestResults and renderDecisionAuditCard when building the Strategy Tester Audit Trade Log.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: "NIFTY_2025-01-02_23800.00_CE". After: { strikeType: "23800 CE", optTypeClass: "ce", expiryFormatted: "02 Jan 2025", expiryIso: "2025-01-02" }.
+   */
+  parseTradeContract(contractStr) {
+    if (!contractStr || typeof contractStr !== "string") {
+      return {
+        strikeType: "—",
+        optTypeClass: "neutral",
+        expiryFormatted: "—",
+        expiryIso: "",
+      };
+    }
+
+    const str = contractStr.trim();
+    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // Pattern 1: UNDERLYING_YYYY-MM-DD_STRIKE_TYPE (e.g. NIFTY_2025-01-02_23800.00_CE or NIFTY_2025-01-02_23800_CE)
+    const matchUnd = str.match(/^([A-Z0-9]+)_(\d{4}-\d{2}-\d{2})_([\d.]+)_([A-Z]+)$/i);
+    if (matchUnd) {
+      const [, , expDate, strikeRaw, optType] = matchUnd;
+      const strikeNum = parseFloat(strikeRaw);
+      const strikeDisplay = Number.isFinite(strikeNum)
+        ? (strikeNum % 1 === 0 ? strikeNum.toFixed(0) : strikeNum.toFixed(2))
+        : strikeRaw;
+      const typeUpper = optType.toUpperCase();
+      const [y, m, d] = expDate.split("-");
+      const mIdx = parseInt(m, 10) - 1;
+      const expFormatted = `${d.padStart(2, "0")} ${MONTHS[mIdx] || m} ${y}`;
+
+      return {
+        strikeType: `${strikeDisplay} ${typeUpper}`,
+        optTypeClass: typeUpper === "CE" ? "ce" : typeUpper === "PE" ? "pe" : "neutral",
+        expiryFormatted: expFormatted,
+        expiryIso: expDate,
+      };
+    }
+
+    // Pattern 2: NSE Trading Symbol (e.g. NIFTY25JAN23800CE, NIFTY2510223800CE)
+    const matchNse = str.match(/^([A-Z]+)(\d{2}[A-Z0-9]{3,5}?)(\d{4,6})(CE|PE)$/i);
+    if (matchNse) {
+      const [, , expToken, strikeRaw, optType] = matchNse;
+      const typeUpper = optType.toUpperCase();
+      return {
+        strikeType: `${strikeRaw} ${typeUpper}`,
+        optTypeClass: typeUpper === "CE" ? "ce" : "pe",
+        expiryFormatted: expToken.toUpperCase(),
+        expiryIso: expToken,
+      };
+    }
+
+    // Fallback for underlying/custom instrument
+    return {
+      strikeType: str,
+      optTypeClass: "neutral",
+      expiryFormatted: "—",
+      expiryIso: "",
+    };
+  }
+
+  /**
+   * 1. The use of function:
+   *    Formats UTC epoch seconds into clean institutional IST timestamp (DD MMM YYYY, HH:mm:ss).
+   *
+   * 2. How does the specific function work:
+   *    - Adds 19800 seconds (Asia/Kolkata +05:30 offset) to the UTC epoch timestamp.
+   *    - Extracts UTC date parts representing the shifted IST calendar moment.
+   *    - Assembles "DD MMM YYYY, HH:mm:ss" zero-padded string.
+   *
+   * 3. Concepts used in the function:
+   *    Epoch timestamp manipulation, timezone normalization, zero-padding.
+   *
+   * 4. Places where this function is imported and used:
+   *    Used in Strategy Tester Trade Log table for Entry Time and Exit Time formatting.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: 1735790880. After: "02 Jan 2025, 09:38:00".
+   */
+  formatTradeDateTime(utcSec) {
+    if (utcSec == null || !Number.isFinite(utcSec) || utcSec <= 0) return "—";
+    const istDate = new Date((utcSec + 19800) * 1000);
+    const pad = (n) => String(n).padStart(2, "0");
+    const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    const day = pad(istDate.getUTCDate());
+    const month = MONTHS[istDate.getUTCMonth()];
+    const year = istDate.getUTCFullYear();
+    const hours = pad(istDate.getUTCHours());
+    const mins = pad(istDate.getUTCMinutes());
+    const secs = pad(istDate.getUTCSeconds());
+
+    return `${day} ${month} ${year}, ${hours}:${mins}:${secs}`;
+  }
+
+  /**
+   * 1. The use of function:
+   *    Maps raw strategy exit reason codes into human-readable semantic badges with styled color coding.
+   *
+   * 2. How does the specific function work:
+   *    - Inspects reason string against TARGET / TARGET_HIT, STOP_LOSS, SESSION_CLOSE / NEXT_BAR_OPEN_EXIT.
+   *    - Returns HTML markup with .badge-reason and specialized sub-classes (.tp, .sl, .time).
+   *
+   * 3. Concepts used in the function:
+   *    Semantic badge styling, trade reason taxonomy.
+   *
+   * 4. Places where this function is imported and used:
+   *    Used by renderBacktestResults in Audit Trade Log table and Decision Audit card.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: "NEXT_BAR_OPEN_EXIT". After: '<span class="badge-reason time">Time Limit / EOD</span>'.
+   */
+  formatExitReasonBadge(reason) {
+    const r = String(reason || "").toUpperCase().trim();
+    if (r === "STOP_LOSS" || r === "SL" || r.includes("STOP_LOSS")) {
+      return `<span class="badge-reason sl">Stop Loss</span>`;
+    }
+    if (r === "TARGET" || r === "TARGET_HIT" || r === "TP" || r.includes("TARGET")) {
+      return `<span class="badge-reason tp">Target Hit</span>`;
+    }
+    if (
+      r === "NEXT_BAR_OPEN_EXIT" ||
+      r === "SESSION_CLOSE" ||
+      r === "FORCE_FLAT" ||
+      r.includes("TIME") ||
+      r.includes("CLOSE") ||
+      r.includes("SESSION")
+    ) {
+      return `<span class="badge-reason time">Time Limit / EOD</span>`;
+    }
+    return `<span class="badge-reason">${esc(reason || "Exit")}</span>`;
+  }
+
+  /**
+   * 1. The use of function:
+   *    Renders the complete institutional tear sheet, KPI cards, equity curve, and trade log table (Milestone M6-04, Task 4 Overhaul).
    *
    * 2. How does the specific function work:
    *    Extracts performance metrics from BacktestRunResponse, computes total return percentage,
-   *    renders 8 KPI cards, mounts the equity curve sub-chart, binds sortable table headers,
-   *    and configures interactive trade row click listeners with on-chart linkage and audit popover.
+   *    creates a sub-navigation bar with Overview and Audit Trade Log tabs, renders 8 KPI cards
+   *    and equity curve in Tab 1, and a dedicated full-height articulated table in Tab 2 with parsed
+   *    strikes, expiries, LTPs, and exit badges, wiring sorting and click-to-highlight audit actions.
    *
    * 3. Concepts used in the function:
-   *    Tear-sheet presentation, financial reporting, click-to-highlight audit table, marker synchronization.
+   *    Tear-sheet presentation, sub-navigation tabs, zero-clipping full-height flex layout, trade forensics, marker synchronization.
    *
    * 4. Places where this function is imported and used:
    *    Invoked when backtest execution finishes successfully in renderStrategyTester.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Loading state in results element. After: Full interactive backtest audit workstation.
+   *    Before: Statically stacked cards pushing trade log offscreen with scroll traps. After: Dual-tab view with dedicated full-height audit log table.
    */
   renderBacktestResults(resultsEl, res, reqPayload) {
     const m = res.metrics;
@@ -2683,7 +2896,7 @@ export class QuantApp {
       : (m.max_drawdown_pct / 100) * initialCap;
 
     resultsEl.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;border-bottom:1px solid var(--border);padding-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;border-bottom:1px solid var(--border);flex-shrink:0;">
         <div>
           <span style="font-weight:600;font-size:13px;color:var(--text);">${esc(res.strategy_id)}</span>
           <span style="color:var(--muted);font-size:11px;margin-left:8px;"><code>${esc(res.run_id)}</code></span>
@@ -2693,128 +2906,180 @@ export class QuantApp {
         </div>
       </div>
 
-      <!-- 8 Tear-Sheet KPI Metric Cards (M6-04) -->
-      <div class="tester-metrics-grid">
-        <div class="metric-card">
-          <div class="metric-title">Net P&amp;L</div>
-          <div class="metric-val ${isNetUp ? "up" : "down"}">${fmtRupees(m.net_pnl_rupees)}</div>
-          <div class="metric-sub">${m.total_trades} round-trip fills</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Total Return</div>
-          <div class="metric-val ${isRetUp ? "up" : "down"}">${fmtPct(totalReturn)}</div>
-          <div class="metric-sub">On ₹${initialCap.toLocaleString("en-IN")}</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Sharpe Ratio</div>
-          <div class="metric-val ${m.sharpe_ratio >= 1.5 ? "up" : ""}">${m.sharpe_ratio != null ? m.sharpe_ratio.toFixed(2) : "—"}</div>
-          <div class="metric-sub">Annualized</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Deflated Sharpe (DSR)</div>
-          <div class="metric-val">${m.deflated_sharpe_ratio != null ? m.deflated_sharpe_ratio.toFixed(2) : "—"}</div>
-          <div class="metric-sub">Multi-test adj.</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Max Drawdown</div>
-          <div class="metric-val down">${m.max_drawdown_pct.toFixed(2)}%</div>
-          <div class="metric-sub">₹${maxDrawdownVal.toFixed(0)} peak trough</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Win Rate</div>
-          <div class="metric-val ${m.win_rate_pct >= 50 ? "up" : "down"}">${m.win_rate_pct.toFixed(1)}%</div>
-          <div class="metric-sub">${m.winning_trades}W / ${m.losing_trades}L</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Total Trades</div>
-          <div class="metric-val">${m.total_trades}</div>
-          <div class="metric-sub">${m.total_trades * 2} order fills</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Profit Factor</div>
-          <div class="metric-val ${m.profit_factor >= 1.5 ? "up" : ""}">${m.profit_factor != null ? m.profit_factor.toFixed(2) : "—"}</div>
-          <div class="metric-sub">Gross Win / Loss</div>
-        </div>
+      <!-- Sub-Navigation Tabs (Task 4 Overhaul) -->
+      <div class="tester-subnav">
+        <button type="button" class="tester-subnav-btn active" id="testerSubnavOverviewBtn">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-6 6"/></svg>
+          <span>Performance Overview &amp; Equity Curve</span>
+        </button>
+        <button type="button" class="tester-subnav-btn" id="testerSubnavTradeLogBtn">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          <span>Audit Trade Log</span>
+          <span class="tester-subnav-badge">${res.trades.length} Closed Round-Trips</span>
+        </button>
       </div>
 
-      <!-- Equity Curve Sub-Chart (M6-04) -->
-      <div class="equity-curve-card">
-        <div class="equity-curve-header">
-          <span class="equity-curve-title">Mark-to-Market Equity Curve</span>
-          <div class="equity-curve-stats">
-            <span>Peak: <b>${fmtRupees(peakEquity)}</b></span>
-            <span>Final: <b class="${isNetUp ? "up" : "down"}">${fmtRupees(endingEquity)}</b></span>
-            <span>Drawdown: <b class="down">${m.max_drawdown_pct.toFixed(2)}%</b></span>
+      <div class="tester-panes-wrap">
+        <!-- Subtab 1: Performance Overview & Equity Curve -->
+        <div class="tester-subtab-pane scrollable" id="testerPaneOverview">
+          <!-- 8 Tear-Sheet KPI Metric Cards (M6-04) -->
+          <div class="tester-metrics-grid">
+            <div class="metric-card">
+              <div class="metric-title">Net P&amp;L</div>
+              <div class="metric-val ${isNetUp ? "up" : "down"}">${fmtRupees(m.net_pnl_rupees)}</div>
+              <div class="metric-sub">${m.total_trades} round-trip fills</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Total Return</div>
+              <div class="metric-val ${isRetUp ? "up" : "down"}">${fmtPct(totalReturn)}</div>
+              <div class="metric-sub">On ₹${initialCap.toLocaleString("en-IN")}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Sharpe Ratio</div>
+              <div class="metric-val ${m.sharpe_ratio >= 1.5 ? "up" : ""}">${m.sharpe_ratio != null ? m.sharpe_ratio.toFixed(2) : "—"}</div>
+              <div class="metric-sub">Annualized</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Deflated Sharpe (DSR)</div>
+              <div class="metric-val">${m.deflated_sharpe_ratio != null ? m.deflated_sharpe_ratio.toFixed(2) : "—"}</div>
+              <div class="metric-sub">Multi-test adj.</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Max Drawdown</div>
+              <div class="metric-val down">${m.max_drawdown_pct.toFixed(2)}%</div>
+              <div class="metric-sub">₹${maxDrawdownVal.toFixed(0)} peak trough</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Win Rate</div>
+              <div class="metric-val ${m.win_rate_pct >= 50 ? "up" : "down"}">${m.win_rate_pct.toFixed(1)}%</div>
+              <div class="metric-sub">${m.winning_trades}W / ${m.losing_trades}L</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Total Trades</div>
+              <div class="metric-val">${m.total_trades}</div>
+              <div class="metric-sub">${m.total_trades * 2} order fills</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-title">Profit Factor</div>
+              <div class="metric-val ${m.profit_factor >= 1.5 ? "up" : ""}">${m.profit_factor != null ? m.profit_factor.toFixed(2) : "—"}</div>
+              <div class="metric-sub">Gross Win / Loss</div>
+            </div>
+          </div>
+
+          <!-- Equity Curve Sub-Chart (M6-04) -->
+          <div class="equity-curve-card">
+            <div class="equity-curve-header">
+              <span class="equity-curve-title">Mark-to-Market Equity Curve</span>
+              <div class="equity-curve-stats">
+                <span>Peak: <b>${fmtRupees(peakEquity)}</b></span>
+                <span>Final: <b class="${isNetUp ? "up" : "down"}">${fmtRupees(endingEquity)}</b></span>
+                <span>Drawdown: <b class="down">${m.max_drawdown_pct.toFixed(2)}%</b></span>
+              </div>
+            </div>
+            <div id="equityCurveContainer" class="equity-chart-container"></div>
+          </div>
+
+          <!-- View Full Trade Log Action Button -->
+          <div style="display:flex;justify-content:flex-end;margin-top:4px;margin-bottom:8px;">
+            <button type="button" id="btnJumpToTradeLog" class="tb" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-size:11.5px;font-weight:600;background:rgba(41,98,255,0.15);border:1px solid rgba(41,98,255,0.4);color:var(--accent);cursor:pointer;border-radius:4px;">
+              <span>View Full Trade Log (${res.trades.length} Closed Round-Trips)</span>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
           </div>
         </div>
-        <div id="equityCurveContainer" class="equity-chart-container"></div>
-      </div>
 
-      <!-- Decision Audit Popover Container (M6-04) -->
-      <div id="decisionAuditContainer"></div>
+        <!-- Subtab 2: Dedicated Full-Height Audit Trade Log -->
+        <div class="tester-subtab-pane hidden" id="testerPaneTradeLog">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <h4 style="margin:0;font-size:12px;font-weight:600;">Audit Trade Log (${res.trades.length} closed round-trips)</h4>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button type="button" id="toggleTradeMarkersBtn" class="tb" style="padding:2px 8px;font-size:11px;display:inline-flex;align-items:center;gap:4px;" title="Toggle On-Chart Trade Visualization Markers">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span id="toggleTradeMarkersText">Hide Chart Markers</span>
+              </button>
+              <span style="font-size:10.5px;color:var(--muted);">Click trade row to jump to candle</span>
+            </div>
+          </div>
 
-      <!-- Trade Log Audit Table (M6-04) -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px;">
-        <h4 style="margin:0;font-size:12px;">Audit Trade Log (${res.trades.length} closed round-trips)</h4>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <button type="button" id="toggleTradeMarkersBtn" class="tb" style="padding:2px 8px;font-size:11px;display:inline-flex;align-items:center;gap:4px;" title="Toggle On-Chart Trade Visualization Markers">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span id="toggleTradeMarkersText">Hide Chart Markers</span>
-          </button>
-          <span style="font-size:10.5px;color:var(--muted);">Click trade row to jump to candle</span>
+          <!-- Decision Audit Popover Container (M6-04) -->
+          <div id="decisionAuditContainer" style="flex-shrink:0;"></div>
+
+          <!-- Dedicated Full-Height Scrollable Trade Log Table (Task 4) -->
+          <div class="trade-log-wrap">
+            <table class="trade-log-table" id="testerTradeLogTable">
+              <thead>
+                <tr>
+                  <th class="sortable" data-col="index" data-type="num" style="width:36px;"># <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="entryTime" data-type="num">Entry Time (IST) <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="exitTime" data-type="num">Exit Time (IST) <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="strikeType" data-type="str">Strike &amp; Type <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="expiry" data-type="str">Expiry <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="side" data-type="str">Side <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="qty" data-type="num">Qty <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="entryPrice" data-type="num">Entry LTP (₹) <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="exitPrice" data-type="num">Exit LTP (₹) <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="grossPnl" data-type="num">Gross P&amp;L (₹) <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="fees" data-type="num">Fees (₹) <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="netPnl" data-type="num">Net P&amp;L (₹ &amp; %) <span class="sort-icon">↕</span></th>
+                  <th class="sortable" data-col="reason" data-type="str">Exit Condition <span class="sort-icon">↕</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${res.trades
+                  .map((t, idx) => {
+                    const parsed = this.parseTradeContract(t.contract);
+                    const entryTimeStr = this.formatTradeDateTime(t.entry_time);
+                    const exitTimeStr = this.formatTradeDateTime(t.exit_time);
+                    const exitBadge = this.formatExitReasonBadge(t.exit_reason);
+
+                    const pnlPct = t.pnl_pct != null
+                      ? t.pnl_pct
+                      : (t.entry_price > 0 ? ((t.exit_price - t.entry_price) / t.entry_price) * 100 : 0);
+                    const pctSign = pnlPct > 0 ? "+" : "";
+                    const pnlPctFormatted = `${pctSign}${pnlPct.toFixed(1)}%`;
+                    const isNetUp = t.net_pnl_rupees >= 0;
+                    const isGrossUp = t.gross_pnl_rupees >= 0;
+
+                    return `
+                      <tr class="trade-row"
+                          data-trade-id="${esc(t.trade_id)}"
+                          data-index="${idx + 1}"
+                          data-entry-time="${t.entry_time}"
+                          data-exit-time="${t.exit_time}"
+                          data-strike-type="${esc(parsed.strikeType)}"
+                          data-expiry="${esc(parsed.expiryIso || parsed.expiryFormatted)}"
+                          data-contract="${esc(t.contract)}"
+                          data-side="${esc(t.side)}"
+                          data-qty="${t.quantity}"
+                          data-entry-price="${t.entry_price}"
+                          data-exit-price="${t.exit_price}"
+                          data-gross-pnl="${t.gross_pnl_rupees}"
+                          data-fees="${t.fees_rupees}"
+                          data-net-pnl="${t.net_pnl_rupees}"
+                          data-reason="${esc(t.exit_reason)}">
+                        <td style="color:var(--muted);">${idx + 1}</td>
+                        <td>${entryTimeStr}</td>
+                        <td>${exitTimeStr}</td>
+                        <td><span class="strike-badge ${parsed.optTypeClass}">${esc(parsed.strikeType)}</span></td>
+                        <td>${esc(parsed.expiryFormatted)}</td>
+                        <td><span class="side-badge ${t.side.toLowerCase()}">${esc(t.side)}</span></td>
+                        <td>${t.quantity}</td>
+                        <td>₹${t.entry_price.toFixed(2)}</td>
+                        <td>₹${t.exit_price.toFixed(2)}</td>
+                        <td class="${isGrossUp ? "up" : "down"}">${isGrossUp ? "+" : ""}₹${t.gross_pnl_rupees.toFixed(2)}</td>
+                        <td>₹${t.fees_rupees.toFixed(2)}</td>
+                        <td class="${isNetUp ? "up" : "down"}"><b>${fmtRupees(t.net_pnl_rupees)} (${pnlPctFormatted})</b></td>
+                        <td>${exitBadge}</td>
+                      </tr>
+                    `;
+                  })
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
-      <div class="trade-log-wrap">
-        <table class="trade-log-table" id="testerTradeLogTable">
-          <thead>
-            <tr>
-              <th class="sortable" data-col="entryTime" data-type="num">Entry Time (IST) <span class="sort-icon">↕</span></th>
-              <th class="sortable" data-col="exitTime" data-type="num">Exit Time (IST) <span class="sort-icon">↕</span></th>
-              <th class="sortable" data-col="contract" data-type="str">Contract <span class="sort-icon">↕</span></th>
-              <th class="sortable" data-col="side" data-type="str">Side <span class="sort-icon">↕</span></th>
-              <th class="sortable" data-col="qty" data-type="num">Qty <span class="sort-icon">↕</span></th>
-              <th class="sortable" data-col="entryPrice" data-type="num">Entry Price <span class="sort-icon">↕</span></th>
-              <th class="sortable" data-col="exitPrice" data-type="num">Exit Price <span class="sort-icon">↕</span></th>
-              <th class="sortable" data-col="grossPnl" data-type="num">Gross P&amp;L <span class="sort-icon">↕</span></th>
-              <th class="sortable" data-col="fees" data-type="num">Fees <span class="sort-icon">↕</span></th>
-              <th class="sortable" data-col="netPnl" data-type="num">Net P&amp;L <span class="sort-icon">↕</span></th>
-              <th class="sortable" data-col="reason" data-type="str">Exit Reason <span class="sort-icon">↕</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            ${res.trades
-              .map(
-                (t) => `
-              <tr class="trade-row"
-                  data-trade-id="${esc(t.trade_id)}"
-                  data-entry-time="${t.entry_time}"
-                  data-exit-time="${t.exit_time}"
-                  data-contract="${esc(t.contract)}"
-                  data-side="${esc(t.side)}"
-                  data-qty="${t.quantity}"
-                  data-entry-price="${t.entry_price}"
-                  data-exit-price="${t.exit_price}"
-                  data-gross-pnl="${t.gross_pnl_rupees}"
-                  data-fees="${t.fees_rupees}"
-                  data-net-pnl="${t.net_pnl_rupees}"
-                  data-reason="${esc(t.exit_reason)}">
-                <td>${fmtTime(t.entry_time)}</td>
-                <td>${fmtTime(t.exit_time)}</td>
-                <td><code>${esc(t.contract)}</code></td>
-                <td><span class="side-badge ${t.side.toLowerCase()}">${esc(t.side)}</span></td>
-                <td>${t.quantity}</td>
-                <td>₹${t.entry_price.toFixed(2)}</td>
-                <td>₹${t.exit_price.toFixed(2)}</td>
-                <td class="${t.gross_pnl_rupees >= 0 ? "up" : "down"}">₹${t.gross_pnl_rupees.toFixed(2)}</td>
-                <td>₹${t.fees_rupees.toFixed(2)}</td>
-                <td class="${t.net_pnl_rupees >= 0 ? "up" : "down"}"><b>${fmtRupees(t.net_pnl_rupees)}</b></td>
-                <td>${esc(t.exit_reason)}</td>
-              </tr>
-            `,
-              )
-              .join("")}
-          </tbody>
-        </table>
       </div>
     `;
 
@@ -2823,6 +3088,31 @@ export class QuantApp {
     if (eqContainer) {
       this.renderEquityCurve(eqContainer, res.equity_curve, initialCap);
     }
+
+    // Configure Sub-Navigation Tab Switching
+    const tabOverviewBtn = resultsEl.querySelector("#testerSubnavOverviewBtn");
+    const tabTradeLogBtn = resultsEl.querySelector("#testerSubnavTradeLogBtn");
+    const paneOverview = resultsEl.querySelector("#testerPaneOverview");
+    const paneTradeLog = resultsEl.querySelector("#testerPaneTradeLog");
+    const jumpBtn = resultsEl.querySelector("#btnJumpToTradeLog");
+
+    const switchSubTab = (target) => {
+      if (target === "tradelog") {
+        if (tabOverviewBtn) tabOverviewBtn.classList.remove("active");
+        if (tabTradeLogBtn) tabTradeLogBtn.classList.add("active");
+        if (paneOverview) paneOverview.classList.add("hidden");
+        if (paneTradeLog) paneTradeLog.classList.remove("hidden");
+      } else {
+        if (tabTradeLogBtn) tabTradeLogBtn.classList.remove("active");
+        if (tabOverviewBtn) tabOverviewBtn.classList.add("active");
+        if (paneTradeLog) paneTradeLog.classList.add("hidden");
+        if (paneOverview) paneOverview.classList.remove("hidden");
+      }
+    };
+
+    if (tabOverviewBtn) tabOverviewBtn.addEventListener("click", () => switchSubTab("overview"));
+    if (tabTradeLogBtn) tabTradeLogBtn.addEventListener("click", () => switchSubTab("tradelog"));
+    if (jumpBtn) jumpBtn.addEventListener("click", () => switchSubTab("tradelog"));
 
     // Configure Toggle for On-Chart Trade Markers
     const toggleMarkersBtn = resultsEl.querySelector("#toggleTradeMarkersBtn");
@@ -2848,13 +3138,23 @@ export class QuantApp {
     const tableEl = resultsEl.querySelector("#testerTradeLogTable");
     if (tableEl) {
       const rows = tableEl.querySelectorAll("tr.trade-row");
-      rows.forEach((row, idx) => {
+      if (rows.length > 0) {
+        rows[0].classList.add("selected");
+      }
+      if (auditContainer && res.trades && res.trades.length > 0) {
+        this.renderDecisionAuditCard(auditContainer, res.trades[0], reqPayload);
+      }
+      rows.forEach((row) => {
         row.addEventListener("click", async () => {
           rows.forEach((r) => r.classList.remove("selected"));
           row.classList.add("selected");
 
-          const trade = res.trades[idx];
+          const tradeId = row.dataset.tradeId;
+          const trade = res.trades.find((t) => t.trade_id === tradeId) || res.trades[parseInt(row.dataset.index, 10) - 1];
           if (!trade) return;
+
+          // Display decision audit popover immediately
+          this.renderDecisionAuditCard(auditContainer, trade, reqPayload);
 
           // Pan and highlight trade on candlestick chart, navigating to historical date if outside window
           if (this.chart) {
@@ -2865,9 +3165,6 @@ export class QuantApp {
             }
             this.chart.highlightTrade(trade);
           }
-
-          // Display decision audit popover
-          this.renderDecisionAuditCard(auditContainer, trade, reqPayload);
 
           this.toast(
             `Auditing Trade ${trade.trade_id}: Entry ₹${trade.entry_price.toFixed(2)} → Exit ₹${trade.exit_price.toFixed(2)} (${fmtRupees(trade.net_pnl_rupees)})`,
@@ -3095,63 +3392,80 @@ export class QuantApp {
 
   /**
    * 1. The use of function:
-   *    Renders a comprehensive decision audit card with rule parameters, prices, and signal details.
+   *    Renders an articulated popover audit card for a selected backtest trade (Milestone M6-04, Task 4 Overhaul).
    *
    * 2. How does the specific function work:
-   *    Constructs structured audit markup showing trade identifier, contract, side, timestamps in IST,
-   *    fill prices, fee breakdown, P&L, exit reason, and backtest execution rule parameters.
+   *    Extracts trade details (execution times, fills, gross/net PnL, exit condition),
+   *    parses strike and expiry, renders the audit card inside container with a dismiss button,
+   *    and wires the dismiss click event.
    *
    * 3. Concepts used in the function:
-   *    Traceable trade audit, point-in-time compliance, financial reconciliation.
+   *    Decision audit card presentation, trade forensics, DOM event binding.
    *
    * 4. Places where this function is imported and used:
    *    Invoked when clicking a trade row in the Strategy Tester trade log audit table.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Container empty or previous trade. After: Active trade decision audit card rendered.
+   *    Before: Container empty or previous trade. After: Active trade decision audit card rendered with dismiss action.
    */
   renderDecisionAuditCard(container, trade, config) {
     if (!container || !trade) return;
     const isWin = trade.net_pnl_rupees >= 0;
+    const parsed = this.parseTradeContract(trade.contract);
+    const entryTimeStr = this.formatTradeDateTime(trade.entry_time);
+    const exitTimeStr = this.formatTradeDateTime(trade.exit_time);
+    const exitBadge = this.formatExitReasonBadge(trade.exit_reason);
+
     container.innerHTML = `
       <div class="decision-audit-card">
         <div class="decision-audit-head">
-          <span><b>Decision Audit:</b> <code>${esc(trade.trade_id)}</code></span>
-          <span class="side-badge ${trade.side.toLowerCase()}">${esc(trade.side)} ${trade.quantity} Qty</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span><b>Decision Audit:</b> <code>${esc(trade.trade_id)}</code></span>
+            <span class="strike-badge ${parsed.optTypeClass}">${esc(parsed.strikeType)}</span>
+            <span class="side-badge ${trade.side.toLowerCase()}">${esc(trade.side)} ${trade.quantity} Qty</span>
+          </div>
+          <button type="button" class="btn-close-audit" title="Close decision audit" style="background:transparent;border:0;color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px;line-height:1;">✕</button>
         </div>
         <div class="decision-audit-grid">
           <div class="decision-audit-item">
-            <span class="decision-audit-label">Contract</span>
-            <span class="decision-audit-val"><code>${esc(trade.contract)}</code></span>
+            <span class="decision-audit-label">Contract / Expiry</span>
+            <span class="decision-audit-val"><code>${esc(trade.contract)}</code> <span style="color:var(--muted);font-size:10px;">(${esc(parsed.expiryFormatted)})</span></span>
           </div>
           <div class="decision-audit-item">
             <span class="decision-audit-label">Entry Execution</span>
-            <span class="decision-audit-val">₹${trade.entry_price.toFixed(2)} @ ${fmtTime(trade.entry_time)}</span>
+            <span class="decision-audit-val">₹${trade.entry_price.toFixed(2)} @ ${entryTimeStr}</span>
           </div>
           <div class="decision-audit-item">
             <span class="decision-audit-label">Exit Execution</span>
-            <span class="decision-audit-val">₹${trade.exit_price.toFixed(2)} @ ${fmtTime(trade.exit_time)}</span>
+            <span class="decision-audit-val">₹${trade.exit_price.toFixed(2)} @ ${exitTimeStr}</span>
           </div>
           <div class="decision-audit-item">
             <span class="decision-audit-label">Gross / Fees / Net</span>
             <span class="decision-audit-val ${isWin ? "up" : "down"}">
-              ₹${trade.gross_pnl_rupees.toFixed(2)} / ₹${trade.fees_rupees.toFixed(2)} / <b>${fmtRupees(trade.net_pnl_rupees)}</b>
+              ${trade.gross_pnl_rupees >= 0 ? "+" : ""}₹${trade.gross_pnl_rupees.toFixed(2)} / ₹${trade.fees_rupees.toFixed(2)} / <b>${fmtRupees(trade.net_pnl_rupees)}</b>
             </span>
           </div>
           <div class="decision-audit-item">
             <span class="decision-audit-label">Execution Mode</span>
-            <span class="decision-audit-val">${esc(config.execution_mode || config.mode)}</span>
+            <span class="decision-audit-val">${esc(config?.execution_mode || config?.mode || "UNDERLYING_DIRECTIONAL")}</span>
           </div>
           <div class="decision-audit-item">
             <span class="decision-audit-label">Stop Policy / Fees</span>
-            <span class="decision-audit-val">${esc(config.intrabar_stop_policy)} / ${esc(config.fee_schedule)}</span>
+            <span class="decision-audit-val">${esc(config?.intrabar_stop_policy || config?.stop_policy || "STOP_FIRST")} / ${esc(config?.fee_schedule || "UPSTOX_2026_V1")}</span>
           </div>
         </div>
-        <div class="decision-audit-reason">
-          <b>Signal &amp; Exit Trigger:</b> ${esc(trade.exit_reason || "Causal rule trigger")}
+        <div class="decision-audit-reason" style="display:flex;align-items:center;justify-content:space-between;">
+          <div><b>Signal &amp; Exit Trigger:</b> ${exitBadge} <span style="color:var(--muted);margin-left:6px;">(${esc(trade.exit_reason || "Causal rule trigger")})</span></div>
         </div>
       </div>
     `;
+
+    const closeBtn = container.querySelector(".btn-close-audit");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        container.innerHTML = "";
+      });
+    }
   }
 
   /**

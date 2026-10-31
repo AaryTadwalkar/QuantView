@@ -521,7 +521,7 @@ export class QuantChart {
    *
    * 2. How does the specific function work:
    *    - Queries appropriate endpoint based on symbol format.
-   *    - Caches returned candles in this.rawCandles.
+   *    - Caches returned candles in this.rawCandles if non-empty, preserving existing valid cache on empty returns.
    *    - Formats candles according to active chartType (e.g. calculates Heikin Ashi).
    *    - Feeds main and volume series via series.setData().
    *    - Renders active indicator overlays and sub-panes.
@@ -534,9 +534,10 @@ export class QuantChart {
    *    Invoked during initial bootstrap, symbol changes, and interval changes.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Previous candles. After: Updated series rendered on chart.
+   *    Before: Previous candles. After: Updated series rendered on chart, preserving state on empty responses.
    */
   async loadCandles() {
+    this._historicalGeneration = (this._historicalGeneration || 0) + 1;
     try {
       let resp;
       if (this.symbol.startsWith("OPT-") || this.symbol.startsWith("NIFTY_20") || /NIFTY.*[0-9]+.*[CP]E/i.test(this.symbol)) {
@@ -545,7 +546,13 @@ export class QuantChart {
         resp = await api.getCandles(this.symbol, this.timeframe, 5000);
       }
 
-      this.rawCandles = resp?.candles || [];
+      if (!resp?.candles || resp.candles.length === 0) {
+        console.warn(`[QuantChart] Empty candles returned for ${this.symbol} (${this.timeframe}), preserving existing cache and sub-panes`);
+        return;
+      }
+
+      const sorted = [...resp.candles].sort((a, b) => a.time - b.time);
+      this.rawCandles = sorted;
       this.renderCachedData();
       this.renderIndicators();
       this.updateLegend();
@@ -568,6 +575,7 @@ export class QuantChart {
    * 2. How does the specific function work:
    *    Fetches up to 5000 candles with to_ts <= earliest loaded candle timestamp, prepends them
    *    to this.rawCandles while deduplicating, updates main/volume/indicator series, and syncs markers.
+   *    Guarded by generational token to prevent race conditions during symbol or date navigation.
    *
    * 3. Concepts used in the function:
    *    Infinite horizontal scroll pagination, temporal deduplication, analytical query pagination.
@@ -581,20 +589,33 @@ export class QuantChart {
   async loadMoreHistoricalCandles() {
     if (this._isLoadingHistorical || !this.rawCandles || this.rawCandles.length === 0) return;
     this._isLoadingHistorical = true;
+    const currentGen = (this._historicalGeneration = this._historicalGeneration || 0);
+    const expectedSymbol = this.symbol;
+    const earliestTs = this.rawCandles[0].time;
+
     try {
-      const earliestTs = this.rawCandles[0].time;
       let resp;
       if (this.symbol.startsWith("OPT-") || this.symbol.startsWith("NIFTY_20") || /NIFTY.*[0-9]+.*[CP]E/i.test(this.symbol)) {
         resp = await api.getOptionCandles(this.symbol, this.timeframe, 5000, null, earliestTs - 1);
       } else {
         resp = await api.getCandles(this.symbol, this.timeframe, 5000, null, earliestTs - 1);
       }
+
+      // Check if generation or symbol changed while fetch was in flight
+      if (this._historicalGeneration !== currentGen || this.symbol !== expectedSymbol) {
+        return;
+      }
+      if (!this.rawCandles || this.rawCandles.length === 0 || this.rawCandles[0].time !== earliestTs) {
+        return;
+      }
+
       const newCandles = resp?.candles || [];
       if (newCandles.length > 0) {
         const existingTimes = new Set(this.rawCandles.map((c) => c.time));
         const prepends = newCandles.filter((c) => !existingTimes.has(c.time));
         if (prepends.length > 0) {
           this.rawCandles = [...prepends, ...this.rawCandles];
+          this.rawCandles.sort((a, b) => a.time - b.time);
           this.renderCachedData();
           this.renderIndicators();
           this.syncAllMarkers();
@@ -667,7 +688,9 @@ export class QuantChart {
    *    Before: Chart displays previous bar series. After: Chart immediately reflects updated candle slice.
    */
   setCandles(candles = [], fit = false) {
-    this.rawCandles = candles || [];
+    this._historicalGeneration = (this._historicalGeneration || 0) + 1;
+    const sorted = [...(candles || [])].sort((a, b) => a.time - b.time);
+    this.rawCandles = sorted;
     this.renderCachedData();
     this.renderIndicators();
     this.syncAllMarkers();
@@ -978,7 +1001,7 @@ export class QuantChart {
    *    Marker collation, temporal bounds checking, anti-clamping filter.
    *
    * 4. Places where this function is imported and used:
-   *    Invoked by setMarkers, clearMarkers, and renderIndicators.
+   *    Invoked by setMarkers, clearMarkers, setCandles, and renderIndicators.
    *
    * 5. Final output of the function, before and after:
    *    Before: Out-of-bounds markers stacking on first candle. After: Only relevant in-window markers rendered cleanly.
@@ -989,9 +1012,20 @@ export class QuantChart {
       const minTime = this.rawCandles[0].time;
       const maxTime = this.rawCandles[this.rawCandles.length - 1].time;
       extra = extra.filter((m) => m && m.time >= minTime && m.time <= maxTime);
+    } else {
+      extra = [];
     }
 
-    const all = [...extra, ...(this.indicatorMarkers || [])];
+    let indicators = this.indicatorMarkers || [];
+    if (this.rawCandles && this.rawCandles.length > 0) {
+      const minTime = this.rawCandles[0].time;
+      const maxTime = this.rawCandles[this.rawCandles.length - 1].time;
+      indicators = indicators.filter((m) => m && m.time >= minTime && m.time <= maxTime);
+    } else {
+      indicators = [];
+    }
+
+    const all = [...extra, ...indicators];
     all.sort((a, b) => a.time - b.time);
     if (this.markersPlugin && typeof this.markersPlugin.setMarkers === "function") {
       this.markersPlugin.setMarkers(all);
@@ -1014,14 +1048,14 @@ export class QuantChart {
    * 2. How does the specific function work:
    *    Checks if timestamp is within [rawCandles[0].time, rawCandles[n-1].time].
    *    If within range, calls scrollToTime(timestamp).
-   *    If outside range, fetches candles centered on timestamp (+- 2 days) via api.getCandles,
+   *    If outside range, fetches candles centered on timestamp (-2 days to +5 days) via api.getCandles,
    *    re-populates rawCandles via setCandles(), and centers view on timestamp.
    *
    * 3. Concepts used in the function:
    *    Point-in-time historical navigation, on-demand chunk loading, time scale centering.
    *
    * 4. Places where this function is imported and used:
-   *    Invoked by trade log row click in apps/web/js/app.js.
+   *    Invoked by trade log row click and runBacktest in apps/web/js/app.js.
    *
    * 5. Final output of the function, before and after:
    *    Before: Chart displaying current bars. After: Historical window loaded and centered on trade execution.
@@ -1030,7 +1064,9 @@ export class QuantChart {
     if (!timestamp || !this.chart) return;
     const ts = Number(timestamp);
     const n = this.rawCandles ? this.rawCandles.length : 0;
-    const isInRange = n > 0 && ts >= this.rawCandles[0].time && ts <= this.rawCandles[n - 1].time;
+    const minTime = n > 0 ? Math.min(this.rawCandles[0].time, this.rawCandles[n - 1].time) : 0;
+    const maxTime = n > 0 ? Math.max(this.rawCandles[0].time, this.rawCandles[n - 1].time) : 0;
+    const isInRange = n > 0 && ts >= minTime && ts <= maxTime;
 
     if (isInRange) {
       this.scrollToTime(ts);
@@ -1038,9 +1074,15 @@ export class QuantChart {
     }
 
     try {
+      this._historicalGeneration = (this._historicalGeneration || 0) + 1;
       const fromTs = Math.max(0, ts - (86400 * 2));
-      const toTs = ts + (86400 * 2);
-      const resp = await api.getCandles(this.symbol, this.timeframe, 5000, fromTs, toTs);
+      const toTs = ts + (86400 * 5);
+      let resp;
+      if (this.symbol && (this.symbol.startsWith("OPT-") || this.symbol.startsWith("NIFTY_20") || /NIFTY.*[0-9]+.*[CP]E/i.test(this.symbol))) {
+        resp = await api.getOptionCandles(this.symbol, this.timeframe, 5000, fromTs, toTs);
+      } else {
+        resp = await api.getCandles(this.symbol, this.timeframe, 5000, fromTs, toTs);
+      }
       if (resp && resp.candles && resp.candles.length > 0) {
         this.setCandles(resp.candles, false);
         this.scrollToTime(ts);
@@ -1093,17 +1135,19 @@ export class QuantChart {
    *    Highlights a specific backtested trade on the chart with visual price lines and scrolling.
    *
    * 2. How does the specific function work:
-   *    Clears any prior temporary trade highlight lines. Creates an entry price line (green dashed)
-   *    and exit price line (red dashed) on the main series, and scrolls viewport to trade entry_time.
+   *    Clears prior temporary trade highlight lines. Scrolls viewport to trade.entry_time.
+   *    Checks if execution prices fall within reasonable range (30%) of currently loaded candles.
+   *    If within range, plots dashed Entry and Exit price lines; if out-of-range (e.g. option premium
+   *    on an index chart), safely omits price lines to prevent crushing the price scale, relying on arrow markers.
    *
    * 3. Concepts used in the function:
-   *    Interactive trade audit, on-chart price level demarcation, synchronized scrolling.
+   *    Interactive trade audit, scale-safe price level demarcation, synchronized scrolling.
    *
    * 4. Places where this function is imported and used:
    *    Invoked by Strategy Tester audit trade log row click in apps/web/js/app.js.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Standard chart view. After: Chart centered at entry bar with entry/exit price levels indicated.
+   *    Before: Standard chart view. After: Chart centered at entry bar with scale-safe price levels indicated.
    */
   highlightTrade(trade) {
     if (!trade || !this.main) return;
@@ -1122,35 +1166,61 @@ export class QuantChart {
       this.scrollToTime(trade.entry_time);
     }
 
-    if (trade.entry_price != null && Number.isFinite(trade.entry_price)) {
-      try {
-        const entryLine = this.main.createPriceLine({
-          price: trade.entry_price,
-          color: "#26a69a",
-          lineWidth: 1,
-          lineStyle: 2,
-          axisLabelVisible: true,
-          title: `AUDIT ENTRY: ₹${trade.entry_price.toFixed(2)}`,
-        });
-        this.tradeHighlightLines.push(entryLine);
-      } catch {
-        /* ignore */
+    // Safety check: verify trade execution prices fall within reasonable range (30%) of chart price bounds.
+    // If the trade is an option contract (e.g. premium ₹123.25) and the chart displays the underlying index
+    // (NSE:NIFTY50 at ~₹23,800), skip creating price lines to prevent crushing the price scale.
+    let allowedMin = 0;
+    let allowedMax = Infinity;
+    let canDrawPriceLines = false;
+
+    if (this.rawCandles && this.rawCandles.length > 0) {
+      let minLow = Infinity;
+      let maxHigh = -Infinity;
+      for (let i = 0; i < this.rawCandles.length; i++) {
+        const c = this.rawCandles[i];
+        if (c.low != null && c.low < minLow) minLow = c.low;
+        if (c.high != null && c.high > maxHigh) maxHigh = c.high;
+      }
+      if (minLow !== Infinity && maxHigh !== -Infinity && minLow > 0) {
+        allowedMin = minLow * 0.70;
+        allowedMax = maxHigh * 1.30;
+        canDrawPriceLines = true;
       }
     }
 
-    if (trade.exit_price != null && Number.isFinite(trade.exit_price)) {
-      try {
-        const exitLine = this.main.createPriceLine({
-          price: trade.exit_price,
-          color: "#ef5350",
-          lineWidth: 1,
-          lineStyle: 2,
-          axisLabelVisible: true,
-          title: `AUDIT EXIT: ₹${trade.exit_price.toFixed(2)} (${trade.exit_reason || "EXIT"})`,
-        });
-        this.tradeHighlightLines.push(exitLine);
-      } catch {
-        /* ignore */
+    if (canDrawPriceLines && trade.entry_price != null && Number.isFinite(trade.entry_price)) {
+      if (trade.entry_price >= allowedMin && trade.entry_price <= allowedMax) {
+        try {
+          const entryLine = this.main.createPriceLine({
+            price: trade.entry_price,
+            color: "#26a69a",
+            lineWidth: 1,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: `AUDIT ENTRY: ₹${trade.entry_price.toFixed(2)}`,
+          });
+          this.tradeHighlightLines.push(entryLine);
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
+    if (canDrawPriceLines && trade.exit_price != null && Number.isFinite(trade.exit_price)) {
+      if (trade.exit_price >= allowedMin && trade.exit_price <= allowedMax) {
+        try {
+          const exitLine = this.main.createPriceLine({
+            price: trade.exit_price,
+            color: "#ef5350",
+            lineWidth: 1,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: `AUDIT EXIT: ₹${trade.exit_price.toFixed(2)} (${trade.exit_reason || "EXIT"})`,
+          });
+          this.tradeHighlightLines.push(exitLine);
+        } catch {
+          /* ignore */
+        }
       }
     }
   }
@@ -1630,16 +1700,16 @@ export class QuantChart {
    *    Synchronizes the chart dimensions with the container's client dimensions.
    *
    * 2. How does the specific function work:
-   *    Measures container clientWidth and clientHeight and calls chart.resize(w, h).
+   *    Measures container clientWidth and clientHeight, calls chart.resize(w, h), reapplies pane stretch factors, and syncs drawings.
    *
    * 3. Concepts used in the function:
-   *    Canvas resize synchronization, responsive layout.
+   *    Canvas resize synchronization, responsive layout, pane stretch maintenance.
    *
    * 4. Places where this function is imported and used:
    *    Invoked when bottom dock expands/collapses or window resizes.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Mismatched canvas resolution. After: Canvas resized pixel-perfectly to container.
+   *    Before: Mismatched canvas resolution. After: Canvas resized pixel-perfectly with preserved pane proportions.
    */
   syncResize() {
     if (!this.chart || !this.container) return;
@@ -1647,6 +1717,14 @@ export class QuantChart {
     const h = this.container.clientHeight;
     if (w > 0 && h > 0) {
       this.chart.resize(w, h);
+    }
+    if (this.chart.panes && typeof this.chart.panes === "function") {
+      const panes = this.chart.panes();
+      panes.forEach((p, i) => {
+        if (typeof p.setStretchFactor === "function") {
+          p.setStretchFactor(i === 0 ? 1 : 0.28);
+        }
+      });
     }
     if (this.drawings) {
       this.drawings.syncResize();
@@ -2086,10 +2164,11 @@ export class QuantChart {
    *    Renders all active technical indicator overlays and sub-panes in Lightweight Charts.
    *
    * 2. How does the specific function work:
+   *    - Verifies rawCandles are present upfront before unmounting or clearing existing sub-panes.
    *    - Cleans up previously registered indicator series.
    *    - Purges sub-panes back to primary pane 0.
    *    - Calculates values for each indicator using computeIndicator().
-   *    - Allocates overlay series on pane 0 or creates sub-panes for oscillators (RSI, MACD, ATR).
+   *    - Allocates overlay series on pane 0 or creates sub-panes for oscillators (RSI, MACD, ATR, Stochastic).
    *    - Formats line series and multi-color histogram bars (green above 0, red below 0).
    *    - Adds reference levels (e.g. 70/30 on RSI).
    *    - Synchronizes multi-pane stretch factors (1 for price pane, 0.28 for sub-panes).
@@ -2102,9 +2181,12 @@ export class QuantChart {
    *    Invoked by loadCandles, setChartType, addIndicator, removeIndicator, and updateIndicator.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Unsynced or stale canvas series. After: Active indicators and sub-panes rendered at 60 FPS.
+   *    Before: Sub-panes wiped out on empty bar transitions. After: Resilient indicator and sub-pane rendering across timeframe/symbol switches.
    */
   renderIndicators() {
+    const bars = this.rawCandles;
+    if (!bars || bars.length === 0) return;
+
     // Clear old indicator series
     for (const list of this.indSeries.values()) {
       for (const s of list) {
@@ -2130,9 +2212,7 @@ export class QuantChart {
 
     this.indResults = {};
     this.indicatorMarkers = [];
-    const bars = this.rawCandles;
     const n = bars.length;
-    if (!n) return;
 
     const step = n > 1 ? (bars[1].time - bars[0].time) || 300 : 300;
     const timeAt = (i) => (i < n ? bars[i].time : bars[n - 1].time + (i - n + 1) * step);

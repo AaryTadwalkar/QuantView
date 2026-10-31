@@ -1,21 +1,23 @@
 /**
  * 1. What this file does:
  *    Interactive chart drawing tools, transparent canvas overlay, geometric hit-testing,
+ *    pointer-events management for unobstructed chart pan/zoom, price scale isolation clipping,
  *    and REST persistence engine for QuantView (apps/web/js/drawings.js).
  *    Supports 13 technical drawing tools (Trendline, Ray, Extended Line, Horizontal Line,
  *    Horizontal Ray, Vertical Line, Parallel Channel, Rectangle, Fibonacci Retracement,
  *    Price Measure/Ruler, Long Position, Short Position, and Text Note), manages interactive
  *    mouse and pointer events, synchronizes canvas resolution with chart dimensions, and
- *    implements the verified hit-test bounding box bug fix for Long and Short position boxes
- *    (Milestone M6-13, Gate G4).
+ *    implements verified hit-testing and price scale clipping (Milestone M6-13, Gate G4).
  *
  * 2. Overall design:
  *    - Implements DrawingLayer as both a transparent DOM canvas overlay and a Lightweight Charts
  *      v5 series primitive (ISeriesPrimitive) attached to the primary candlestick series.
  *    - Points are stored canonically as { time: UtcEpochSec, price: number }, ensuring drawings
  *      remain invariant and anchored during timeframe switching or interval changes.
- *    - Corrects the Long/Short hitTest calculation so that clicking anywhere in the entry,
- *      stop-loss, or target zones selects the position box instantly for deletion or editing.
+ *    - Dynamically configures overlay canvas pointer-events ("auto" only on hover of drawings/anchors,
+ *      otherwise "none"), ensuring chart pan/zoom and right-hand price scale manipulation never lock up.
+ *    - Strictly clips horizontal lines and horizontal rays at plotWidth so zero pixels ever paint
+ *      into the right 65px price scale column.
  *    - Automatically synchronizes drawing entities with the backend FastAPI persistence endpoints:
  *        * POST /api/v1/charts/drawings (upsert)
  *        * GET /api/v1/charts/drawings?symbol=... (load)
@@ -131,7 +133,7 @@ export const COLORS = {
 /**
  * 1. The use of class:
  *    Manages the chart drawing overlay canvas, user interactions, geometric hit-testing,
- *    and REST synchronization with the FastAPI drawings storage backend.
+ *    unobstructed pointer event delegation, and REST synchronization with the FastAPI drawings storage backend.
  *
  * 2. What the class contains:
  *    - chart: Reference to the parent QuantChart instance.
@@ -145,14 +147,16 @@ export const COLORS = {
  *    - series: Attached Lightweight Charts series primitive reference.
  *
  * 3. Technologies used and why:
- *    HTML5 Canvas 2D API for high-performance 60-120 FPS drawing rendering,
+ *    HTML5 Canvas 2D API for high-performance 60-120 FPS drawing rendering with strict clipping,
  *    Lightweight Charts v5 series primitive API for seamless canvas synchronization,
+ *    dynamic pointer-events toggling for unblocked chart interactions,
  *    and typed async REST API methods for lossless backend persistence.
  *
  * 4. Key design and overall design of the class:
  *    Provides dual-mode rendering (dedicated overlay canvas + series primitive fallback),
  *    exact Euclidean and point-in-polygon hit-testing with the M6-13 Long/Short bug fix,
- *    and reactive event delegation for mouse, pointer, and keyboard operations.
+ *    price scale isolation clipping at plotWidth, and reactive event delegation for mouse,
+ *    pointer, and keyboard operations with pass-through pointer-events.
  */
 export class DrawingLayer {
   /**
@@ -236,20 +240,21 @@ export class DrawingLayer {
 
   /**
    * 1. The use of function:
-   *    Binds interactive pointer and mouse events to the overlay canvas and chart container.
+   *    Binds interactive pointer, mouse, and keyboard events to the overlay canvas, container, and window.
    *
    * 2. How does the specific function work:
-   *    Attaches pointerdown, pointermove, pointerup, click, and contextmenu listeners
-   *    to handle interactive point placement, selection, and hit-testing.
+   *    Attaches pointerdown, pointermove, pointerup, click, and container mousemove listeners.
+   *    Configures container mousemove to enable canvas pointer events only when directly hovering over an
+   *    anchor handle or drawing entity, ensuring chart panning, zooming, and price scale drags remain fully unblocked.
    *
    * 3. Concepts used in the function:
-   *    Pointer events, mouse tracking, canvas event delegation.
+   *    Pointer events delegation, non-blocking transparent canvas overlay, geometric hit-testing, gesture dispatch.
    *
    * 4. Places where this function is imported and used:
-   *    Called internally by mount().
+   *    Called internally by mount() upon workstation initialization.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Detached events. After: Overlay canvas bound to user input gestures.
+   *    Before: Detached events. After: Overlay canvas bound to user input gestures with selective pointer event pass-through.
    */
   bindOverlayEvents() {
     if (!this.canvas) return;
@@ -293,18 +298,34 @@ export class DrawingLayer {
     // Also observe container mousemove for cursor hit-testing and anchor manipulation
     this.container.addEventListener("mousemove", (e) => {
       if (this.tool === "cursor" && !this.temp) {
+        if (this.dragAnchor) return;
         const rect = this.container.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         const hit = this.hitTest(x, y);
         const anchor = this.hitAnchor ? this.hitAnchor(x, y) : null;
-        if (hit || anchor || this.selected) {
+        if (hit || anchor) {
           this.canvas.style.pointerEvents = "auto";
-          this.canvas.style.cursor = anchor ? "crosshair" : hit ? "pointer" : "default";
+          this.canvas.style.cursor = anchor ? "crosshair" : "pointer";
         } else {
           this.canvas.style.pointerEvents = "none";
           this.canvas.style.cursor = "";
         }
+      }
+    });
+
+    this.container.addEventListener("mouseleave", () => {
+      if (this.tool === "cursor" && !this.dragAnchor) {
+        this.canvas.style.pointerEvents = "none";
+        this.canvas.style.cursor = "";
+      }
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if (tag === "input" || tag === "textarea" || tag === "select") return;
+        this.cancel();
       }
     });
   }
@@ -504,28 +525,32 @@ export class DrawingLayer {
    *    Sets the active drawing tool mode (e.g. "cursor", "trend", "long", "short").
    *
    * 2. How does the specific function work:
-   *    Updates this.tool property, cancels any incomplete in-flight drawing (this.temp),
-   *    updates canvas pointer-events and cursor styling, and repaints.
+   *    Updates this.tool property and cancels any incomplete in-flight drawing. When switching to "cursor",
+   *    clears active selection (this.selected = null), sets canvas pointerEvents to "none", and clears the cursor.
+   *    When selecting a drawing tool, sets canvas pointerEvents to "auto" and cursor to "crosshair". Repaints the canvas.
    *
    * 3. Concepts used in the function:
-   *    Tool state management, mode switching, pointer-events configuration.
+   *    Tool state management, mode switching, pointer-events configuration, selection clearing.
    *
    * 4. Places where this function is imported and used:
-   *    Invoked when user clicks toolbar buttons in #drawbar.
+   *    Invoked when user clicks toolbar buttons in #drawbar or presses Escape.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Previous tool mode. After: Updated tool mode with appropriate cursor styling.
+   *    Before: Previous tool mode. After: Updated tool mode with appropriate pointer events and cursor styling.
    */
   setTool(tool) {
     this.tool = tool || "cursor";
     if (this.temp) {
       this.temp = null;
     }
-    if (this.canvas) {
-      if (this.tool === "cursor") {
+    if (this.tool === "cursor") {
+      this.selected = null;
+      if (this.canvas) {
         this.canvas.style.pointerEvents = "none";
         this.canvas.style.cursor = "";
-      } else {
+      }
+    } else {
+      if (this.canvas) {
         this.canvas.style.pointerEvents = "auto";
         this.canvas.style.cursor = "crosshair";
       }
@@ -597,16 +622,17 @@ export class DrawingLayer {
    * 2. How does the specific function work:
    *    Projects all anchor points to (x, y) coordinates. Dispatches switch based on d.type
    *    (trend, ray, extended, hline, hray, vline, channel, rect, fib, measure, long, short, text)
-   *    rendering stroke lines, polygon fills, price tags, and selection anchor handles.
+   *    rendering stroke lines, polygon fills, price tags, and selection anchor handles. For hline and hray,
+   *    strictly clips lines and labels at plotWidth to isolate and protect the right 65px price scale column.
    *
    * 3. Concepts used in the function:
-   *    Vector path construction, geometric projection, typography metrics, selection handles.
+   *    Vector path construction, geometric projection, canvas clipping bounds, typography metrics, selection handles.
    *
    * 4. Places where this function is imported and used:
    *    Called internally by draw() for each active drawing item.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Unrendered drawing object. After: Vector primitives rendered on canvas.
+   *    Before: Unrendered drawing object. After: Vector primitives rendered on canvas with price scale isolation.
    */
   drawOne(ctx, size, d, active) {
     const pts = d.points.map((p) => ({
@@ -691,16 +717,38 @@ export class DrawingLayer {
       }
 
       case "hline": {
-        const plotWidth = this.chart?.chart?.timeScale?.()?.width?.() || (size.width - 65);
+        const plotWidth = Math.min(
+          (typeof this.chart?.chart?.timeScale === "function" &&
+            this.chart.chart.timeScale()?.width?.()) ||
+            (size.width - 65),
+          size.width - 65,
+        );
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, plotWidth, size.height);
+        ctx.clip();
         line(0, a.y, plotWidth, a.y);
         label(price(a.price), plotWidth - 8, a.y - 10, "right", "rgba(30, 34, 45, 0.85)");
+        ctx.restore();
         break;
       }
 
       case "hray": {
-        const plotWidth = this.chart?.chart?.timeScale?.()?.width?.() || (size.width - 65);
-        line(a.x, a.y, plotWidth, a.y);
-        label(price(a.price), plotWidth - 8, a.y - 10, "right", "rgba(30, 34, 45, 0.85)");
+        const plotWidth = Math.min(
+          (typeof this.chart?.chart?.timeScale === "function" &&
+            this.chart.chart.timeScale()?.width?.()) ||
+            (size.width - 65),
+          size.width - 65,
+        );
+        if (a.x < plotWidth) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, 0, plotWidth, size.height);
+          ctx.clip();
+          line(a.x, a.y, plotWidth, a.y);
+          label(price(a.price), plotWidth - 8, a.y - 10, "right", "rgba(30, 34, 45, 0.85)");
+          ctx.restore();
+        }
         break;
       }
 
@@ -872,8 +920,15 @@ export class DrawingLayer {
         ];
       }
 
+      const plotWidth = Math.min(
+        (typeof this.chart?.chart?.timeScale === "function" &&
+          this.chart.chart.timeScale()?.width?.()) ||
+          (size.width - 65),
+        size.width - 65,
+      );
+
       for (const p of handlePoints) {
-        if (p && p.x != null && p.y != null) {
+        if (p && p.x != null && p.y != null && p.x <= plotWidth) {
           ctx.beginPath();
           ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
           ctx.fill();
@@ -888,20 +943,29 @@ export class DrawingLayer {
    *    Performs precise geometric hit-testing to identify the nearest drawing within interaction range.
    *
    * 2. How does the specific function work:
-   *    Iterates through all items, projects points to canvas space, and calculates distance
-   *    to geometries. Applies the verified M6-13 bounding box calculation for Long and Short
-   *    positions ensuring clicking anywhere in target, entry, or stop zones selects the box.
+   *    Verifies coordinate is inside the chart plot area (x < plotWidth). If x is within the price scale,
+   *    immediately returns null. Otherwise, iterates through items, projects points to canvas space, and calculates
+   *    distance to geometries. Applies the verified M6-13 bounding box calculation for Long and Short positions.
    *
    * 3. Concepts used in the function:
-   *    Point-to-segment Euclidean distance, axis-aligned bounding box containment, M6-13 hit-test fix.
+   *    Plot area boundary checking, Euclidean point-to-segment distance, axis-aligned bounding box containment.
    *
    * 4. Places where this function is imported and used:
-   *    Invoked by pointer event handlers when user clicks in cursor mode to select drawings.
+   *    Invoked by pointer down/move and container mousemove handlers to detect hover and selection.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Click coordinates (x, y). After: Nearest hit drawing object or null.
+   *    Before: Click coordinates (x, y). After: Nearest hit drawing object inside plot area, or null.
    */
   hitTest(x, y) {
+    const maxPlotWidth = this.canvas ? this.canvas.clientWidth - 65 : 1e5;
+    const plotWidth = Math.min(
+      (typeof this.chart?.chart?.timeScale === "function" &&
+        this.chart.chart.timeScale()?.width?.()) ||
+        maxPlotWidth,
+      maxPlotWidth,
+    );
+    if (x >= plotWidth) return null;
+
     let best = null;
     let bestD = 12;
 
@@ -999,20 +1063,28 @@ export class DrawingLayer {
    *    Tests if a pointer coordinate (x, y) strikes an anchor handle point of the selected drawing.
    *
    * 2. How does the specific function work:
-   *    Iterates over projected pixel coordinates of the currently selected drawing's anchor points.
-   *    If Euclidean distance <= 10 pixels, returns descriptor { drawing, pointIndex }.
+   *    Verifies coordinate is inside the chart plot area (x < plotWidth). Iterates over projected pixel
+   *    coordinates of the currently selected drawing's anchor points within interaction radius (<= 10px).
    *
    * 3. Concepts used in the function:
-   *    Anchor hit-testing, Euclidean proximity detection.
+   *    Anchor hit-testing, plot boundary isolation, Euclidean proximity detection.
    *
    * 4. Places where this function is imported and used:
    *    Invoked by onPointerDown and mousemove handlers to initiate control point dragging.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Canvas (x, y). After: Hit anchor handle descriptor or null.
+   *    Before: Coordinates (x, y). After: Hit anchor handle descriptor inside plot area, or null.
    */
   hitAnchor(x, y) {
     if (!this.selected || !this.selected.points) return null;
+    const maxPlotWidth = this.canvas ? this.canvas.clientWidth - 65 : 1e5;
+    const plotWidth = Math.min(
+      (typeof this.chart?.chart?.timeScale === "function" &&
+        this.chart.chart.timeScale()?.width?.()) ||
+        maxPlotWidth,
+      maxPlotWidth,
+    );
+    if (x >= plotWidth) return null;
     const d = this.selected;
 
     if ((d.type === "long" || d.type === "short") && d.points.length >= 2) {
@@ -1090,20 +1162,22 @@ export class DrawingLayer {
 
   /**
    * 1. The use of function:
-   *    Handles pointerdown events for drawing tool point anchoring and selection.
+   *    Handles pointerdown events for drawing tool point anchoring, selection, and control dragging.
    *
    * 2. How does the specific function work:
-   *    Calculates relative coordinates, checks if in cursor mode (hit-testing or anchor dragging)
-   *    or drawing mode (point creation). If drawing, initializes or extends this.temp anchor points.
+   *    Calculates relative coordinates. In cursor mode, if an anchor is hit, captures pointer and initiates drag;
+   *    if a drawing is hit, sets pointerEvents to "auto" and marks it selected; if empty space is clicked,
+   *    clears selection (this.selected = null), sets pointerEvents to "none", and clears cursor.
+   *    In drawing mode, creates or advances anchor points of this.temp until completion.
    *
    * 3. Concepts used in the function:
-   *    Pointer interaction, anchor point accumulation, control point dragging.
+   *    Pointer interaction, selection toggling, non-blocking pass-through, anchor dragging.
    *
    * 4. Places where this function is imported and used:
    *    Registered on overlay canvas in bindOverlayEvents().
    *
    * 5. Final output of the function, before and after:
-   *    Before: Pointer event received. After: State updated, drawing initialized, selected, or dragged.
+   *    Before: Pointerdown event received. After: State updated, drawing initialized, selected, or deselected.
    */
   onPointerDown(e) {
     if (!this.canvas) return;
@@ -1114,6 +1188,7 @@ export class DrawingLayer {
     if (this.tool === "cursor") {
       const anchor = this.hitAnchor(x, y);
       if (anchor) {
+        this.canvas.style.pointerEvents = "auto";
         this.dragAnchor = anchor;
         if (this.canvas.setPointerCapture && e.pointerId) {
           try {
@@ -1124,9 +1199,14 @@ export class DrawingLayer {
         }
         return;
       }
-      this.selected = this.hitTest(x, y);
-      if (this.selected) {
+      const hit = this.hitTest(x, y);
+      if (hit) {
+        this.selected = hit;
         this.canvas.style.pointerEvents = "auto";
+      } else {
+        this.selected = null;
+        this.canvas.style.pointerEvents = "none";
+        this.canvas.style.cursor = "";
       }
       this.update();
       return;
@@ -1170,10 +1250,11 @@ export class DrawingLayer {
    *
    * 2. How does the specific function work:
    *    If an anchor point is being dragged, updates the corresponding control point and repaints.
+   *    In cursor mode when not dragging, evaluates hover hit-testing to adjust pointerEvents and cursor.
    *    If temp drawing is active, updates the last anchor point to match current cursor position.
    *
    * 3. Concepts used in the function:
-   *    Live preview rendering, interactive vector reshaping, 60 FPS repaint.
+   *    Live preview rendering, interactive vector reshaping, dynamic pointer-events relinquishment.
    *
    * 4. Places where this function is imported and used:
    *    Registered on overlay canvas in bindOverlayEvents().
@@ -1219,9 +1300,17 @@ export class DrawingLayer {
       return;
     }
 
-    if (this.tool === "cursor" && this.selected) {
-      const anchor = this.hitAnchor(x, y);
-      this.canvas.style.cursor = anchor ? "crosshair" : "pointer";
+    if (this.tool === "cursor" && !this.temp) {
+      const hit = this.hitTest(x, y);
+      const anchor = this.hitAnchor ? this.hitAnchor(x, y) : null;
+      if (hit || anchor) {
+        this.canvas.style.pointerEvents = "auto";
+        this.canvas.style.cursor = anchor ? "crosshair" : "pointer";
+      } else {
+        this.canvas.style.pointerEvents = "none";
+        this.canvas.style.cursor = "";
+      }
+      return;
     }
 
     if (!this.temp) return;
@@ -1238,10 +1327,11 @@ export class DrawingLayer {
    *
    * 2. How does the specific function work:
    *    If an anchor was being dragged, releases pointer capture, persists updated coordinates
-   *    to the backend API, and clears dragging state.
+   *    to the backend API, and clears dragging state. In cursor mode, re-evaluates hover hit-testing
+   *    and sets pointerEvents to "none" if no longer over an anchor or drawing.
    *
    * 3. Concepts used in the function:
-   *    Gesture lifecycle completion, RESTful vector persistence.
+   *    Gesture lifecycle completion, RESTful vector persistence, pointer-events synchronization.
    *
    * 4. Places where this function is imported and used:
    *    Registered on overlay canvas in bindOverlayEvents().
@@ -1260,6 +1350,17 @@ export class DrawingLayer {
       }
       this.saveDrawingToBackend(this.dragAnchor.drawing);
       this.dragAnchor = null;
+      if (this.tool === "cursor") {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const hit = this.hitTest(x, y);
+        const anchor = this.hitAnchor ? this.hitAnchor(x, y) : null;
+        if (!hit && !anchor) {
+          this.canvas.style.pointerEvents = "none";
+          this.canvas.style.cursor = "";
+        }
+      }
       this.update();
     }
   }
@@ -1269,16 +1370,18 @@ export class DrawingLayer {
    *    Handles direct click events on the overlay canvas.
    *
    * 2. How does the specific function work:
-   *    Evaluates click coordinates and updates selection or deselects when clicking empty canvas space.
+   *    Evaluates click coordinates in cursor mode: if hitting a drawing, sets it as selected and enables
+   *    pointerEvents; if clicking empty space (!hit && !anchor), immediately deselects (this.selected = null),
+   *    sets canvas pointerEvents to "none", and clears cursor.
    *
    * 3. Concepts used in the function:
-   *    Click delegation, selection dispatch.
+   *    Click delegation, empty space deselection, pointer event pass-through restoration.
    *
    * 4. Places where this function is imported and used:
    *    Registered on overlay canvas in bindOverlayEvents().
    *
    * 5. Final output of the function, before and after:
-   *    Before: Click received. After: Selected item updated.
+   *    Before: Click received. After: Selected item updated or deselected with canvas pass-through restored.
    */
   onCanvasClick(e) {
     if (this.tool === "cursor") {
@@ -1286,11 +1389,14 @@ export class DrawingLayer {
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       const hit = this.hitTest(x, y);
-      const anchor = this.hitAnchor(x, y);
+      const anchor = this.hitAnchor ? this.hitAnchor(x, y) : null;
       if (!hit && !anchor) {
         this.selected = null;
+        this.canvas.style.pointerEvents = "none";
+        this.canvas.style.cursor = "";
       } else if (hit) {
         this.selected = hit;
+        this.canvas.style.pointerEvents = "auto";
       }
       this.update();
     }
@@ -1301,20 +1407,30 @@ export class DrawingLayer {
    *    Lightweight Charts subscribeClick adapter forwarding chart clicks to drawing layer.
    *
    * 2. How does the specific function work:
-   *    Extracts point from Lightweight Charts event payload and executes onPointerDown logic.
+   *    Extracts point from Lightweight Charts event payload. In cursor mode, hit-tests the clicked coordinates:
+   *    if a drawing is clicked, selects it and sets pointerEvents to "auto"; if empty space is clicked, deselects
+   *    and ensures pointerEvents is "none".
    *
    * 3. Concepts used in the function:
-   *    Chart event adaptation.
+   *    Chart event adaptation, cross-layer selection synchronization.
    *
    * 4. Places where this function is imported and used:
    *    Registered via chart.subscribeClick in QuantChart.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Chart click. After: Drawing selection or point creation dispatched.
+   *    Before: Chart click. After: Drawing selection or empty space deselection updated.
    */
   onClick(p) {
     if (this.tool === "cursor" && p?.point) {
       this.selected = this.hitTest(p.point.x, p.point.y);
+      if (this.canvas) {
+        if (this.selected) {
+          this.canvas.style.pointerEvents = "auto";
+        } else {
+          this.canvas.style.pointerEvents = "none";
+          this.canvas.style.cursor = "";
+        }
+      }
       this.update();
     }
   }
@@ -1389,20 +1505,25 @@ export class DrawingLayer {
    *    Cancels in-progress drawing construction or clears current selection.
    *
    * 2. How does the specific function work:
-   *    Clears this.temp, resets this.tool to "cursor", deselects active item, and updates canvas.
+   *    Clears this.temp, resets this.tool to "cursor", deselects active item (this.selected = null),
+   *    sets canvas pointerEvents to "none", clears cursor styling, and repaints canvas.
    *
    * 3. Concepts used in the function:
-   *    Cancellation semantics, escape key recovery.
+   *    Cancellation semantics, escape key recovery, pointer event reset.
    *
    * 4. Places where this function is imported and used:
    *    Invoked when Escape key is pressed or when switching away from drawing mode.
    *
    * 5. Final output of the function, before and after:
-   *    Before: In-progress or selected drawing. After: Clean idle cursor state.
+   *    Before: In-progress or selected drawing. After: Clean idle cursor state with pointer events passing through.
    */
   cancel() {
     this.temp = null;
     this.selected = null;
+    if (this.canvas) {
+      this.canvas.style.pointerEvents = "none";
+      this.canvas.style.cursor = "";
+    }
     this.setTool("cursor");
     this.update();
   }

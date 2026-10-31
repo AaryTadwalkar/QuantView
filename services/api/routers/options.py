@@ -13,6 +13,7 @@
    Optimized with indexed snapshot captures (sub-150ms) and graceful fallback chaining.
 
 3. Elements in the file:
+   - OPTION_TIMEFRAME_MAP: Mapping of timeframe resolution strings to DuckDB INTERVAL expressions.
    - router: FastAPI APIRouter configured with /api/v1/options prefix and options tags.
    - get_expiries: Endpoint serving available contract expiry dates.
    - get_option_chain: Endpoint reconstructing multi-strike option chain matrix around ATM.
@@ -40,6 +41,16 @@ from services.api.schemas.options import (
 )
 
 router = APIRouter(prefix="/api/v1/options", tags=["options"])
+
+OPTION_TIMEFRAME_MAP: Dict[str, str] = {
+    "3m": "3 minutes",
+    "5m": "5 minutes",
+    "15m": "15 minutes",
+    "30m": "30 minutes",
+    "1h": "1 hour",
+    "4h": "4 hours",
+    "1d": "1 day",
+}
 
 
 @router.get(
@@ -478,28 +489,44 @@ def get_option_candles(
 ) -> OptionCandleResponse:
     """
     1. The use of function:
-       FastAPI endpoint returning historical and real-time OHLCV bars for an individual option contract.
+       FastAPI endpoint returning historical and real-time OHLCV candlestick bars for an individual
+       option contract across multiple supported timeframes (1m, 3m, 5m, 15m, 30m, 1h, 4h, 1d).
 
     2. How does the specific function work:
-       - Validates and prepares filter parameters for contract_id, strike, option_type, expiry, and resolution.
-       - Constructs parameterized SQL query projecting UTC epoch seconds, open, high, low, close, and volume
-         from v_candles_options.
-       - Orders rows chronologically ascending by bar_start.
-       - Catches DuckDB errors gracefully, returning an empty list of candles if tables are missing.
-       - Populates and returns OptionCandleResponse schema.
+       - Normalizes and validates the requested candle resolution string.
+       - If resolution is '1m', queries raw 1m bars from v_candles_options matching interval = '1m'.
+       - If resolution is in OPTION_TIMEFRAME_MAP (3m, 5m, 15m, 30m, 1h, 4h, 1d), performs on-the-fly SQL
+         aggregation over raw 1m bars using DuckDB time_bucket(INTERVAL '{interval_str}', bar_start),
+         arg_min(open, bar_start), max(high), min(low), arg_max(close, bar_start), and sum(volume),
+         omitting the raw interval filter from the WHERE clause.
+       - Filters by contract_id, or tuple of (strike, option_type, expiry), and optional from_ts/to_ts bounds.
+       - If the primary query returns no rows and contract_id was provided, performs a regex fallback
+         extraction of symbol, expiry, strike, and option_type, rerunning the query (aggregated or 1m).
+       - Orders rows chronologically ascending by bucketed timestamp up to the limit parameter.
+       - Returns a validated OptionCandleResponse containing the list of OHLCV Candle objects.
 
     3. Concepts used in the function:
-       Contract specification resolution, time-series candle projection, parameterization, fault tolerance.
+       On-the-fly multi-timeframe candle aggregation, time_bucket temporal bucketing, arg_min/arg_max stateful
+       aggregation, regex contract parsing, graceful DuckDB error handling.
 
     4. Places where this function is imported and used:
-       Registered with the options router under GET /api/v1/options/candles.
+       Registered with the FastAPI APIRouter under GET /api/v1/options/candles in services.api.routers.options,
+       consumed by web charting UI (QuantChart) and backtesting/option analysis tools.
 
     5. Final output of the function, before and after:
-       Before: Query filters and DB connection. After: Validated OptionCandleResponse instance.
+       Before: Query filter parameters (contract_id, strike, option_type, expiry, resolution, bounds, limit).
+       After: Validated OptionCandleResponse schema instance containing chronologically sorted aggregated candles.
     """
     res_clean = resolution.strip().lower()
-    conditions: List[str] = ["interval = ?"]
-    params: List[object] = [res_clean]
+    interval_str = OPTION_TIMEFRAME_MAP.get(res_clean)
+    is_aggregated = interval_str is not None
+
+    conditions: List[str] = []
+    params: List[object] = []
+
+    if not is_aggregated:
+        conditions.append("interval = ?")
+        params.append(res_clean)
 
     if contract_id:
         conditions.append("contract_id = ?")
@@ -525,14 +552,30 @@ def get_option_candles(
         conditions.append("epoch(bar_start) <= ?")
         params.append(to_ts)
 
-    where_clause = " WHERE " + " AND ".join(conditions)
-    query = (
-        "SELECT contract_id, symbol, CAST(expiry AS VARCHAR) as expiry, "
-        "CAST(strike AS DOUBLE) as strike, option_type, "
-        "CAST(epoch(bar_start) AS BIGINT) as time, "
-        "open, high, low, close, COALESCE(volume, 0) as volume "
-        f"FROM v_candles_options{where_clause} ORDER BY bar_start ASC LIMIT ?"
-    )
+    where_clause = (" WHERE " + " AND ".join(conditions)) if conditions else ""
+
+    if is_aggregated:
+        query = (
+            "SELECT contract_id, symbol, CAST(expiry AS VARCHAR) as expiry, "
+            "CAST(strike AS DOUBLE) as strike, option_type, "
+            f"CAST(epoch(time_bucket(INTERVAL '{interval_str}', bar_start)) AS BIGINT) as time, "
+            "arg_min(open, bar_start) as open, "
+            "max(high) as high, "
+            "min(low) as low, "
+            "arg_max(close, bar_start) as close, "
+            "sum(COALESCE(volume, 0)) as volume "
+            f"FROM v_candles_options{where_clause} "
+            "GROUP BY 1, 2, 3, 4, 5, 6 "
+            "ORDER BY time ASC LIMIT ?"
+        )
+    else:
+        query = (
+            "SELECT contract_id, symbol, CAST(expiry AS VARCHAR) as expiry, "
+            "CAST(strike AS DOUBLE) as strike, option_type, "
+            "CAST(epoch(bar_start) AS BIGINT) as time, "
+            "open, high, low, close, COALESCE(volume, 0) as volume "
+            f"FROM v_candles_options{where_clause} ORDER BY bar_start ASC LIMIT ?"
+        )
     params.append(limit)
 
     try:
@@ -550,8 +593,13 @@ def get_option_candles(
             p_exp = m.group(2)
             p_strike = float(m.group(3))
             p_type = m.group(4)
-            fb_conds = ["interval = ?", "symbol = ?", "strike = ?", "option_type = ?"]
-            fb_params: List[object] = [res_clean, p_sym, p_strike, p_type]
+            fb_conds: List[str] = []
+            fb_params: List[object] = []
+            if not is_aggregated:
+                fb_conds.append("interval = ?")
+                fb_params.append(res_clean)
+            fb_conds.extend(["symbol = ?", "strike = ?", "option_type = ?"])
+            fb_params.extend([p_sym, p_strike, p_type])
             if p_exp:
                 fb_conds.append("CAST(expiry AS VARCHAR) LIKE ?")
                 fb_params.append(f"%{p_exp}%")
@@ -562,16 +610,33 @@ def get_option_candles(
                 fb_conds.append("epoch(bar_start) <= ?")
                 fb_params.append(to_ts)
             fb_where = " WHERE " + " AND ".join(fb_conds)
-            fb_query = (
-                "SELECT contract_id, symbol, CAST(expiry AS VARCHAR) as expiry, "
-                "CAST(strike AS DOUBLE) as strike, option_type, "
-                "CAST(epoch(bar_start) AS BIGINT) as time, "
-                "open, high, low, close, COALESCE(volume, 0) as volume "
-                f"FROM v_candles_options{fb_where} ORDER BY bar_start ASC LIMIT ?"
-            )
+            if is_aggregated:
+                fb_query = (
+                    "SELECT contract_id, symbol, CAST(expiry AS VARCHAR) as expiry, "
+                    "CAST(strike AS DOUBLE) as strike, option_type, "
+                    f"CAST(epoch(time_bucket(INTERVAL '{interval_str}', bar_start)) AS BIGINT) as time, "
+                    "arg_min(open, bar_start) as open, "
+                    "max(high) as high, "
+                    "min(low) as low, "
+                    "arg_max(close, bar_start) as close, "
+                    "sum(COALESCE(volume, 0)) as volume "
+                    f"FROM v_candles_options{fb_where} "
+                    "GROUP BY 1, 2, 3, 4, 5, 6 "
+                    "ORDER BY time ASC LIMIT ?"
+                )
+            else:
+                fb_query = (
+                    "SELECT contract_id, symbol, CAST(expiry AS VARCHAR) as expiry, "
+                    "CAST(strike AS DOUBLE) as strike, option_type, "
+                    "CAST(epoch(bar_start) AS BIGINT) as time, "
+                    "open, high, low, close, COALESCE(volume, 0) as volume "
+                    f"FROM v_candles_options{fb_where} ORDER BY bar_start ASC LIMIT ?"
+                )
             fb_params.append(limit)
             try:
                 rows = conn.execute(fb_query, fb_params).fetchall()
+            except duckdb.Error:
+                pass
             except duckdb.Error:
                 pass
 
