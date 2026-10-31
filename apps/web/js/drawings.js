@@ -259,6 +259,37 @@ export class DrawingLayer {
     this.canvas.addEventListener("pointerup", (e) => this.onPointerUp(e));
     this.canvas.addEventListener("click", (e) => this.onCanvasClick(e));
 
+    // Observe active panning and scaling to update vector drawings with zero lag
+    window.addEventListener("mousemove", (e) => {
+      if (e.buttons > 0 && (this.items.length > 0 || this.temp)) {
+        if (!this._rafPending) {
+          this._rafPending = true;
+          requestAnimationFrame(() => {
+            this._rafPending = false;
+            this.drawOverlay();
+          });
+        }
+      }
+    });
+
+    window.addEventListener("mouseup", () => {
+      this.drawOverlay();
+    });
+
+    this.container.addEventListener(
+      "wheel",
+      () => {
+        if (!this._rafPending) {
+          this._rafPending = true;
+          requestAnimationFrame(() => {
+            this._rafPending = false;
+            this.drawOverlay();
+          });
+        }
+      },
+      { passive: true },
+    );
+
     // Also observe container mousemove for cursor hit-testing and anchor manipulation
     this.container.addEventListener("mousemove", (e) => {
       if (this.tool === "cursor" && !this.temp) {
@@ -659,15 +690,19 @@ export class DrawingLayer {
         break;
       }
 
-      case "hline":
-        line(0, a.y, size.width, a.y);
-        label(price(a.price), size.width - 4, a.y - 10, "right");
+      case "hline": {
+        const plotWidth = this.chart?.chart?.timeScale?.()?.width?.() || (size.width - 65);
+        line(0, a.y, plotWidth, a.y);
+        label(price(a.price), plotWidth - 8, a.y - 10, "right", "rgba(30, 34, 45, 0.85)");
         break;
+      }
 
-      case "hray":
-        line(a.x, a.y, size.width, a.y);
-        label(price(a.price), size.width - 4, a.y - 10, "right");
+      case "hray": {
+        const plotWidth = this.chart?.chart?.timeScale?.()?.width?.() || (size.width - 65);
+        line(a.x, a.y, plotWidth, a.y);
+        label(price(a.price), plotWidth - 8, a.y - 10, "right", "rgba(30, 34, 45, 0.85)");
         break;
+      }
 
       case "vline":
         line(a.x, 0, a.x, size.height);

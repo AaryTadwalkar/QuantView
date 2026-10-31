@@ -34,6 +34,33 @@ import { INDICATORS, BY_ID } from "../lib/indicators.js";
 const TIMEFRAMES = ["1m", "3m", "5m", "15m", "30m", "1h", "4h", "1d"];
 
 /**
+ * 1. The use of function:
+ *    Evaluates whether the provided UTC epoch seconds or current wall-clock time falls
+ *    within Indian exchange (NSE) trading hours (Monday-Friday, 09:15:00 to 15:30:00 IST).
+ *
+ * 2. How does the specific function work:
+ *    Calculates Asia/Kolkata (+05:30) day of week and minute of day, checking 09:15-15:30 range.
+ *
+ * 3. Concepts used in the function:
+ *    Timezone offset conversion, session boundary gating.
+ *
+ * 4. Places where this function is imported and used:
+ *    Used in QuantApp.fetchQuotes, initMarketWebSocket, and market badge updater.
+ *
+ * 5. Final output of the function, before and after:
+ *    Before: Timestamp or null. After: Boolean indicating if exchange session is active.
+ */
+export function isIndianMarketOpen(timestampSec = null) {
+  const d = timestampSec ? new Date(timestampSec * 1000) : new Date();
+  const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
+  const istDate = new Date(utcMs + 5.5 * 3600000);
+  const day = istDate.getDay();
+  if (day === 0 || day === 6) return false;
+  const totalMin = istDate.getHours() * 60 + istDate.getMinutes();
+  return totalMin >= 555 && totalMin <= 930;
+}
+
+/**
  * 1. The use of class:
  *    Main workstation controller coordinating topbar, chart viewport, bottom dock panels,
  *    order placement, backtesting, and live market quotes.
@@ -261,6 +288,16 @@ export class QuantApp {
     const replayBtn = document.getElementById("replayBtn");
     if (replayBtn) {
       replayBtn.addEventListener("click", () => this.toggleReplayMode());
+    }
+
+    const resetChartBtn = document.getElementById("resetChartBtn");
+    if (resetChartBtn) {
+      resetChartBtn.addEventListener("click", () => {
+        if (this.chart && typeof this.chart.resetView === "function") {
+          this.chart.resetView();
+          this.toast("Chart & indicator scales reset to default", "info");
+        }
+      });
     }
 
     const themeBtn = document.getElementById("themeBtn");
@@ -796,6 +833,13 @@ export class QuantApp {
    */
   async fetchQuotes() {
     try {
+      const marketOpen = isIndianMarketOpen();
+      const marketBadge = document.getElementById("marketBadge");
+      if (marketBadge) {
+        marketBadge.textContent = marketOpen ? "OPEN" : "CLOSED";
+        marketBadge.className = `status-badge ${marketOpen ? "open" : "closed"}`;
+      }
+
       const [niftyQuote, vixQuote] = await Promise.allSettled([
         api.getQuote("NSE:NIFTY50"),
         api.getQuote("INDIAVIX"),
@@ -809,10 +853,10 @@ export class QuantApp {
           spotEl.textContent = `${fmtPrice(q.last_price)} (${fmtPct(q.change_pct)})`;
           spotEl.className = q.change >= 0 ? "up" : "down";
         }
-        if (this.chart) {
+        if (this.chart && (this.isReplaying || marketOpen)) {
           this.chart.updateLiveBar({
             price: q.last_price,
-            time: Math.floor(Date.now() / 1000),
+            time: q.timestamp || Math.floor(Date.now() / 1000),
             volume: q.volume || 0,
           });
         }
@@ -869,7 +913,7 @@ export class QuantApp {
                 spotEl.textContent = `${fmtPrice(price)} (${fmtPct(chgPct)})`;
                 if (msg.change != null) spotEl.className = msg.change >= 0 ? "up" : "down";
               }
-              if (this.chart) {
+              if (this.chart && (this.isReplaying || isIndianMarketOpen(msg.time))) {
                 this.chart.updateLiveBar({
                   price: price,
                   time: msg.time || (msg.data?.timestamp_ns ? Math.floor(msg.data.timestamp_ns / 1_000_000_000) : Math.floor(Date.now() / 1000)),
@@ -1331,12 +1375,20 @@ export class QuantApp {
           expirySel.appendChild(opt);
           return;
         }
+
+        // Determine the active expiry (first upcoming or nearest to current date, or latest in analytical lake)
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const upcoming = expiries.filter((e) => e >= todayStr);
+        const activeExpiry = upcoming.length > 0 ? upcoming[0] : expiries[expiries.length - 1];
+
         expiries.forEach((exp) => {
           const opt = document.createElement("option");
           opt.value = exp;
           opt.textContent = exp;
+          if (exp === activeExpiry) opt.selected = true;
           expirySel.appendChild(opt);
         });
+        expirySel.value = activeExpiry;
       } catch (err) {
         console.warn("[QuantApp] Could not load expiries:", err);
       }
@@ -1790,8 +1842,12 @@ export class QuantApp {
               <b>₹${refPrice.toFixed(2)}</b>
             </div>
             <div class="summary-line">
-              <span class="muted">Estimated Margin (65 qty/lot):</span>
-              <b id="estimatedMarginText" style="color:var(--accent);">₹${(refPrice * 65).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+              <span class="muted" id="marginLabel">${isBuy ? `Estimated Margin (${lotSize} qty/lot):` : "Estimated Margin (SPAN + Exposure):"}</span>
+              <b id="estimatedMarginText" style="color:var(--accent);">₹${(isBuy ? refPrice * lotSize : Math.round((this.currentSpot || 23050) * lotSize * 0.10)).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+            </div>
+            <div class="summary-line" id="premiumCreditLine" style="${isBuy ? "display:none;" : "display:flex;"}">
+              <span class="muted">Premium Received:</span>
+              <b id="premiumCreditText" style="color:var(--up);">+₹${(refPrice * lotSize).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (Credit)</b>
             </div>
           </div>
         </div>
@@ -1817,6 +1873,9 @@ export class QuantApp {
     const limitPriceGroup = overlay.querySelector("#limitPriceGroup");
     const limitPriceInput = overlay.querySelector("#orderLimitPrice");
     const marginText = overlay.querySelector("#estimatedMarginText");
+    const marginLabel = overlay.querySelector("#marginLabel");
+    const premiumCreditLine = overlay.querySelector("#premiumCreditLine");
+    const premiumCreditText = overlay.querySelector("#premiumCreditText");
 
     const slInput = overlay.querySelector("#orderSlVal");
     const slModePct = overlay.querySelector("#slModePct");
@@ -1837,8 +1896,23 @@ export class QuantApp {
       qtyText.textContent = `Quantity: ${totalQty} contracts`;
 
       const execPrice = orderTypeSel.value === "LIMIT" ? (parseFloat(limitPriceInput.value) || refPrice) : refPrice;
-      const margin = execPrice * totalQty;
-      marginText.textContent = `₹${margin.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      const premium = execPrice * totalQty;
+      const spot = this.currentSpot || 23050.0;
+
+      if (isBuy) {
+        marginText.textContent = `₹${premium.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (marginLabel) marginLabel.textContent = `Estimated Margin (${totalQty} qty):`;
+        if (premiumCreditLine) premiumCreditLine.style.display = "none";
+      } else {
+        const notional = spot * totalQty;
+        const writingMargin = Math.round(notional * 0.10);
+        marginText.textContent = `₹${writingMargin.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (marginLabel) marginLabel.textContent = `Estimated Margin (SPAN + Exposure):`;
+        if (premiumCreditLine && premiumCreditText) {
+          premiumCreditLine.style.display = "flex";
+          premiumCreditText.textContent = `+₹${premium.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (Credit)`;
+        }
+      }
 
       // SL Preview
       const slVal = parseFloat(slInput.value) || 0;
@@ -2682,7 +2756,13 @@ export class QuantApp {
       <!-- Trade Log Audit Table (M6-04) -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 4px;">
         <h4 style="margin:0;font-size:12px;">Audit Trade Log (${res.trades.length} closed round-trips)</h4>
-        <span style="font-size:10.5px;color:var(--muted);">Click trade row to highlight on chart &amp; inspect decision audit</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button type="button" id="toggleTradeMarkersBtn" class="tb" style="padding:2px 8px;font-size:11px;display:inline-flex;align-items:center;gap:4px;" title="Toggle On-Chart Trade Visualization Markers">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span id="toggleTradeMarkersText">Hide Chart Markers</span>
+          </button>
+          <span style="font-size:10.5px;color:var(--muted);">Click trade row to jump to candle</span>
+        </div>
       </div>
       <div class="trade-log-wrap">
         <table class="trade-log-table" id="testerTradeLogTable">
@@ -2744,22 +2824,45 @@ export class QuantApp {
       this.renderEquityCurve(eqContainer, res.equity_curve, initialCap);
     }
 
+    // Configure Toggle for On-Chart Trade Markers
+    const toggleMarkersBtn = resultsEl.querySelector("#toggleTradeMarkersBtn");
+    const toggleMarkersText = resultsEl.querySelector("#toggleTradeMarkersText");
+    let markersVisible = true;
+    if (toggleMarkersBtn) {
+      toggleMarkersBtn.addEventListener("click", () => {
+        markersVisible = !markersVisible;
+        if (markersVisible) {
+          if (this.chart && res.chart_markers) this.chart.setMarkers(res.chart_markers);
+          if (toggleMarkersText) toggleMarkersText.textContent = "Hide Chart Markers";
+          this.toast("Trade markers displayed on chart", "info");
+        } else {
+          if (this.chart) this.chart.clearMarkers();
+          if (toggleMarkersText) toggleMarkersText.textContent = "Show Chart Markers";
+          this.toast("Trade markers hidden from chart", "info");
+        }
+      });
+    }
+
     // Configure Interactive Trade Row Click & On-Chart Linkage (M6-04, M6-09)
     const auditContainer = resultsEl.querySelector("#decisionAuditContainer");
     const tableEl = resultsEl.querySelector("#testerTradeLogTable");
     if (tableEl) {
       const rows = tableEl.querySelectorAll("tr.trade-row");
       rows.forEach((row, idx) => {
-        row.addEventListener("click", () => {
+        row.addEventListener("click", async () => {
           rows.forEach((r) => r.classList.remove("selected"));
           row.classList.add("selected");
 
           const trade = res.trades[idx];
           if (!trade) return;
 
-          // Pan and highlight trade on candlestick chart
+          // Pan and highlight trade on candlestick chart, navigating to historical date if outside window
           if (this.chart) {
-            this.chart.scrollToTime(trade.entry_time);
+            if (typeof this.chart.navigateToTimestamp === "function") {
+              await this.chart.navigateToTimestamp(trade.entry_time);
+            } else {
+              this.chart.scrollToTime(trade.entry_time);
+            }
             this.chart.highlightTrade(trade);
           }
 

@@ -299,7 +299,12 @@ export class QuantChart {
         }
       });
     });
-    this.chart.timeScale().subscribeVisibleLogicalRangeChange(() => this.drawings?.drawOverlay());
+    this.chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+      this.drawings?.drawOverlay();
+      if (range && range.from < 30 && !this._isLoadingHistorical) {
+        this.loadMoreHistoricalCandles();
+      }
+    });
     this.chart.timeScale().subscribeVisibleTimeRangeChange(() => this.drawings?.drawOverlay());
 
     const banner = document.getElementById("syntheticBanner");
@@ -558,6 +563,52 @@ export class QuantChart {
 
   /**
    * 1. The use of function:
+   *    Pages in earlier historical candles from the analytical lake when scrolling near the chart start boundary.
+   *
+   * 2. How does the specific function work:
+   *    Fetches up to 5000 candles with to_ts <= earliest loaded candle timestamp, prepends them
+   *    to this.rawCandles while deduplicating, updates main/volume/indicator series, and syncs markers.
+   *
+   * 3. Concepts used in the function:
+   *    Infinite horizontal scroll pagination, temporal deduplication, analytical query pagination.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by timeScale subscribeVisibleLogicalRangeChange when range.from < 30.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Chart stops at initial 5000-bar limit. After: Seamless historical continuity back into multi-year data.
+   */
+  async loadMoreHistoricalCandles() {
+    if (this._isLoadingHistorical || !this.rawCandles || this.rawCandles.length === 0) return;
+    this._isLoadingHistorical = true;
+    try {
+      const earliestTs = this.rawCandles[0].time;
+      let resp;
+      if (this.symbol.startsWith("OPT-") || this.symbol.startsWith("NIFTY_20") || /NIFTY.*[0-9]+.*[CP]E/i.test(this.symbol)) {
+        resp = await api.getOptionCandles(this.symbol, this.timeframe, 5000, null, earliestTs - 1);
+      } else {
+        resp = await api.getCandles(this.symbol, this.timeframe, 5000, null, earliestTs - 1);
+      }
+      const newCandles = resp?.candles || [];
+      if (newCandles.length > 0) {
+        const existingTimes = new Set(this.rawCandles.map((c) => c.time));
+        const prepends = newCandles.filter((c) => !existingTimes.has(c.time));
+        if (prepends.length > 0) {
+          this.rawCandles = [...prepends, ...this.rawCandles];
+          this.renderCachedData();
+          this.renderIndicators();
+          this.syncAllMarkers();
+        }
+      }
+    } catch (err) {
+      console.warn("[QuantChart] Failed to load older historical bars:", err);
+    } finally {
+      this._isLoadingHistorical = false;
+    }
+  }
+
+  /**
+   * 1. The use of function:
    *    Registers an external callback function for chart click events.
    *
    * 2. How does the specific function work:
@@ -619,6 +670,7 @@ export class QuantChart {
     this.rawCandles = candles || [];
     this.renderCachedData();
     this.renderIndicators();
+    this.syncAllMarkers();
     this.updateLegend();
     if (this.drawings) {
       this.drawings.syncResize();
@@ -626,6 +678,47 @@ export class QuantChart {
     }
     if (fit && this.chart && this.rawCandles.length > 0) {
       this.chart.timeScale().fitContent();
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Resets horizontal time scale, vertical price scale, and indicator sub-pane scales to default layout.
+   *
+   * 2. How does the specific function work:
+   *    Calls resetTimeScale(), scrollToRealtime(), enables autoScale on right price scale, resets
+   *    indicator series price scales, re-renders drawings, and refreshes the legend.
+   *
+   * 3. Concepts used in the function:
+   *    Time scale normalization, auto-scaling reset, viewport realignment.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by #resetChartBtn click handler in apps/web/js/app.js.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Zoomed/panned or disproportional chart layout. After: Centered on latest bar with default proportions.
+   */
+  resetView() {
+    if (!this.chart) return;
+    try {
+      this.chart.timeScale().resetTimeScale();
+      this.chart.timeScale().scrollToRealtime();
+      this.chart.priceScale("right").applyOptions({ autoScale: true });
+      if (this.indSeries) {
+        for (const list of this.indSeries.values()) {
+          for (const s of list) {
+            try {
+              s.priceScale().applyOptions({ autoScale: true });
+            } catch (_) {}
+          }
+        }
+      }
+      if (this.drawings) {
+        this.drawings.syncResize();
+        this.drawings.update();
+      }
+    } catch (err) {
+      console.warn("[QuantChart] Error during resetView:", err);
     }
   }
 
@@ -830,8 +923,46 @@ export class QuantChart {
    * 5. Final output of the function, before and after:
    *    Before: No markers or previous markers. After: Arrows plotted above/below execution bars.
    */
+  /**
+   * 1. The use of function:
+   *    Sets entry/exit trade markers on the candlestick series.
+   *
+   * 2. How does the specific function work:
+   *    Passes markers array to markersPlugin.setMarkers() or main.setMarkers().
+   *    Markers are sorted chronologically by time ascending.
+   *
+   * 3. Concepts used in the function:
+   *    Lightweight Charts marker overlay, temporal sorting.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by Strategy Tester tear sheet when plotting backtest executions.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: No markers or previous markers. After: Arrows plotted above/below execution bars.
+   */
   setMarkers(markers = []) {
     this.extraMarkers = [...markers];
+    this.syncAllMarkers();
+  }
+
+  /**
+   * 1. The use of function:
+   *    Clears all execution and trade markers from the candlestick series.
+   *
+   * 2. How does the specific function work:
+   *    Empties this.extraMarkers and invokes syncAllMarkers() to refresh chart overlay.
+   *
+   * 3. Concepts used in the function:
+   *    Overlay cleanup, marker reset.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked when toggling off trade visualization or resetting test runs.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Trade markers visible. After: Clean candlestick chart without trade arrows.
+   */
+  clearMarkers() {
+    this.extraMarkers = [];
     this.syncAllMarkers();
   }
 
@@ -840,20 +971,27 @@ export class QuantChart {
    *    Merges trade markers with indicator structural swing markers (e.g. BOS/CHoCH) and renders them.
    *
    * 2. How does the specific function work:
-   *    Combines extraMarkers and indicatorMarkers arrays, sorts chronologically by time ascending,
-   *    and feeds to Lightweight Charts markers plugin.
+   *    Filters trade markers to strictly include only timestamps within currently loaded rawCandles range
+   *    (preventing boundary stacking), combines with indicatorMarkers, sorts chronologically, and updates series.
    *
    * 3. Concepts used in the function:
-   *    Marker collation, temporal sorting.
+   *    Marker collation, temporal bounds checking, anti-clamping filter.
    *
    * 4. Places where this function is imported and used:
-   *    Invoked by setMarkers and renderIndicators.
+   *    Invoked by setMarkers, clearMarkers, and renderIndicators.
    *
    * 5. Final output of the function, before and after:
-   *    Before: Separate marker lists. After: Combined markers rendered on chart series.
+   *    Before: Out-of-bounds markers stacking on first candle. After: Only relevant in-window markers rendered cleanly.
    */
   syncAllMarkers() {
-    const all = [...(this.extraMarkers || []), ...(this.indicatorMarkers || [])];
+    let extra = this.extraMarkers || [];
+    if (this.rawCandles && this.rawCandles.length > 0) {
+      const minTime = this.rawCandles[0].time;
+      const maxTime = this.rawCandles[this.rawCandles.length - 1].time;
+      extra = extra.filter((m) => m && m.time >= minTime && m.time <= maxTime);
+    }
+
+    const all = [...extra, ...(this.indicatorMarkers || [])];
     all.sort((a, b) => a.time - b.time);
     if (this.markersPlugin && typeof this.markersPlugin.setMarkers === "function") {
       this.markersPlugin.setMarkers(all);
@@ -865,6 +1003,50 @@ export class QuantChart {
       } catch (err) {
         console.warn("[QuantChart] Failed to create markers:", err);
       }
+    }
+  }
+
+  /**
+   * 1. The use of function:
+   *    Navigates the chart to a specific historical epoch timestamp, loading surrounding historical candles
+   *    from the analytical lake if the target timestamp is outside currently loaded rawCandles.
+   *
+   * 2. How does the specific function work:
+   *    Checks if timestamp is within [rawCandles[0].time, rawCandles[n-1].time].
+   *    If within range, calls scrollToTime(timestamp).
+   *    If outside range, fetches candles centered on timestamp (+- 2 days) via api.getCandles,
+   *    re-populates rawCandles via setCandles(), and centers view on timestamp.
+   *
+   * 3. Concepts used in the function:
+   *    Point-in-time historical navigation, on-demand chunk loading, time scale centering.
+   *
+   * 4. Places where this function is imported and used:
+   *    Invoked by trade log row click in apps/web/js/app.js.
+   *
+   * 5. Final output of the function, before and after:
+   *    Before: Chart displaying current bars. After: Historical window loaded and centered on trade execution.
+   */
+  async navigateToTimestamp(timestamp) {
+    if (!timestamp || !this.chart) return;
+    const ts = Number(timestamp);
+    const n = this.rawCandles ? this.rawCandles.length : 0;
+    const isInRange = n > 0 && ts >= this.rawCandles[0].time && ts <= this.rawCandles[n - 1].time;
+
+    if (isInRange) {
+      this.scrollToTime(ts);
+      return;
+    }
+
+    try {
+      const fromTs = Math.max(0, ts - (86400 * 2));
+      const toTs = ts + (86400 * 2);
+      const resp = await api.getCandles(this.symbol, this.timeframe, 5000, fromTs, toTs);
+      if (resp && resp.candles && resp.candles.length > 0) {
+        this.setCandles(resp.candles, false);
+        this.scrollToTime(ts);
+      }
+    } catch (err) {
+      console.warn("[QuantChart] Failed to navigate to timestamp:", err);
     }
   }
 

@@ -1,7 +1,15 @@
 # Active Context — QuantView (`c:\Algo\quantview`)
 
-## Current State of the Union (2026-10-29 — Stage 6 Post-Verification Bug Fixes & UX Polish Complete)
-- **POST-STAGE 6 SYSTEMATIC DEBUGGING COMPLETED (14/14 RESOLVED & VERIFIED):**
+## Current State of the Union (2026-10-31 — Stage 7 Post-Verification Systematic Debugging Complete)
+- **POST-STAGE 7 SYSTEMATIC DEBUGGING (8/8 USER ISSUES RESOLVED & VERIFIED):**
+  1. Chart Scale & Indicator Reset (Issue 1): Added `#resetChartBtn` in topbar toolbar and `resetView()` in `QuantChart` that invokes `resetTimeScale()`, `scrollToRealtime()`, and sets `autoScale: true` on both the main price scale and indicator sub-panes.
+  2. Default Expiry & Cross-Epoch ATM Spot (Issue 2): Updated `loadExpiries()` to automatically select the nearest upcoming/active expiry (`2026-11-03`) rather than oldest `2025-01-02`. In `services/api/routers/options.py`, historical expiry spot prices are resolved point-in-time as of that expiry's date, preventing deep ITM/OTM strike skewing.
+  3. Saturday Ghost Candle & Flat Lines (Issue 3): Guarded `updateLiveBar()` in `app.js` with `isIndianMarketOpen()` to ensure offline weekend ticks stamped with `Date.now()` are never pushed onto the chart outside active market hours (09:15-15:30 IST) or replay. Topbar `#marketBadge` accurately displays OPEN/CLOSED.
+  4 & 5. Strategy Tester On-Chart Trade Markers & Stacking Removal (Issues 4 & 5): Filtered `syncAllMarkers()` in `chart.js` so only markers with timestamps within currently loaded candle bounds are rendered, eliminating the stacked column of markers at the chart edge. Added `[Hide/Show Chart Markers]` toggle button to the tear sheet and implemented `navigateToTimestamp()` to load historical candle slices when clicking any trade row.
+  6. 1-Minute Multi-Year Historical Pagination (Issue 6): Overcame the 5,000-bar initial window by adding infinite scroll-back pagination (`loadMoreHistoricalCandles()`) when `range.from < 30`, fetching earlier 5,000-bar chunks from DuckDB (440,016 1m bars available back to 2021).
+  7. Option Sell Margin Calculation (Issue 7): Updated order modal calculation to reflect exchange rules. BUY options require premium (`execPrice * qty`), while SELL options require SPAN + Exposure margin (~10% of underlying contract value, ~₹1,49,825 for 1 lot) and show the premium received credit.
+  8. Drawing Price Scale Collision & Drag Adjustment Lag (Issue 8): Clipped horizontal lines (`hline`, `hray`) at `plotWidth` so they never paint over the right price scale numbers. Added `requestAnimationFrame` tracking to window `mousemove`, `mouseup`, and container `wheel` events so drawings follow price scale dragging and panning with 0ms lag.
+- **GATE G5 CERTIFIED & CLOSED (100% PASS):**
   1. Candle Date Range (Bug 1): Resolved by subquerying newest bars (`ORDER BY time DESC LIMIT ?`) then ordering ASC; queries return up to latest session (`2026-10-19 15:25:00 IST`).
   2. Indicator Controls (Bug 2): Added persistent hover styling & discoverability for indicator settings, hide/unhide, and removal icons.
   3. TradingView Link (Bug 3): Injected CSS suppression for TradingView attribution anchor links.

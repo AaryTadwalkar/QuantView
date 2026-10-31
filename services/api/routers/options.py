@@ -399,10 +399,21 @@ def get_option_chain(
 
     if resolved_spot is None or resolved_spot <= 0.0:
         try:
-            spot_row = conn.execute(
-                "SELECT close, CAST(epoch(bar_start) AS BIGINT) FROM v_candles_underlying WHERE symbol = ? ORDER BY bar_start DESC LIMIT 1",
-                [canon_symbol],
-            ).fetchone()
+            if target_expiry:
+                spot_row = conn.execute(
+                    "SELECT close, CAST(epoch(bar_start) AS BIGINT) FROM v_candles_underlying "
+                    "WHERE symbol = ? AND bar_start <= ? ORDER BY bar_start DESC LIMIT 1",
+                    [canon_symbol, f"{target_expiry} 23:59:59"],
+                ).fetchone()
+            else:
+                spot_row = None
+
+            if not spot_row:
+                spot_row = conn.execute(
+                    "SELECT close, CAST(epoch(bar_start) AS BIGINT) FROM v_candles_underlying WHERE symbol = ? ORDER BY bar_start DESC LIMIT 1",
+                    [canon_symbol],
+                ).fetchone()
+
             if spot_row:
                 resolved_spot = float(spot_row[0])
                 if snapshot_time == 0:

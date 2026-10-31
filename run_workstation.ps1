@@ -141,9 +141,9 @@ try {
         if (-not $daemonReady) {
             try {
                 $daemonRes = Invoke-RestMethod -Uri "http://127.0.0.1:8001/control/status" -TimeoutSec 1 -ErrorAction SilentlyContinue
-                if ($daemonRes -and $daemonRes.status -eq "RUNNING") {
+                if ($daemonRes -and ($daemonRes.status -eq "HEALTHY" -or $daemonRes.status -eq "RUNNING")) {
                     $daemonReady = $true
-                    Write-Host "  -> Live Daemon operational at http://127.0.0.1:8001 (Supervisor: RUNNING)" -ForegroundColor Green
+                    Write-Host "  -> Live Daemon operational at http://127.0.0.1:8001 (Supervisor: $($daemonRes.status))" -ForegroundColor Green
                 }
             } catch {}
         }
